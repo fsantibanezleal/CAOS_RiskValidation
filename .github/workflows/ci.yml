@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests scripts
+      - name: Unit tests (closed-form and published worked examples; no training, no data)
+        run: pytest -q
+      - name: Smoke (wheel builds and imports clean)
+        run: |
+          python -m build
+          python -c "import riskvalidation; print('riskvalidation', riskvalidation.__version__)"
+      - name: CI budget, trunk-only triggers, no training (ADR-0074)
+        run: python scripts/check_ci_budget.py
+      - name: No em-dash and no emoji in tracked content (ADR-0067)
+        run: python scripts/check_content_standards.py
+      - name: SDD present, every requirement names a real gate (ADR-0075)
+        run: python scripts/check_sdd.py
