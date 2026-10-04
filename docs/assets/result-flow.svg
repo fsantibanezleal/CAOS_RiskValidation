@@ -29,7 +29,7 @@
   <text class="t" x="246" y="146">Test function</text>
   <text class="s" x="246" y="168">statistic, p-value or</text>
   <text class="s" x="246" y="186">metric, extras</text>
-  <text class="m" x="246" y="204">tests/&lt;family&gt;.py</text>
+  <text class="m" x="246" y="204">validation/&lt;family&gt;.py</text>
 
   <rect class="hl" x="446" y="120" width="170" height="92" rx="8"/>
   <text class="t" x="462" y="146">make_result</text>

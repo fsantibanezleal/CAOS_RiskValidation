@@ -2,5 +2,110 @@
   "policy_id": "riskvalidation-default",
   "version": "2026.10.0",
   "description": "Conventional thresholds for illustration and comparison. They are policy choices, not regulatory thresholds: the ECB 2019 IRB validation-reporting instructions set no pass or fail thresholds, and each entry names where its convention comes from. Institutions replace this file with their own policy.",
-  "thresholds": {}
+  "thresholds": {
+    "pd.jeffreys": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.binomial": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.binomial_vasicek": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.chi2_grades": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.hosmer_lemeshow": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.spiegelhalter": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.normal_multiperiod": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "pd.traffic_lights": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% on P(V <= v); BCBS WP14 defines v_alpha for a chosen confidence level"
+    },
+    "disc.auc_vs_initial": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "disc.delong": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "rating.migration_ztests": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "rating.hhi": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "stability.psi": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "Yurdakul and Naranjo (2020) chi-square benchmark at 5% and 1%; the 0.10/0.25 bands are reported beside it as a rule of thumb without error control"
+    },
+    "stability.csi": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "Yurdakul and Naranjo (2020) chi-square benchmark at 5% and 1%; the 0.10/0.25 bands are reported beside it as a rule of thumb without error control"
+    },
+    "stability.chi2": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "stability.ks": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    }
+  },
+  "descriptive_without_thresholds": [
+    "pd.brier",
+    "pd.ece",
+    "disc.auc",
+    "disc.ks",
+    "rating.mwb",
+    "stability.wasserstein"
+  ]
 }
