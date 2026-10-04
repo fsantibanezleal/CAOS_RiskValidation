@@ -5,6 +5,7 @@ traffic light; :func:`run_suite` runs a battery without stopping at the first fa
 only on NumPy and SciPy, so it also runs in the browser under Pyodide.
 """
 
+from riskvalidation import validation  # noqa: E402,F401  (registers the test catalogue)
 from riskvalidation.core.policy import Policy, Threshold, default_policy, load_policy
 from riskvalidation.core.registry import TestSpec, catalogue
 from riskvalidation.core.result import Light, TestResult
@@ -25,4 +26,5 @@ __all__ = [
     "default_policy",
     "load_policy",
     "run_suite",
+    "validation",
 ]

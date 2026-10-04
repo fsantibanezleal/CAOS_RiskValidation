@@ -1,0 +1,72 @@
+"""Validation tests, grouped by family. Importing this package registers every test in the catalogue."""
+
+from riskvalidation.validation import calibration, discrimination, rating_system, stability
+from riskvalidation.validation.calibration import (
+    critical_default_count,
+    pd_binomial,
+    pd_binomial_vasicek,
+    pd_brier,
+    pd_chi2_grades,
+    pd_ece,
+    pd_hosmer_lemeshow,
+    pd_jeffreys,
+    pd_jeffreys_grades,
+    pd_normal_multiperiod,
+    pd_spiegelhalter,
+    pd_traffic_lights,
+)
+from riskvalidation.validation.discrimination import (
+    bootstrap_ci,
+    cap_accuracy_ratio,
+    disc_auc,
+    disc_auc_vs_initial,
+    disc_delong,
+    disc_ks,
+)
+from riskvalidation.validation.rating_system import rating_hhi, rating_migration_ztests, rating_mwb
+from riskvalidation.validation.stability import (
+    bin_counts,
+    psi_benchmark,
+    quantile_edges,
+    stability_chi2,
+    stability_csi,
+    stability_ks,
+    stability_psi,
+    stability_wasserstein,
+)
+
+__all__ = [
+    "bin_counts",
+    "bootstrap_ci",
+    "calibration",
+    "cap_accuracy_ratio",
+    "critical_default_count",
+    "disc_auc",
+    "disc_auc_vs_initial",
+    "disc_delong",
+    "disc_ks",
+    "discrimination",
+    "pd_binomial",
+    "pd_binomial_vasicek",
+    "pd_brier",
+    "pd_chi2_grades",
+    "pd_ece",
+    "pd_hosmer_lemeshow",
+    "pd_jeffreys",
+    "pd_jeffreys_grades",
+    "pd_normal_multiperiod",
+    "pd_spiegelhalter",
+    "pd_traffic_lights",
+    "psi_benchmark",
+    "quantile_edges",
+    "rating_hhi",
+    "rating_migration_ztests",
+    "rating_mwb",
+    "rating_system",
+    "stability",
+    "stability_chi2",
+    "stability_csi",
+    "stability_ks",
+    "stability_psi",
+    "stability_wasserstein",
+]
