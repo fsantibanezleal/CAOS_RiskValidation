@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" width="960" height="360" role="img" aria-labelledby="t d">
+  <title id="t">From test inputs to a classified result</title>
+  <desc id="d">A test function computes a statistic and p-value from NumPy inputs; make_result reads the null hypothesis and reference from the registry and the thresholds from a versioned policy file, and returns a TestResult with a light, an inputs hash and notes; run_suite collects results into a SuiteRun.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; stroke: #cbd5e1; }
+      .box { fill: #ffffff; stroke: #334155; stroke-width: 1.4; }
+      .hl { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.6; }
+      .pol { fill: #fff7ed; stroke: #c2410c; stroke-width: 1.4; }
+      .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+      .s { font: 12px system-ui, sans-serif; fill: #334155; }
+      .m { font: 12px ui-monospace, Consolas, monospace; fill: #4338ca; }
+      .l { stroke: #334155; stroke-width: 1.4; fill: none; marker-end: url(#a); }
+      .g { fill: #16a34a; } .y { fill: #d97706; } .r { fill: #dc2626; } .n { fill: #94a3b8; }
+    </style>
+  </defs>
+  <rect class="bg" x="1" y="1" width="958" height="358" rx="10"/>
+
+  <rect class="box" x="24" y="120" width="170" height="92" rx="8"/>
+  <text class="t" x="40" y="146">Inputs</text>
+  <text class="s" x="40" y="168">counts, PDs, scores,</text>
+  <text class="s" x="40" y="186">grades, distributions</text>
+  <text class="m" x="40" y="204">numpy arrays</text>
+
+  <rect class="box" x="230" y="120" width="180" height="92" rx="8"/>
+  <text class="t" x="246" y="146">Test function</text>
+  <text class="s" x="246" y="168">statistic, p-value or</text>
+  <text class="s" x="246" y="186">metric, extras</text>
+  <text class="m" x="246" y="204">tests/&lt;family&gt;.py</text>
+
+  <rect class="hl" x="446" y="120" width="170" height="92" rx="8"/>
+  <text class="t" x="462" y="146">make_result</text>
+  <text class="s" x="462" y="168">classify under policy,</text>
+  <text class="s" x="462" y="186">hash the inputs</text>
+  <text class="m" x="462" y="204">core/build.py</text>
+
+  <rect class="box" x="446" y="22" width="170" height="70" rx="8"/>
+  <text class="t" x="462" y="48">Registry</text>
+  <text class="s" x="462" y="68">h0, reference, family</text>
+  <text class="m" x="462" y="84">core/registry.py</text>
+
+  <rect class="pol" x="446" y="246" width="170" height="92" rx="8"/>
+  <text class="t" x="462" y="272">Policy file</text>
+  <text class="s" x="462" y="292">versioned thresholds,</text>
+  <text class="s" x="462" y="310">labelled "policy"</text>
+  <text class="m" x="462" y="328">policies/*.json</text>
+
+  <rect class="box" x="652" y="120" width="140" height="92" rx="8"/>
+  <text class="t" x="668" y="146">TestResult</text>
+  <circle class="g" cx="674" cy="166" r="6"/><circle class="y" cx="692" cy="166" r="6"/>
+  <circle class="r" cx="710" cy="166" r="6"/><circle class="n" cx="728" cy="166" r="6"/>
+  <text class="s" x="668" y="190">light, hash, notes</text>
+  <text class="m" x="668" y="204">core/result.py</text>
+
+  <rect class="box" x="818" y="120" width="120" height="92" rx="8"/>
+  <text class="t" x="834" y="146">SuiteRun</text>
+  <text class="s" x="834" y="168">counts, worst,</text>
+  <text class="s" x="834" y="186">JSON table</text>
+  <text class="m" x="834" y="204">core/suite.py</text>
+
+  <path class="l" d="M194,166 L228,166"/>
+  <path class="l" d="M410,166 L444,166"/>
+  <path class="l" d="M531,92 L531,118"/>
+  <path class="l" d="M531,246 L531,214"/>
+  <path class="l" d="M616,166 L650,166"/>
+  <path class="l" d="M792,166 L816,166"/>
+  <text class="s" x="652" y="250">green, amber, red, not evaluated;</text>
+  <text class="s" x="652" y="268">error when the test raises</text>
+</svg>
