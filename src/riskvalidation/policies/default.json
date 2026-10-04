@@ -1,0 +1,6 @@
+{
+  "policy_id": "riskvalidation-default",
+  "version": "2026.10.0",
+  "description": "Conventional thresholds for illustration and comparison. They are policy choices, not regulatory thresholds: the ECB 2019 IRB validation-reporting instructions set no pass or fail thresholds, and each entry names where its convention comes from. Institutions replace this file with their own policy.",
+  "thresholds": {}
+}

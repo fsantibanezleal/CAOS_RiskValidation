@@ -1,0 +1,60 @@
+# riskvalidation: validation tests, regulatory calculators and reference engines for financial risk models.
+# Distribution name == import name (`riskvalidation`), verified free on PyPI 2026-10-04 (ADR-0061).
+# The core depends on NumPy and SciPy only, so it runs in the browser under Pyodide.
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "riskvalidation"
+# PEP 440 form of the display version X.XX.XXX in VERSION (see CHANGELOG.md and riskvalidation.__version__).
+version = "0.1.0"
+description = "Validation tests, regulatory calculators and reference engines for financial risk models: the toolkit of an independent model validator."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Felipe Santibáñez-Leal" }]
+keywords = [
+    "model-validation", "model-risk-management", "credit-risk", "market-risk", "basel", "ifrs9",
+    "probability-of-default", "backtesting", "irrbb", "liquidity-risk", "operational-risk",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = ["numpy>=1.24", "scipy>=1.10"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6,<0.17", "build>=1.2"]
+
+[project.urls]
+Homepage = "https://github.com/fsantibanezleal/CAOS_RiskValidation"
+Repository = "https://github.com/fsantibanezleal/CAOS_RiskValidation"
+Changelog = "https://github.com/fsantibanezleal/CAOS_RiskValidation/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+riskvalidation = ["policies/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Shared guard copied verbatim from the product line (OreFlow's check_sdd.py); kept identical across repos.
+"scripts/check_sdd.py" = ["E501"]
