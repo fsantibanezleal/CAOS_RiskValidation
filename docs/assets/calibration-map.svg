@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" width="900" height="380" role="img" aria-labelledby="t d">
+  <title id="t">PD calibration tests by scope and dependence assumption</title>
+  <desc id="d">Columns give the scope of a test: one grade in one period, all grades in one period, several periods. Rows give the dependence assumption: independent defaults, or correlated defaults through a systematic factor or across time. Each test sits in the cell of its assumptions.</desc>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .hd { fill: #e2e8f0; stroke: #94a3b8; }
+    .cell { fill: #ffffff; stroke: #94a3b8; }
+    .warn { fill: #fff7ed; stroke: #c2410c; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .h { font: 600 13px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .m { font: 12px ui-monospace, Consolas, monospace; fill: #4338ca; }
+  </style>
+  <rect class="bg" x="1" y="1" width="898" height="378" rx="10"/>
+  <text class="t" x="24" y="30">Which calibration test assumes what</text>
+
+  <rect class="hd" x="200" y="46" width="226" height="40" rx="6"/>
+  <text class="h" x="313" y="71" text-anchor="middle">one grade, one period</text>
+  <rect class="hd" x="436" y="46" width="226" height="40" rx="6"/>
+  <text class="h" x="549" y="71" text-anchor="middle">all grades, one period</text>
+  <rect class="hd" x="672" y="46" width="206" height="40" rx="6"/>
+  <text class="h" x="775" y="71" text-anchor="middle">several periods</text>
+
+  <rect class="hd" x="22" y="96" width="168" height="120" rx="6"/>
+  <text class="h" x="34" y="130">defaults</text>
+  <text class="h" x="34" y="148">independent</text>
+  <text class="s" x="34" y="172">may overstate</text>
+  <text class="s" x="34" y="188">significance when</text>
+  <text class="s" x="34" y="204">defaults correlate</text>
+
+  <rect class="hd" x="22" y="226" width="168" height="130" rx="6"/>
+  <text class="h" x="34" y="260">dependence</text>
+  <text class="h" x="34" y="278">allowed</text>
+  <text class="s" x="34" y="302">one systematic factor,</text>
+  <text class="s" x="34" y="318">or cross-sectional</text>
+  <text class="s" x="34" y="334">dependence each year</text>
+
+  <rect class="warn" x="200" y="96" width="226" height="120" rx="6"/>
+  <text class="m" x="214" y="126">pd.jeffreys</text>
+  <text class="s" x="214" y="144">ECB 2019 reporting test</text>
+  <text class="m" x="214" y="172">pd.binomial</text>
+  <text class="s" x="214" y="190">WP14: an early warning</text>
+
+  <rect class="warn" x="436" y="96" width="226" height="120" rx="6"/>
+  <text class="m" x="450" y="126">pd.chi2_grades</text>
+  <text class="m" x="450" y="150">pd.hosmer_lemeshow</text>
+  <text class="m" x="450" y="174">pd.spiegelhalter</text>
+  <text class="s" x="450" y="198">obligor or grade level</text>
+
+  <rect class="cell" x="672" y="96" width="206" height="120" rx="6"/>
+  <text class="m" x="686" y="126">pd.traffic_lights</text>
+  <text class="s" x="686" y="144">colours per year,</text>
+  <text class="s" x="686" y="160">multinomial counts</text>
+
+  <rect class="cell" x="200" y="226" width="226" height="130" rx="6"/>
+  <text class="m" x="214" y="256">pd.binomial_vasicek</text>
+  <text class="s" x="214" y="274">asset correlation rho is</text>
+  <text class="s" x="214" y="290">an assumption to document</text>
+
+  <rect class="cell" x="436" y="226" width="226" height="130" rx="6"/>
+  <text class="s" x="450" y="256">no test here: WP14 finds no</text>
+  <text class="s" x="450" y="272">powerful calibration test</text>
+  <text class="s" x="450" y="288">once defaults correlate</text>
+
+  <rect class="cell" x="672" y="226" width="206" height="130" rx="6"/>
+  <text class="m" x="686" y="256">pd.normal_multiperiod</text>
+  <text class="s" x="686" y="274">dependence within a year</text>
+  <text class="s" x="686" y="290">admitted; independence</text>
+  <text class="s" x="686" y="306">over time assumed</text>
+</svg>
