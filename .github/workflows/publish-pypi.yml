@@ -1,0 +1,62 @@
+name: Publish to PyPI
+
+# ADR-0061, Trusted Publishing (OIDC): no API token is stored anywhere.
+# One-time human step: configure the PyPI pending publisher for
+#   project=riskvalidation · owner=fsantibanezleal · repo=CAOS_RiskValidation · workflow=publish-pypi.yml · environment=pypi
+# Then publishing a GitHub Release (tag vX.XX.XXX) builds and publishes automatically.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build sdist and wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Verify metadata
+        run: |
+          python -m pip install --upgrade twine
+          python -m twine check dist/*
+      - name: Test the built wheel
+        run: |
+          python -m pip install dist/*.whl pytest
+          python -m pytest tests/ -q
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI (OIDC)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: pypi
+      url: https://pypi.org/p/riskvalidation
+    permissions:
+      id-token: write   # required for trusted publishing; no token stored
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
