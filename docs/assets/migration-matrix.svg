@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 380" width="860" height="380" role="img" aria-labelledby="t d">
+  <title id="t">Migration matrix: off-diagonals and z-test neighbours</title>
+  <desc id="d">A five-grade migration matrix. Cells above the diagonal are downgrades (counted in the upper bandwidth), cells below are upgrades (lower bandwidth). Each off-diagonal cell is z-tested against its neighbour one step closer to the diagonal in the same row.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f172a"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; stroke: #cbd5e1; }
+      .diag { fill: #e2e8f0; stroke: #64748b; }
+      .up { fill: #fee2e2; stroke: #b91c1c; }
+      .lo { fill: #dcfce7; stroke: #15803d; }
+      .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+      .s { font: 12px system-ui, sans-serif; fill: #334155; }
+      .k { font: 11px system-ui, sans-serif; fill: #475569; }
+      .ar { stroke: #0f172a; stroke-width: 2; fill: none; marker-end: url(#a); }
+    </style>
+  </defs>
+  <rect class="bg" x="1" y="1" width="858" height="378" rx="10"/>
+  <text class="t" x="24" y="30">Grade at start (rows) by grade at end (columns), 1 best to 5 worst</text>
+  <g transform="translate(70,60)">
+    <text class="k" x="125" y="-8" text-anchor="middle">end grade 1 to 5</text>
+    <g>
+      <rect class="diag" x="0" y="0" width="50" height="50"/><rect class="up" x="50" y="0" width="50" height="50"/><rect class="up" x="100" y="0" width="50" height="50"/><rect class="up" x="150" y="0" width="50" height="50"/><rect class="up" x="200" y="0" width="50" height="50"/>
+      <rect class="lo" x="0" y="50" width="50" height="50"/><rect class="diag" x="50" y="50" width="50" height="50"/><rect class="up" x="100" y="50" width="50" height="50"/><rect class="up" x="150" y="50" width="50" height="50"/><rect class="up" x="200" y="50" width="50" height="50"/>
+      <rect class="lo" x="0" y="100" width="50" height="50"/><rect class="lo" x="50" y="100" width="50" height="50"/><rect class="diag" x="100" y="100" width="50" height="50"/><rect class="up" x="150" y="100" width="50" height="50"/><rect class="up" x="200" y="100" width="50" height="50"/>
+      <rect class="lo" x="0" y="150" width="50" height="50"/><rect class="lo" x="50" y="150" width="50" height="50"/><rect class="lo" x="100" y="150" width="50" height="50"/><rect class="diag" x="150" y="150" width="50" height="50"/><rect class="up" x="200" y="150" width="50" height="50"/>
+      <rect class="lo" x="0" y="200" width="50" height="50"/><rect class="lo" x="50" y="200" width="50" height="50"/><rect class="lo" x="100" y="200" width="50" height="50"/><rect class="lo" x="150" y="200" width="50" height="50"/><rect class="diag" x="200" y="200" width="50" height="50"/>
+    </g>
+    <path class="ar" d="M225,25 L180,25"/>
+    <path class="ar" d="M175,25 L130,25"/>
+    <path class="ar" d="M25,175 L70,175"/>
+    <path class="ar" d="M75,175 L120,175"/>
+    <text class="k" x="-10" y="130" text-anchor="end">start grade</text>
+  </g>
+  <g transform="translate(380,70)">
+    <rect class="up" x="0" y="0" width="22" height="22"/>
+    <text class="s" x="32" y="16">above the diagonal: downgrades, counted in MWB upper</text>
+    <rect class="lo" x="0" y="34" width="22" height="22"/>
+    <text class="s" x="32" y="50">below the diagonal: upgrades, counted in MWB lower</text>
+    <rect class="diag" x="0" y="68" width="22" height="22"/>
+    <text class="s" x="32" y="84">diagonal: no migration</text>
+    <path class="ar" d="M0,122 L28,122"/>
+    <text class="s" x="40" y="126">each cell is z-tested against its neighbour one step</text>
+    <text class="s" x="40" y="142">closer to the diagonal in the same row; a small p-value</text>
+    <text class="s" x="40" y="158">means the farther cell is more populated (ECB 2019, 2.5.5.2)</text>
+    <text class="s" x="0" y="196">MWB weights each migration by its distance |i - j| and</text>
+    <text class="s" x="0" y="212">normalises by the largest jump each start grade allows,</text>
+    <text class="s" x="0" y="228">so both bandwidths lie between 0 and 1 (ECB 2019, 2.5.5.1)</text>
+  </g>
+</svg>
