@@ -68,6 +68,23 @@ asymptotically $\chi^2$ with as many degrees of freedom as grades under $H_0$ (e
 defaults independent within and between grades). WP14: likely to understate the true type I error under default
 dependence, and slow to converge for small PDs.
 
+## Chi-square test of the default profile (`pd.default_profile`)
+
+The test Tasche (2013) uses to rank PD curve calibrations
+([doi:10.21314/jcr.2013.169](https://doi.org/10.21314/jcr.2013.169), sections 3.3 and 4.2.5). Given the number of
+defaults $D = \sum_i d_i$, the default numbers by grade are multinomial with the implied default profile
+$q_i = n_i p_i / \sum_j n_j p_j$ under $H_0$, and Pearson's statistic is
+
+$$T = \sum_{i}\frac{(d_i - D\,q_i)^2}{D\,q_i}.$$
+
+- $H_0$: given their number, the defaults fall on the grades as the PD curve implies. The test sees the **shape** of
+  the curve, not its level; read it with a level test such as `pd.binomial`.
+- p-value: Monte Carlo, $(1 + \#\{T^* \ge T\})/(B + 1)$ over $B$ = `n_sim` multinomial samples drawn with `seed`
+  (both recorded), because expected counts in good grades are far below the chi-square rule of thumb. The Monte Carlo
+  standard error and the asymptotic p-value ($k - 1$ degrees of freedom) are kept in `extras`.
+- Reproduces the p-values of Tasche (2013) Table 7 on the S&P data within their Monte Carlo error (see
+  [PD curve calibration](../engines/03_pd-curve-calibration.md)).
+
 ## Hosmer-Lemeshow test (`pd.hosmer_lemeshow`)
 
 Obligors are grouped by quantiles of predicted PD into $G$ groups with observed defaults $O_g$, expected

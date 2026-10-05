@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 440" width="800" height="440" role="img" aria-labelledby="t d">
+  <title id="t">Most prudent PD bounds for a zero-default portfolio, and the published values</title>
+  <desc id="d">Upper confidence bounds for the PD of grades A, B and C (100, 400 and 300 obligors, no defaults) against the confidence level, under independence and under asset correlation 12%, computed by riskvalidation; the dots are the values printed by Pluto and Tasche.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="438" rx="10"/>
+  <text class="t" x="64" y="28">Most prudent PD bound (%), grades A, B, C: 100, 400, 300 obligors, no defaults</text>
+  <line class="grid" x1="64" x2="580" y1="384.0" y2="384.0"/>
+  <text class="k" x="56" y="388.0" text-anchor="end">0</text>
+  <line class="grid" x1="64" x2="580" y1="316.8" y2="316.8"/>
+  <text class="k" x="56" y="320.8" text-anchor="end">2</text>
+  <line class="grid" x1="64" x2="580" y1="249.6" y2="249.6"/>
+  <text class="k" x="56" y="253.6" text-anchor="end">4</text>
+  <line class="grid" x1="64" x2="580" y1="182.4" y2="182.4"/>
+  <text class="k" x="56" y="186.4" text-anchor="end">6</text>
+  <line class="grid" x1="64" x2="580" y1="115.2" y2="115.2"/>
+  <text class="k" x="56" y="119.2" text-anchor="end">8</text>
+  <line class="grid" x1="64" x2="580" y1="48.0" y2="48.0"/>
+  <text class="k" x="56" y="52.0" text-anchor="end">10</text>
+  <line class="grid" x1="64.0" x2="64.0" y1="48" y2="384"/>
+  <text class="k" x="64.0" y="402" text-anchor="middle">50%</text>
+  <line class="grid" x1="121.6" x2="121.6" y1="48" y2="384"/>
+  <text class="k" x="121.6" y="402" text-anchor="middle">75%</text>
+  <line class="grid" x1="197.6" x2="197.6" y1="48" y2="384"/>
+  <text class="k" x="197.6" y="402" text-anchor="middle">90%</text>
+  <line class="grid" x1="255.2" x2="255.2" y1="48" y2="384"/>
+  <text class="k" x="255.2" y="402" text-anchor="middle">95%</text>
+  <line class="grid" x1="388.8" x2="388.8" y1="48" y2="384"/>
+  <text class="k" x="388.8" y="402" text-anchor="middle">99%</text>
+  <line class="grid" x1="580.0" x2="580.0" y1="48" y2="384"/>
+  <text class="k" x="580.0" y="402" text-anchor="middle">99.9%</text>
+  <line class="ax" x1="64" x2="580" y1="384" y2="384"/>
+  <line class="ax" x1="64" x2="64" y1="48" y2="384"/>
+  <text class="s" x="322" y="426" text-anchor="middle">confidence level (scale of -log10(1 - level))</text>
+  <polyline class="l1" points="64.0,381.1 78.7,380.3 93.5,379.6 108.2,378.9 123.0,378.1 137.7,377.4 152.5,376.6 167.2,375.9 181.9,375.1 196.7,374.4 211.4,373.6 226.2,372.9 240.9,372.2 255.7,371.4 270.4,370.7 285.1,369.9 299.9,369.2 314.6,368.4 329.4,367.7 344.1,367.0 358.9,366.2 373.6,365.5 388.3,364.7 403.1,364.0 417.8,363.3 432.6,362.5 447.3,361.8 462.1,361.0 476.8,360.3 491.5,359.6 506.3,358.8 521.0,358.1 535.8,357.3 550.5,356.6 565.3,355.9 580.0,355.1"/>
+  <circle class="p1" cx="64.0" cy="381.0" r="3"/>
+  <circle class="p1" cx="121.6" cy="378.3" r="3"/>
+  <circle class="p1" cx="197.6" cy="374.3" r="3"/>
+  <circle class="p1" cx="255.2" cy="371.6" r="3"/>
+  <circle class="p1" cx="388.8" cy="364.8" r="3"/>
+  <circle class="p1" cx="580.0" cy="355.1" r="3"/>
+  <polyline class="l2" points="64.0,380.7 78.7,379.8 93.5,379.0 108.2,378.1 123.0,377.3 137.7,376.4 152.5,375.6 167.2,374.7 181.9,373.9 196.7,373.0 211.4,372.2 226.2,371.3 240.9,370.5 255.7,369.6 270.4,368.8 285.1,367.9 299.9,367.1 314.6,366.2 329.4,365.4 344.1,364.5 358.9,363.7 373.6,362.8 388.3,362.0 403.1,361.1 417.8,360.3 432.6,359.5 447.3,358.6 462.1,357.8 476.8,356.9 491.5,356.1 506.3,355.2 521.0,354.4 535.8,353.5 550.5,352.7 565.3,351.8 580.0,351.0"/>
+  <circle class="p2" cx="64.0" cy="380.6" r="3"/>
+  <circle class="p2" cx="121.6" cy="377.3" r="3"/>
+  <circle class="p2" cx="197.6" cy="372.9" r="3"/>
+  <circle class="p2" cx="255.2" cy="369.6" r="3"/>
+  <circle class="p2" cx="388.8" cy="361.8" r="3"/>
+  <circle class="p2" cx="580.0" cy="351.1" r="3"/>
+  <polyline class="l3" points="64.0,376.2 78.7,374.3 93.5,372.3 108.2,370.3 123.0,368.3 137.7,366.3 152.5,364.4 167.2,362.4 181.9,360.4 196.7,358.4 211.4,356.5 226.2,354.5 240.9,352.5 255.7,350.6 270.4,348.6 285.1,346.6 299.9,344.7 314.6,342.7 329.4,340.7 344.1,338.8 358.9,336.8 373.6,334.8 388.3,332.9 403.1,330.9 417.8,329.0 432.6,327.0 447.3,325.1 462.1,323.1 476.8,321.1 491.5,319.2 506.3,317.2 521.0,315.3 535.8,313.4 550.5,311.4 565.3,309.5 580.0,307.5"/>
+  <circle class="p3" cx="64.0" cy="376.3" r="3"/>
+  <circle class="p3" cx="121.6" cy="368.5" r="3"/>
+  <circle class="p3" cx="197.6" cy="358.5" r="3"/>
+  <circle class="p3" cx="255.2" cy="350.7" r="3"/>
+  <circle class="p3" cx="388.8" cy="332.9" r="3"/>
+  <circle class="p3" cx="580.0" cy="307.4" r="3"/>
+  <polyline class="l1 dash" points="64.0,378.8 78.7,377.0 93.5,374.9 108.2,372.7 123.0,370.2 137.7,367.6 152.5,364.8 167.2,361.8 181.9,358.6 196.7,355.2 211.4,351.6 226.2,347.9 240.9,343.9 255.7,339.8 270.4,335.6 285.1,331.1 299.9,326.4 314.6,321.6 329.4,316.6 344.1,311.5 358.9,306.1 373.6,300.6 388.3,294.9 403.1,289.1 417.8,283.1 432.6,276.9 447.3,270.5 462.1,264.0 476.8,257.3 491.5,250.5 506.3,243.5 521.0,236.3 535.8,229.0 550.5,221.5 565.3,213.9 580.0,206.2"/>
+  <circle class="p1" cx="64.0" cy="379.0" r="3"/>
+  <circle class="p1" cx="121.6" cy="370.6" r="3"/>
+  <circle class="p1" cx="197.6" cy="355.1" r="3"/>
+  <circle class="p1" cx="255.2" cy="340.0" r="3"/>
+  <circle class="p1" cx="388.8" cy="295.0" r="3"/>
+  <circle class="p1" cx="580.0" cy="206.3" r="3"/>
+  <polyline class="l2 dash" points="64.0,378.2 78.7,376.1 93.5,373.8 108.2,371.3 123.0,368.6 137.7,365.7 152.5,362.5 167.2,359.2 181.9,355.7 196.7,351.9 211.4,348.0 226.2,343.9 240.9,339.6 255.7,335.1 270.4,330.4 285.1,325.5 299.9,320.4 314.6,315.1 329.4,309.7 344.1,304.1 358.9,298.2 373.6,292.3 388.3,286.1 403.1,279.7 417.8,273.2 432.6,266.5 447.3,259.6 462.1,252.6 476.8,245.4 491.5,238.0 506.3,230.4 521.0,222.7 535.8,214.9 550.5,206.8 565.3,198.6 580.0,190.3"/>
+  <circle class="p2" cx="64.0" cy="378.3" r="3"/>
+  <circle class="p2" cx="121.6" cy="368.9" r="3"/>
+  <circle class="p2" cx="197.6" cy="351.7" r="3"/>
+  <circle class="p2" cx="255.2" cy="335.3" r="3"/>
+  <circle class="p2" cx="388.8" cy="285.9" r="3"/>
+  <circle class="p2" cx="580.0" cy="190.1" r="3"/>
+  <polyline class="l3 dash" points="64.0,371.6 78.7,367.3 93.5,362.7 108.2,357.7 123.0,352.4 137.7,346.7 152.5,340.7 167.2,334.4 181.9,327.8 196.7,320.9 211.4,313.7 226.2,306.2 240.9,298.4 255.7,290.3 270.4,282.0 285.1,273.4 299.9,264.5 314.6,255.4 329.4,246.1 344.1,236.4 358.9,226.6 373.6,216.5 388.3,206.2 403.1,195.6 417.8,184.9 432.6,173.9 447.3,162.7 462.1,151.3 476.8,139.7 491.5,127.9 506.3,115.9 521.0,103.7 535.8,91.4 550.5,78.9 565.3,66.2 580.0,53.3"/>
+  <circle class="p3" cx="64.0" cy="371.6" r="3"/>
+  <circle class="p3" cx="121.6" cy="353.1" r="3"/>
+  <circle class="p3" cx="197.6" cy="320.5" r="3"/>
+  <circle class="p3" cx="255.2" cy="290.6" r="3"/>
+  <circle class="p3" cx="388.8" cy="205.9" r="3"/>
+  <circle class="p3" cx="580.0" cy="53.4" r="3"/>
+  <line class="l1" x1="596" x2="624" y1="70" y2="70"/>
+  <text class="s" x="630" y="74">grade A, independent</text>
+  <line class="l2" x1="596" x2="624" y1="92" y2="92"/>
+  <text class="s" x="630" y="96">grade B, independent</text>
+  <line class="l3" x1="596" x2="624" y1="114" y2="114"/>
+  <text class="s" x="630" y="118">grade C, independent</text>
+  <line class="l1 dash" x1="596" x2="624" y1="136" y2="136"/>
+  <text class="s" x="630" y="140">grade A, correlation 12%</text>
+  <line class="l2 dash" x1="596" x2="624" y1="158" y2="158"/>
+  <text class="s" x="630" y="162">grade B, correlation 12%</text>
+  <line class="l3 dash" x1="596" x2="624" y1="180" y2="180"/>
+  <text class="s" x="630" y="184">grade C, correlation 12%</text>
+  <circle class="p0" cx="610" cy="208" r="3"/>
+  <text class="s" x="630" y="212">printed by Pluto and Tasche</text>
+</svg>

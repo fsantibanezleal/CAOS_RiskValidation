@@ -14,6 +14,7 @@ analysis "should involve a range of tests because any individual test will have 
 | `pd.binomial` | Binomial test | p-value | [PD calibration](tests/01_pd-calibration.md) |
 | `pd.binomial_vasicek` | Vasicek-corrected binomial test | p-value | [PD calibration](tests/01_pd-calibration.md) |
 | `pd.chi2_grades` | Chi-square over grades | p-value | [PD calibration](tests/01_pd-calibration.md) |
+| `pd.default_profile` | Chi-square test of the default profile (Monte Carlo) | p-value | [PD calibration](tests/01_pd-calibration.md) |
 | `pd.hosmer_lemeshow` | Hosmer-Lemeshow | p-value | [PD calibration](tests/01_pd-calibration.md) |
 | `pd.spiegelhalter` | Spiegelhalter | p-value | [PD calibration](tests/01_pd-calibration.md) |
 | `pd.normal_multiperiod` | Normal test over several years | p-value | [PD calibration](tests/01_pd-calibration.md) |

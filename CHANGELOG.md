@@ -4,6 +4,38 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.02.000] - 2026-10-05
+
+### Added
+
+- `riskvalidation.regulatory.irb`: the IRB risk-weight functions (corporate with the firm-size and
+  financial-institution adjustments, sovereign, bank, HVCRE, SME, residential mortgage, QRRE, other retail), defaulted
+  exposures, expected loss against eligible provisions, and four regimes as data with paragraph references and in-force
+  dates: Basel III final, EU CRR3, Basel II (the 1.06 factor, 0.03% floors) and CMF RAN 21-6 (its own correlations, the
+  61.3% consumer LGD). Reproduces all 144 cells of BCBS CRE99 Table 1 within 0.01 percentage points (141 exact).
+- `riskvalidation.engines.vasicek`: the one-factor conditional PD, the large homogeneous portfolio's distribution,
+  quantile and density, and the systematic factor implied by an observed default rate.
+- `riskvalidation.engines.low_default`: most prudent estimation (Pluto and Tasche), independent and with asset
+  correlation by Gauss-Hermite quadrature, scaled to a central tendency or to the portfolio's upper bound (section 5),
+  and over several years with intertemporally correlated factors by seeded Monte Carlo (section 6). Reproduces the
+  paper's Tables 1 to 14 and documents where its own values deviate (Table 4 at 75%, Table 8, Table 12, Tables 13
+  and 14).
+- `riskvalidation.engines.pd_curve`: the rating model's identities (Tasche 2013, section 3, theorem 3.3), quasi moment
+  matching (appendix A), and every calibration approach of the paper: invariant default profile, invariant accuracy
+  ratio, scaled PDs, scaled likelihood ratio (case 1), invariant likelihood ratio (cases 2 and 3), invariant PD curve
+  and invariant conditional profiles by least squares or least chi-square (case 3), with improper models refused.
+  Reproduces Tables 2 to 9 of the paper from the raw S&P counts.
+- `pd.default_profile`: the chi-square test of the implied default profile with a seeded Monte Carlo p-value; it
+  reproduces the p-values of Tasche (2013) Table 7. Policy threshold 5% and 1%, with its source.
+- Docs: the regulatory and engines sections (four pages with the formulas from the primary sources, the
+  reproductions and what not to claim), four computed and two hand-authored theme-aware figures, and
+  `examples/credit_math.py`, run by the test suite.
+
+### Fixed
+
+- The QRRE PD floor of 0.10% applies to revolvers only; transactors take the retail 0.05% (CRE32.58), which is what
+  CRE99 Table 1 tabulates.
+
 ## [0.01.000] - 2026-10-04
 
 ### Added
