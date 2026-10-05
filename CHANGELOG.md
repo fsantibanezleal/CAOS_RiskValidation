@@ -16,7 +16,10 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 - `riskvalidation.engines.vasicek`: the one-factor conditional PD, the large homogeneous portfolio's distribution,
   quantile and density, and the systematic factor implied by an observed default rate.
 - `riskvalidation.engines.low_default`: most prudent estimation (Pluto and Tasche), independent and with asset
-  correlation by Gauss-Hermite quadrature; reproduces the paper's Tables 1 to 7 and documents a misprint in Table 4.
+  correlation by Gauss-Hermite quadrature, scaled to a central tendency or to the portfolio's upper bound (section 5),
+  and over several years with intertemporally correlated factors by seeded Monte Carlo (section 6). Reproduces the
+  paper's Tables 1 to 14 and documents where its own values deviate (Table 4 at 75%, Table 8, Table 12, Tables 13
+  and 14).
 - `riskvalidation.engines.pd_curve`: the rating model's identities (Tasche 2013, section 3, theorem 3.3), quasi moment
   matching (appendix A), and every calibration approach of the paper: invariant default profile, invariant accuracy
   ratio, scaled PDs, scaled likelihood ratio (case 1), invariant likelihood ratio (cases 2 and 3), invariant PD curve

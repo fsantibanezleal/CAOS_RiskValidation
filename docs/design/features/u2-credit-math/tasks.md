@@ -11,12 +11,14 @@
 | 7 | `pd.default_profile`, the Monte Carlo chi-square test of the default profile, with its policy threshold | RV-212 | done |
 | 8 | `docs/regulatory/01_irb.md`, `docs/engines/01_vasicek-lhp.md`, `02_low-default.md`, `03_pd-curve-calibration.md`, the index pages, four computed and two hand-authored figures (theme-aware) | all | done |
 | 9 | `examples/credit_math.py`, catalogue entries, CHANGELOG, version 0.02.000 | RV-211, RV-214 | done |
+| 10 | Most prudent estimation extended: Table 8 (correlated with defaults), scaling (section 5, Tables 9 to 12), several years (section 6, Tables 13 and 14) | RV-206, RV-215, RV-216 | done |
 
 ## Convergence verdict (2026-10-05)
 
-Converged. Every requirement's gate exists and passes: 39 tests, lint clean, every guard. The golden values are the
+Converged. Every requirement's gate exists and passes: 42 tests, lint clean, every guard. The golden values are the
 primary sources' own tables, recomputed from their inputs: CRE99 Table 1 (144 cells, 141 exact), Pluto and Tasche
-Tables 1 to 7 (one misprint found: Table 4 at 75%), Tasche (2013) Tables 2 to 9 (Table 5: 15 of 17 exact, the rest one
+Tables 1 to 14 (Table 4 at 75% a computation carried into Table 11; Table 8 and Tables 13 and 14 above the exact
+bounds; one misprint in Table 12), Tasche (2013) Tables 2 to 9 (Table 5: 15 of 17 exact, the rest one
 unit off; Table 7's 136 forecasts and 8 p-values; Table 8's 8 forecasts and 4 p-values; Table 9 up to the paper's solver
 offset). Found and fixed on the way: the QRRE floor applies to revolvers only (CRE99 tabulates QRRE at 0.05%); a shared
 regime table could be mutated through a result, now read-only. Not reproducible from the paper alone: the Moody's
