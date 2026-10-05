@@ -1,4 +1,5 @@
-"""RV-113: every U1 test is registered with its source, and the default policy states each threshold's origin."""
+"""RV-113 and RV-212: every registered test has its source, and the default policy states each threshold's
+origin."""
 
 from __future__ import annotations
 
@@ -14,15 +15,16 @@ U1 = {
     "rating.mwb", "rating.migration_ztests", "rating.hhi",
     "stability.psi", "stability.csi", "stability.chi2", "stability.ks", "stability.wasserstein",
 }
+U2 = {"pd.default_profile"}
 
 
 def test_u1_catalogue_complete():
     specs = {s.test_id: s for s in catalogue() if not s.test_id.startswith("selftest.")}
-    assert U1 <= set(specs)
+    assert U1 | U2 <= set(specs)
     policy = default_policy()
     raw = json.loads(resources.files("riskvalidation.policies").joinpath("default.json").read_text("utf-8"))
     descriptive = set(raw["descriptive_without_thresholds"])
-    for tid in U1:
+    for tid in sorted(U1 | U2):
         s = specs[tid]
         assert s.reference.strip() and s.h0.strip(), tid
         th = policy.threshold(tid)
