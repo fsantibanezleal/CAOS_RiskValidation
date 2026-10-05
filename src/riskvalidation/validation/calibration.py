@@ -266,6 +266,78 @@ def pd_chi2_grades(
 
 
 @register(
+    "pd.default_profile",
+    family="pd-calibration",
+    name="Chi-square test of the default profile",
+    h0="given their number, the defaults fall on the grades as the PD curve implies (the shape of the curve)",
+    reference="Tasche (2013), The art of probability-of-default curve calibration, Journal of Credit Risk 9(4), "
+    "doi:10.21314/jcr.2013.169, sections 3.3 and 4.2.5; Pearson (1900), doi:10.1080/14786440009463897",
+    decision="p_value",
+)
+def pd_default_profile(
+    n: Sequence[int],
+    d: Sequence[int],
+    pd: Sequence[float],
+    *,
+    n_sim: int = 100_000,
+    seed: int = 0,
+    policy: Policy | None = None,
+    model_id: str | None = None,
+    segment: str | None = None,
+) -> TestResult:
+    """T = sum_x (d_x - D q_x)^2 / (D q_x), with q_x = n_x PD_x / sum_t n_t PD_t the implied default profile (3.5b) and
+    D the observed number of defaults. Under H0 the default numbers are multinomial(D, q) given D, so the test sees the
+    shape of the curve and not its level (read it with a level test such as ``pd.binomial``). Expected counts are small
+    in good grades, so the p-value is a Monte Carlo one, (1 + #{T* >= T}) / (n_sim + 1) over ``n_sim`` multinomial
+    samples drawn with ``seed``; the asymptotic chi-square p-value with k - 1 degrees of freedom is kept for reference.
+    """
+    n_a, d_a = check_counts(n, d)
+    pd_a = check_pd(pd)
+    if pd_a.shape != n_a.shape:
+        raise ValueError("pd needs one value per grade")
+    if n_sim < 1000:
+        raise ValueError("n_sim must be at least 1000")
+    keep = n_a > 0
+    n_a, d_a, pd_a = n_a[keep], d_a[keep], pd_a[keep]
+    total = int(d_a.sum())
+    if total == 0 or n_a.size < 2:
+        raise ValueError("the default profile needs at least one default and two populated grades")
+    q = n_a * pd_a / float(np.sum(n_a * pd_a))
+    expected = total * q
+    t = float(np.sum((d_a - expected) ** 2 / expected))
+    rng = np.random.default_rng(seed)
+    at_least, done = 0, 0
+    while done < n_sim:
+        size = min(50_000, n_sim - done)
+        draws = rng.multinomial(total, q, size=size)
+        at_least += int(np.sum(np.sum((draws - expected) ** 2 / expected, axis=1) >= t * (1.0 - 1e-12)))
+        done += size
+    p_mc = (1 + at_least) / (n_sim + 1)
+    dof = int(n_a.size - 1)
+    return make_result(
+        "pd.default_profile",
+        statistic=t,
+        p_value=float(p_mc),
+        policy=policy,
+        alternative="the defaults fall on the grades differently from the implied default profile",
+        n=int(n_a.sum()),
+        n_events=total,
+        model_id=model_id,
+        segment=segment,
+        inputs=(n_a, d_a, pd_a, n_sim, seed),
+        notes="Monte Carlo p-value; its standard error is in extras",
+        extras={
+            "n_sim": int(n_sim),
+            "seed": int(seed),
+            "mc_standard_error": float(math.sqrt(p_mc * (1.0 - p_mc) / n_sim)),
+            "implied_default_profile": [float(v) for v in q],
+            "dof": dof,
+            "p_value_asymptotic": float(stats.chi2.sf(t, dof)),
+        },
+    )
+
+
+@register(
     "pd.hosmer_lemeshow",
     family="pd-calibration",
     name="Hosmer-Lemeshow test",
@@ -610,6 +682,7 @@ __all__ = [
     "pd_binomial_vasicek",
     "pd_brier",
     "pd_chi2_grades",
+    "pd_default_profile",
     "pd_ece",
     "pd_hosmer_lemeshow",
     "pd_jeffreys",

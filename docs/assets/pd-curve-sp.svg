@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 760" width="800" height="760" role="img" aria-labelledby="t d">
+  <title id="t">PD curve calibration on the S&amp;P corporate data of Tasche (2013)</title>
+  <desc id="d">Top: the 2009 grade default rates and the PD curve smoothed by quasi moment matching, which reproduces Table 5 of Tasche (2013). Bottom: the 2010 default rates and the four forecasts of section 4.2 from the 2009 model at the observed 2010 default rate, which reproduce Table 7. Grades without a default are drawn as rings on the floor of the log scale.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="758" rx="10"/>
+  <text class="t" x="70" y="42">2009: grade default rates and the QMM curve (targets PD 3.99%, AR 82.7%)</text>
+  <line class="grid" x1="70" x2="570" y1="340.0" y2="340.0"/>
+  <text class="k" x="62" y="344.0" text-anchor="end">0.0001%</text>
+  <line class="grid" x1="70" x2="570" y1="293.3" y2="293.3"/>
+  <text class="k" x="62" y="297.3" text-anchor="end">0.001%</text>
+  <line class="grid" x1="70" x2="570" y1="246.7" y2="246.7"/>
+  <text class="k" x="62" y="250.7" text-anchor="end">0.01%</text>
+  <line class="grid" x1="70" x2="570" y1="200.0" y2="200.0"/>
+  <text class="k" x="62" y="204.0" text-anchor="end">0.1%</text>
+  <line class="grid" x1="70" x2="570" y1="153.3" y2="153.3"/>
+  <text class="k" x="62" y="157.3" text-anchor="end">1%</text>
+  <line class="grid" x1="70" x2="570" y1="106.7" y2="106.7"/>
+  <text class="k" x="62" y="110.7" text-anchor="end">10%</text>
+  <line class="grid" x1="70" x2="570" y1="60.0" y2="60.0"/>
+  <text class="k" x="62" y="64.0" text-anchor="end">100%</text>
+  <line class="ax" x1="70" x2="570" y1="340" y2="340"/>
+  <line class="ax" x1="70" x2="70" y1="60" y2="340"/>
+  <text class="k" x="84.7" y="356" text-anchor="middle">AAA</text>
+  <text class="k" x="114.1" y="356" text-anchor="middle">AA+</text>
+  <text class="k" x="143.5" y="356" text-anchor="middle">AA</text>
+  <text class="k" x="172.9" y="356" text-anchor="middle">AA-</text>
+  <text class="k" x="202.4" y="356" text-anchor="middle">A+</text>
+  <text class="k" x="231.8" y="356" text-anchor="middle">A</text>
+  <text class="k" x="261.2" y="356" text-anchor="middle">A-</text>
+  <text class="k" x="290.6" y="356" text-anchor="middle">BBB+</text>
+  <text class="k" x="320.0" y="356" text-anchor="middle">BBB</text>
+  <text class="k" x="349.4" y="356" text-anchor="middle">BBB-</text>
+  <text class="k" x="378.8" y="356" text-anchor="middle">BB+</text>
+  <text class="k" x="408.2" y="356" text-anchor="middle">BB</text>
+  <text class="k" x="437.6" y="356" text-anchor="middle">BB-</text>
+  <text class="k" x="467.1" y="356" text-anchor="middle">B+</text>
+  <text class="k" x="496.5" y="356" text-anchor="middle">B</text>
+  <text class="k" x="525.9" y="356" text-anchor="middle">B-</text>
+  <text class="k" x="555.3" y="356" text-anchor="middle">CCC-C</text>
+  <text class="t" x="70" y="412">2010: default rates and the four case 1 forecasts from 2009 (p1 = 1.14%)</text>
+  <line class="grid" x1="70" x2="570" y1="710.0" y2="710.0"/>
+  <text class="k" x="62" y="714.0" text-anchor="end">0.0001%</text>
+  <line class="grid" x1="70" x2="570" y1="663.3" y2="663.3"/>
+  <text class="k" x="62" y="667.3" text-anchor="end">0.001%</text>
+  <line class="grid" x1="70" x2="570" y1="616.7" y2="616.7"/>
+  <text class="k" x="62" y="620.7" text-anchor="end">0.01%</text>
+  <line class="grid" x1="70" x2="570" y1="570.0" y2="570.0"/>
+  <text class="k" x="62" y="574.0" text-anchor="end">0.1%</text>
+  <line class="grid" x1="70" x2="570" y1="523.3" y2="523.3"/>
+  <text class="k" x="62" y="527.3" text-anchor="end">1%</text>
+  <line class="grid" x1="70" x2="570" y1="476.7" y2="476.7"/>
+  <text class="k" x="62" y="480.7" text-anchor="end">10%</text>
+  <line class="grid" x1="70" x2="570" y1="430.0" y2="430.0"/>
+  <text class="k" x="62" y="434.0" text-anchor="end">100%</text>
+  <line class="ax" x1="70" x2="570" y1="710" y2="710"/>
+  <line class="ax" x1="70" x2="70" y1="430" y2="710"/>
+  <text class="k" x="84.7" y="726" text-anchor="middle">AAA</text>
+  <text class="k" x="114.1" y="726" text-anchor="middle">AA+</text>
+  <text class="k" x="143.5" y="726" text-anchor="middle">AA</text>
+  <text class="k" x="172.9" y="726" text-anchor="middle">AA-</text>
+  <text class="k" x="202.4" y="726" text-anchor="middle">A+</text>
+  <text class="k" x="231.8" y="726" text-anchor="middle">A</text>
+  <text class="k" x="261.2" y="726" text-anchor="middle">A-</text>
+  <text class="k" x="290.6" y="726" text-anchor="middle">BBB+</text>
+  <text class="k" x="320.0" y="726" text-anchor="middle">BBB</text>
+  <text class="k" x="349.4" y="726" text-anchor="middle">BBB-</text>
+  <text class="k" x="378.8" y="726" text-anchor="middle">BB+</text>
+  <text class="k" x="408.2" y="726" text-anchor="middle">BB</text>
+  <text class="k" x="437.6" y="726" text-anchor="middle">BB-</text>
+  <text class="k" x="467.1" y="726" text-anchor="middle">B+</text>
+  <text class="k" x="496.5" y="726" text-anchor="middle">B</text>
+  <text class="k" x="525.9" y="726" text-anchor="middle">B-</text>
+  <text class="k" x="555.3" y="726" text-anchor="middle">CCC-C</text>
+  <polyline class="l1" points="84.7,272.7 114.1,257.7 143.5,243.4 172.9,228.2 202.4,215.2 231.8,201.8 261.2,188.9 290.6,177.8 320.0,167.6 349.4,157.9 378.8,150.7 408.2,144.9 437.6,136.6 467.1,125.5 496.5,111.2 525.9,93.1 555.3,74.7"/>
+  <circle class="hollow" cx="84.7" cy="335.0" r="3.6"/>
+  <circle class="hollow" cx="114.1" cy="335.0" r="3.6"/>
+  <circle class="hollow" cx="143.5" cy="335.0" r="3.6"/>
+  <circle class="hollow" cx="172.9" cy="335.0" r="3.6"/>
+  <circle class="p0" cx="202.4" cy="178.1" r="3.6"/>
+  <circle class="p0" cx="231.8" cy="172.3" r="3.6"/>
+  <circle class="hollow" cx="261.2" cy="335.0" r="3.6"/>
+  <circle class="p0" cx="290.6" cy="171.8" r="3.6"/>
+  <circle class="p0" cx="320.0" cy="187.5" r="3.6"/>
+  <circle class="p0" cx="349.4" cy="151.6" r="3.6"/>
+  <circle class="hollow" cx="378.8" cy="335.0" r="3.6"/>
+  <circle class="p0" cx="408.2" cy="153.0" r="3.6"/>
+  <circle class="p0" cx="437.6" cy="155.3" r="3.6"/>
+  <circle class="p0" cx="467.1" cy="118.9" r="3.6"/>
+  <circle class="p0" cx="496.5" cy="106.8" r="3.6"/>
+  <circle class="p0" cx="525.9" cy="95.7" r="3.6"/>
+  <circle class="p0" cx="555.3" cy="74.7" r="3.6"/>
+  <polyline class="l1" points="84.7,660.1 114.1,646.7 143.5,634.6 172.9,620.4 202.4,606.8 231.8,593.1 261.2,580.6 290.6,570.1 320.0,559.9 349.4,550.2 378.8,543.5 408.2,538.0 437.6,530.8 467.1,521.3 496.5,508.7 525.9,492.7 555.3,471.4"/>
+  <polyline class="l2" points="84.7,679.7 114.1,664.6 143.5,651.0 172.9,635.1 202.4,619.7 231.8,604.5 261.2,590.4 290.6,578.7 320.0,567.3 349.4,556.4 378.8,548.9 408.2,542.9 437.6,535.0 467.1,524.5 496.5,510.5 525.9,492.8 555.3,469.1"/>
+  <polyline class="l3" points="84.7,669.7 114.1,654.6 143.5,640.4 172.9,625.2 202.4,612.2 231.8,598.8 261.2,585.8 290.6,574.8 320.0,564.6 349.4,554.9 378.8,547.7 408.2,541.8 437.6,533.6 467.1,522.5 496.5,508.2 525.9,490.0 555.3,471.7"/>
+  <polyline class="l4" points="84.7,675.6 114.1,660.6 143.5,646.3 172.9,631.1 202.4,618.1 231.8,604.8 261.2,591.8 290.6,580.7 320.0,570.4 349.4,560.7 378.8,553.4 408.2,547.5 437.6,539.2 467.1,527.8 496.5,512.8 525.9,492.5 555.3,467.7"/>
+  <circle class="hollow" cx="84.7" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="114.1" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="143.5" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="172.9" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="202.4" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="231.8" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="261.2" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="290.6" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="320.0" cy="705.0" r="3.6"/>
+  <circle class="hollow" cx="349.4" cy="705.0" r="3.6"/>
+  <circle class="p0" cx="378.8" cy="528.2" r="3.6"/>
+  <circle class="p0" cx="408.2" cy="543.9" r="3.6"/>
+  <circle class="p0" cx="437.6" cy="536.3" r="3.6"/>
+  <circle class="hollow" cx="467.1" cy="705.0" r="3.6"/>
+  <circle class="p0" cx="496.5" cy="530.9" r="3.6"/>
+  <circle class="p0" cx="525.9" cy="508.6" r="3.6"/>
+  <circle class="p0" cx="555.3" cy="460.4" r="3.6"/>
+  <line class="l1" x1="584" x2="612" y1="70" y2="70"/>
+  <text class="s" x="618" y="74">QMM smoothed curve</text>
+  <line class="l1" x1="584" x2="612" y1="440" y2="440"/>
+  <text class="s" x="618" y="444">invariant default profile (4.2)</text>
+  <line class="l2" x1="584" x2="612" y1="462" y2="462"/>
+  <text class="s" x="618" y="466">invariant accuracy ratio (4.3)</text>
+  <line class="l3" x1="584" x2="612" y1="484" y2="484"/>
+  <text class="s" x="618" y="488">scaled PDs (4.4)</text>
+  <line class="l4" x1="584" x2="612" y1="506" y2="506"/>
+  <text class="s" x="618" y="510">scaled likelihood ratio (4.5)</text>
+  <circle class="p0" cx="598" cy="92" r="3"/>
+  <text class="s" x="618" y="96">observed default rate</text>
+  <circle class="hollow" cx="598" cy="114" r="3.6"/>
+  <text class="s" x="618" y="118">no default observed</text>
+  <circle class="p0" cx="598" cy="528" r="3"/>
+  <text class="s" x="618" y="532">observed default rate</text>
+  <circle class="hollow" cx="598" cy="550" r="3.6"/>
+  <text class="s" x="618" y="554">no default observed</text>
+</svg>

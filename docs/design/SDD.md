@@ -1,6 +1,6 @@
 # riskvalidation, software design document
 
-Version: 0.01.000 design, 2026-10-04. Requirements with named gates live in `docs/design/features/<unit>/`; each
+Version: 0.02.000 design, 2026-10-05. Requirements with named gates live in `docs/design/features/<unit>/`; each
 unit's requirements are written before its code and its `tasks.md` closes with a convergence verdict.
 
 ## 1. Problem and non-goals
@@ -46,7 +46,7 @@ in the browser under Pyodide, where NumPy and SciPy ship with the distribution. 
 |---|---|
 | Core contracts (U0) | RV-001 to RV-007 pass. |
 | PD calibration and discrimination, rating-system and stability tests (U1) | each test reproduces a published worked example (BCBS WP14 critical values, ECB 2019 formulas, Yurdakul-Naranjo benchmarks) or an independent SciPy reference to a stated tolerance. |
-| IRB, LHP, low-default and calibration methods (U2) | BCBS CRE99 Table 1, Pluto-Tasche tables and Tasche (2013) Table 1 reproduced. |
+| IRB, LHP, low-default and calibration methods (U2) | BCBS CRE99 Table 1, the Pluto-Tasche tables and Tasche (2013) Tables 2 to 9 reproduced from their inputs (RV-201 to RV-214). |
 | Known-truth generators and the size/power harness (U3) | each generator recovers its parameters; each test holds its size under the null within Monte Carlo error. |
 | Transition estimators (U4), provisions (U5), LGD/CCF (U6), portfolio models (U7), market (U8), regulatory calculators (U9), IRRBB/ALM (U10), liquidity (U11), operational risk (U12), aggregation and stress (U13), ML and fairness tests (U14), governance (U15) | the golden values listed in each unit's feature SDD are reproduced, and every displayed regulatory parameter carries its paragraph reference and in-force date. |
 

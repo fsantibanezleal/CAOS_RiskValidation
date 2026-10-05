@@ -11,7 +11,7 @@ from riskvalidation.core.registry import TestSpec, catalogue
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.core.suite import SuiteRun, run_suite
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 """PEP 440 form of the display version in ``VERSION``."""
 
 __all__ = [
