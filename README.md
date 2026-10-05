@@ -13,10 +13,12 @@ same wheel runs in a Python pipeline and in the browser under Pyodide.
 
 ## Status
 
-Version 0.01.000: the core contracts (result record, policy, registry, suite runner) and 22 validation tests for
-PD calibration, discrimination, rating-system stability and population stability, each reproducing a published
-worked example or an independent reference. Regulatory calculators and reference engines arrive unit by unit;
-the [CHANGELOG](CHANGELOG.md) lists exactly what each release contains. Not yet published on PyPI.
+Version 0.02.000: the core contracts (result record, policy, registry, suite runner); 23 validation tests for
+PD calibration, discrimination, rating-system stability and population stability; the IRB risk-weight functions
+under four regimes; and three reference engines: the one-factor model with its large homogeneous portfolio, most
+prudent estimation for low-default portfolios, and PD curve calibration (Tasche 2013). Each reproduces its primary
+source's own tables or worked examples. Further calculators and engines arrive unit by unit; the
+[CHANGELOG](CHANGELOG.md) lists exactly what each release contains. Not yet published on PyPI.
 
 ## Install (from source, until the first PyPI release)
 
@@ -74,8 +76,11 @@ print("lights:", run.counts(), "worst:", run.worst().value)
 ## Documentation
 
 The [`docs/`](docs/README.md) wiki: the software design document, the architecture (result contract, policies
-and lights, suites and reproducibility) and, as each unit ships, one page per test family with its formula,
-null hypothesis, decision rule and primary source.
+and lights, suites and reproducibility), one page per test family with its formula, null hypothesis, decision rule
+and primary source, the [regulatory calculators](docs/regulatory.md) and the [reference engines](docs/engines.md).
+[`examples/credit_math.py`](examples/credit_math.py) runs the credit mathematics end to end: IRB capital under two
+regimes, the large homogeneous portfolio behind it, most prudent PDs, and a PD curve calibrated to a new year and
+tested for fit.
 
 ## What this is not
 

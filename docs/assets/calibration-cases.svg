@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 470" width="800" height="470" role="img" aria-labelledby="t d">
+  <title id="t">Which PD curve calibration approach fits what is known</title>
+  <desc id="d">A two by two grid. Columns: the forecast rating profile is known or not. Rows: a forecast of the unconditional PD is known or not. Case 1, both known: invariant default profile, invariant accuracy ratio, scaled PDs, scaled likelihood ratio. Case 2, only the PD known: invariant likelihood ratio. Case 3, only the profile known: invariant PD curve, invariant conditional profiles fitted by least squares or least chi-square, invariant likelihood ratio. Case 4, neither known: the estimation model unchanged, to be backtested.</desc>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .hd { fill: #e2e8f0; stroke: #94a3b8; }
+    .cell { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.2; }
+    .best { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.4; }
+    .t { font: 600 15px system-ui, sans-serif; fill: #0f172a; }
+    .h { font: 600 13px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .e { font: italic 12px system-ui, sans-serif; fill: #475569; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .hd { fill: #21262d; stroke: #30363d; }
+      .cell { fill: #161b22; stroke: #30363d; }
+      .best { fill: #161b22; stroke: #58a6ff; }
+      .t, .h { fill: #c9d1d9; }
+      .s { fill: #c9d1d9; }
+      .e { fill: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="468" rx="10"/>
+  <text class="t" x="24" y="32">What is known at the start of the forecast period decides the approach (Tasche 2013, section 4)</text>
+
+  <rect class="hd" x="160" y="48" width="306" height="40" rx="6"/>
+  <text class="h" x="313" y="73" text-anchor="middle">forecast rating profile known</text>
+  <rect class="hd" x="476" y="48" width="300" height="40" rx="6"/>
+  <text class="h" x="626" y="73" text-anchor="middle">forecast rating profile not known</text>
+  <rect class="hd" x="24" y="98" width="126" height="176" rx="6"/>
+  <text class="h" x="87" y="180" text-anchor="middle">forecast PD p1</text>
+  <text class="h" x="87" y="198" text-anchor="middle">known</text>
+  <rect class="hd" x="24" y="284" width="126" height="170" rx="6"/>
+  <text class="h" x="87" y="364" text-anchor="middle">forecast PD p1</text>
+  <text class="h" x="87" y="382" text-anchor="middle">not known</text>
+
+  <rect class="best" x="160" y="98" width="306" height="176" rx="8"/>
+  <text class="h" x="174" y="120">Case 1 (section 4.2)</text>
+  <text class="s" x="174" y="142">invariant default profile (4.2, 4.6a)</text>
+  <text class="s" x="174" y="160">invariant accuracy ratio, by QMM (4.3)</text>
+  <text class="s" x="174" y="178">scaled PDs (4.4, 4.7a)</text>
+  <text class="s" x="174" y="196">scaled likelihood ratio (4.5, 4.8a)</text>
+  <text class="e" x="174" y="222">S&amp;P 2010 and 2011: scaled likelihood ratio and</text>
+  <text class="e" x="174" y="238">invariant AR fit best. Moody's 1987 to 2012:</text>
+  <text class="e" x="174" y="254">scaled likelihood ratio best, invariant AR worst.</text>
+
+  <rect class="cell" x="476" y="98" width="300" height="176" rx="8"/>
+  <text class="h" x="490" y="120">Case 2 (section 4.3)</text>
+  <text class="s" x="490" y="142">invariant conditional profiles (4.9),</text>
+  <text class="s" x="490" y="160">which needs only the likelihood ratio:</text>
+  <text class="s" x="490" y="178">invariant likelihood ratio (4.10, 4.11),</text>
+  <text class="s" x="490" y="196">the change in base rate (Elkan 2001)</text>
+  <text class="e" x="490" y="222">The rating model re-rates the portfolio only</text>
+  <text class="e" x="490" y="238">gradually; a preliminary calibration.</text>
+
+  <rect class="cell" x="160" y="284" width="306" height="170" rx="8"/>
+  <text class="h" x="174" y="306">Case 3 (section 4.4)</text>
+  <text class="s" x="174" y="328">invariant PD curve (4.12, 4.13)</text>
+  <text class="s" x="174" y="346">invariant conditional profiles (4.9), p1 by</text>
+  <text class="s" x="174" y="364">least squares (4.14b) or least chi-square</text>
+  <text class="s" x="174" y="382">invariant likelihood ratio, p1 by theorem 3.3</text>
+  <text class="e" x="174" y="408">S&amp;P 2010 and 2011: every forecast PD far too</text>
+  <text class="e" x="174" y="424">high (Table 8); the invariances did not hold.</text>
+
+  <rect class="cell" x="476" y="284" width="300" height="170" rx="8"/>
+  <text class="h" x="490" y="306">Case 4 (section 4.5)</text>
+  <text class="s" x="490" y="328">the estimation model unchanged:</text>
+  <text class="s" x="490" y="346">invariant PD curve (4.12) and invariant</text>
+  <text class="s" x="490" y="364">rating profile (4.17)</text>
+  <text class="e" x="490" y="390">Defensible only in a stable economy; backtest</text>
+  <text class="e" x="490" y="406">the default profile at the end of the period.</text>
+</svg>
