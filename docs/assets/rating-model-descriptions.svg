@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 456" width="800" height="456" role="img" aria-labelledby="t d">
+  <title id="t">One rating model, three equivalent descriptions</title>
+  <desc id="d">The joint distribution of a borrower's grade at the start of a period and its state at the end is fixed by the rating profile and the PD curve, or by the unconditional PD and the two conditional profiles, or by the unconditional PD and the likelihood ratio. Bayes' formula and the law of total probability move between them. A calibration approach chooses which part stays fixed from the estimation period to the forecast period.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="tip" d="M0,0 L10,5 L0,10 z"/>
+    </marker>
+  </defs>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .box { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.2; }
+    .key { fill: #eef2ff; stroke: #4338ca; stroke-width: 1.4; }
+    .chip { fill: #f1f5f9; stroke: #94a3b8; }
+    .t { font: 600 15px system-ui, sans-serif; fill: #0f172a; }
+    .h { font: 600 13px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px ui-monospace, Consolas, monospace; fill: #475569; }
+    .m { font: 12px ui-monospace, Consolas, monospace; fill: #4338ca; }
+    .edge { stroke: #475569; stroke-width: 1.4; fill: none; }
+    .tip { fill: #475569; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .box { fill: #161b22; stroke: #30363d; }
+      .key { fill: #161b22; stroke: #58a6ff; }
+      .chip { fill: #161b22; stroke: #30363d; }
+      .t, .h { fill: #c9d1d9; }
+      .s, .k { fill: #8b949e; }
+      .m { fill: #58a6ff; }
+      .edge { stroke: #8b949e; }
+      .tip { fill: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="454" rx="10"/>
+  <text class="t" x="24" y="32">One rating model, three equivalent descriptions (Tasche 2013, Proposition 3.1)</text>
+  <text class="s" x="24" y="52">X: the grade at the start of the period (1 the worst, k the best); D or N: default or survival by its end</text>
+
+  <rect class="key" x="24" y="72" width="208" height="128" rx="8"/>
+  <text class="h" x="38" y="96">Profile and PD curve</text>
+  <text class="m" x="38" y="120">Pr[X = x]</text>
+  <text class="m" x="38" y="140">PD(x) = Pr[D | X = x]</text>
+  <text class="s" x="38" y="168">what a rating model states,</text>
+  <text class="s" x="38" y="186">grade by grade</text>
+
+  <rect class="box" x="296" y="72" width="208" height="128" rx="8"/>
+  <text class="h" x="310" y="96">PD and conditional profiles</text>
+  <text class="m" x="310" y="120">p = Pr[D]</text>
+  <text class="m" x="310" y="140">Pr[x | D], Pr[x | N]</text>
+  <text class="s" x="310" y="168">where defaulters and survivors</text>
+  <text class="s" x="310" y="186">sit on the grade scale</text>
+
+  <rect class="box" x="568" y="72" width="208" height="128" rx="8"/>
+  <text class="h" x="582" y="96">PD and likelihood ratio</text>
+  <text class="m" x="582" y="120">p</text>
+  <text class="m" x="582" y="140">λ(x) = Pr[x|N] / Pr[x|D]</text>
+  <text class="s" x="582" y="168">the part free of the base rate;</text>
+  <text class="s" x="582" y="186">meets a profile under (3.11b)</text>
+
+  <path class="edge" d="M232,118 L296,118" marker-end="url(#arrow)"/>
+  <text class="k" x="264" y="110" text-anchor="middle">(3.5)</text>
+  <path class="edge" d="M296,154 L232,154" marker-end="url(#arrow)"/>
+  <text class="k" x="264" y="170" text-anchor="middle">(3.4a)</text>
+  <path class="edge" d="M504,118 L568,118" marker-end="url(#arrow)"/>
+  <text class="k" x="536" y="110" text-anchor="middle">(3.8)</text>
+  <path class="edge" d="M568,154 L504,154" marker-end="url(#arrow)"/>
+  <text class="k" x="536" y="170" text-anchor="middle">(3.10a)</text>
+  <path class="edge" d="M672,200 C672,240 128,240 128,204" marker-end="url(#arrow)"/>
+  <text class="k" x="400" y="248" text-anchor="middle">(3.9a)</text>
+
+  <text class="m" x="24" y="278">(3.5a)  p = sum over x of PD(x) Pr[X = x]</text>
+  <text class="m" x="24" y="298">(3.5b)  Pr[x | D] = PD(x) Pr[X = x] / p</text>
+  <text class="m" x="24" y="318">(3.5c)  Pr[x | N] = (1 - PD(x)) Pr[X = x] / (1 - p)</text>
+  <text class="m" x="420" y="278">(3.4a)  Pr[X = x] = p Pr[x|D] + (1 - p) Pr[x|N]</text>
+  <text class="m" x="420" y="298">(3.10a) Pr[x | D] = Pr[X = x] / (p + (1 - p) λ(x))</text>
+  <text class="m" x="420" y="318">(3.9a)  PD(x) = p / (p + (1 - p) λ(x))</text>
+
+  <text class="h" x="24" y="356">What a calibration keeps fixed from the estimation period (0) to the forecast period (1)</text>
+  <rect class="chip" x="24" y="370" width="176" height="62" rx="8"/>
+  <text class="h" x="36" y="392">default profile</text>
+  <text class="s" x="36" y="412">Pr1[x | D] = Pr0[x | D] (4.2)</text>
+  <rect class="chip" x="212" y="370" width="176" height="62" rx="8"/>
+  <text class="h" x="224" y="392">accuracy ratio</text>
+  <text class="s" x="224" y="412">AR1 = AR0 (4.3)</text>
+  <rect class="chip" x="400" y="370" width="176" height="62" rx="8"/>
+  <text class="h" x="412" y="392">shape of the PD curve</text>
+  <text class="s" x="412" y="412">PD1(x) = c_PD PD0(x) (4.4)</text>
+  <rect class="chip" x="588" y="370" width="188" height="62" rx="8"/>
+  <text class="h" x="600" y="392">shape of the likelihood ratio</text>
+  <text class="s" x="600" y="412">λ1(x) = c_LR λ0(x) (4.5)</text>
+</svg>

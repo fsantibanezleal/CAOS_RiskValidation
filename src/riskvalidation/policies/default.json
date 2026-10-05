@@ -27,6 +27,12 @@
       "red": 0.01,
       "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
     },
+    "pd.default_profile": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; Tasche (2013) reads the 2009 fit (p 9%) as rejectable at 10%, and the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
     "pd.hosmer_lemeshow": {
       "kind": "p_value",
       "amber": 0.05,
