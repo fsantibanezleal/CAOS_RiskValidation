@@ -4,6 +4,14 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.03.002] - 2026-10-06
+
+### Fixed
+
+- `harness.wilson_interval` returns its bounds exactly at 0 and at n successes: the closed form's subtraction left a
+  residue of about 1e-20 above a zero rate for some n (5.4e-20 at n = 4,000), so an interval did not contain its own
+  rate (#18). The suite checks the containment for every k over seven values of n.
+
 ## [0.03.001] - 2026-10-06
 
 ### Fixed
