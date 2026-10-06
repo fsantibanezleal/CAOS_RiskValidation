@@ -48,6 +48,13 @@ which this cell meets in 2.8% of the runs, but no treatment explains the gap: fl
 | 400 | 2.1% | 0.0% | 5.47% |
 | 2,000 | 0.0% | 0.0% | 4.67% |
 
+**A small systematic offset.** Beyond the one cell, the harness's rates sit slightly above the paper's on average: over
+the cells strictly between 0 and 1 the mean z of the difference is +0.8 with the suite's seed and +0.65 with another
+(each rule's 18 cells are independent runs, so a mean of 0 would carry a standard error of 0.24), and its spread is
+about 1.5 instead of 1. How many cells pass 3.29 combined standard errors therefore depends on the seed (53 here, 50
+with the other). The source of the offset, an unstated detail of the paper's implementation, was not identified; every
+qualitative finding of the paper reproduces.
+
 Measured with 4,000 repetitions: the 0.10 band raises a false alarm in most samples of 100, the benchmark exceeds its
 level at 100 (Yurdakul and Naranjo print 0.076) and holds it from 400.
 
