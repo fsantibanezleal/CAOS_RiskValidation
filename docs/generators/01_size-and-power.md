@@ -107,7 +107,7 @@ the exact one and the normal 95% interval covers 93% to 95% ([discrimination](..
 | Study | Cells | Reproduced | Not reproduced, with the evidence |
 |---|---|---|---|
 | BCBS WP14 Tables 7 and 8, normal and traffic-lights tests, 25,000 runs | 144 | 143 | Table 8, DV_LV, traffic lights at 0.1%: printed 0.955, measured 0.9475 (SE 0.0005, 200,000 runs) ([page 02](02_default-counts.md)) |
-| Yurdakul and Naranjo (2020) Table 4, PSI rules and benchmark, 10,000 runs | 54 | 53 | m = 100, n = 400, shift 1/2, PSI > 0.25: printed 0.787, measured 0.817 ([page 04](04_drift-and-ratings.md)) |
+| Yurdakul and Naranjo (2020) Table 4, PSI rules and benchmark, 10,000 runs | 54 | 53 (with the suite's seed; 50 with another: the harness sits slightly above the paper, mean z +0.65 to +0.8) | m = 100, n = 400, shift 1/2, PSI > 0.25: printed 0.787, measured 0.817 ([page 04](04_drift-and-ratings.md)) |
 | Demler, Pencina and D'Agostino (2012), DeLong on nested discriminants, 1,000 runs | 1 | 1 | none: 1 rejection in 1,000 at 5%, their 0.001 ([page 03](03_scores-and-portfolios.md)) |
 
 The traffic-lights cells reproduce only with the tie rule WP14's simulation must have used, which differs from its
