@@ -33,19 +33,41 @@ conservative above about 200; the power of fixed-threshold rules falls as sample
 The package reports both: the light follows the chi-square p-value, and the conventional band appears in the
 result's notes, labelled as a rule of thumb.
 
+**Their simulation, reproduced (0.03.000).** Yurdakul and Naranjo's Table 4 measures the rejection rates of PSI > 0.10,
+PSI > 0.25 and the chi-square benchmark over 10,000 runs: a base sample of $N(0, 64)$, a target shifted by 0, 1/4 or 1/2
+standard deviation, ten bins at the base population's deciles, six pairs of sample sizes. The harness reproduces 53 of
+its 54 cells within 3.29 combined standard errors (`test_yurdakul_naranjo_table4`, the [two-sample
+generator](../generators/04_drift-and-ratings.md)). The cell it does not reproduce is $m = 100$, $n = 400$, shift 1/2,
+PSI > 0.25: printed 0.787, measured 0.817 (0.8175 at 20,000 runs). The paper does not say how it treats an empty bin,
+which this cell meets in 2.8% of the runs, but no treatment explains the gap: flooring at half an observation gives
+0.8175, dropping empty bins 0.8075, adding one half to every bin 0.7406 (and breaks the other rows).
+
+| $n = m$, no shift | PSI > 0.10 | PSI > 0.25 | Chi-square benchmark at 5% |
+|---|---|---|---|
+| 100 | 85.3% | 23.4% | 7.67% |
+| 400 | 2.1% | 0.0% | 5.47% |
+| 2,000 | 0.0% | 0.0% | 4.67% |
+
+Measured with 4,000 repetitions: the 0.10 band raises a false alarm in most samples of 100, the benchmark exceeds its
+level at 100 (Yurdakul and Naranjo print 0.076) and holds it from 400.
+
 **Implementation choices, stated.**
 
-- Bins must be fixed before the current sample is seen. `quantile_edges` places them at the development
-  sample's quantiles, with open outer edges so every current value falls in a bin; Yurdakul and Naranjo note
-  that bins defined on base percentiles make PSI asymmetric in the two samples.
-- An empty bin would make the logarithm infinite. Its count is floored at half an observation of its own sample
-  (a continuity correction); the result counts how many bins were floored.
+- Bins must be fixed before the current sample is seen. `quantile_edges` places them at the development sample's
+  quantiles, with open outer edges so every current value falls in a bin; Yurdakul and Naranjo note that bins defined on
+  base percentiles make PSI asymmetric in the two samples. The benchmark assumes fixed bins, yet measured on equal
+  samples the size with the development sample's own deciles is the same within Monte Carlo error as with population
+  deciles (7.45% against 7.67% at $n = m = 100$, 5.03% against 5.47% at 400, 4.98% against 4.67% at 2,000): the
+  randomness of the edges carries the development sample's variability into the bin contents.
+- An empty bin would make the logarithm infinite. Its count is floored at half an observation of its own sample (a
+  continuity correction); the result counts how many bins were floored.
 
 ## Chi-square test of homogeneity (`stability.chi2`)
 
 $X^2 = \sum_{g \in \{dev, cur\}}\sum_i (O_{gi} - E_{gi})^2/E_{gi}$ on the $2 \times B$ table, $\chi^2_{B-1}$ under
-$H_0$. Asymptotically it plays the same role as the PSI benchmark. Computed with SciPy's `chi2_contingency`
-without continuity correction.
+$H_0$. Asymptotically it plays the same role as the PSI benchmark. Computed with SciPy's `chi2_contingency` without
+continuity correction. Measured size 5.33% at 5% with two samples of 2,000; the PSI's benchmark 5.73%, the CSI's 4.83%
+and the Kolmogorov-Smirnov test's 4.72% on the same design.
 
 ## Two-sample Kolmogorov-Smirnov (`stability.ks`)
 

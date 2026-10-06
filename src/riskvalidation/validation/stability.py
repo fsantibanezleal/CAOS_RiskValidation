@@ -8,10 +8,11 @@ level. Both are reported; the light follows the benchmark's p-value.
 
 from __future__ import annotations
 
+import functools
 from collections.abc import Sequence
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 
 from riskvalidation.core.build import make_result
 from riskvalidation.core.policy import Policy
@@ -68,12 +69,17 @@ def _psi_core(expected: Sequence[float], actual: Sequence[float]) -> dict:
         "n": int(n),
         "m": int(m),
         "bins": b,
-        "p_value": float(stats.chi2.sf(psi / scale, b - 1)),
-        "benchmark_05": float(scale * stats.chi2.ppf(0.95, b - 1)),
+        "p_value": float(special.chdtrc(b - 1, psi / scale)),  # chi2.sf inside SciPy
+        "benchmark_05": float(scale * _chi2_quantile(0.95, b - 1)),
         "band": band,
         "contributions": contrib.tolist(),
         "empty_bins_floored": int(np.sum((e == 0) | (a == 0))),
     }
+
+
+@functools.lru_cache(maxsize=256)
+def _chi2_quantile(q: float, dof: int) -> float:
+    return float(stats.chi2.ppf(q, dof))
 
 
 def psi_benchmark(n: int, m: int, bins: int = 10, alpha: float = 0.05) -> float:
