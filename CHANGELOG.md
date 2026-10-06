@@ -14,8 +14,9 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
   reproduces WP14's examples), `BinormalScores` (exact AUC and AUC variance; decay, an estimated development AUC, a
   challenger, a leaked feature), `LogisticPortfolio` (true PDs, a planted calibration intercept and slope, an omitted
   quadratic term, covariate shift, one-factor dependence), `TwoSample` (Yurdakul and Naranjo's design, population or
-  sample binning), `Migrations` and `decaying_matrix` with `break_monotonicity`, `GradeFrequencies` with `concentrate`,
-  and `NestedLda` (Demler et al.'s Framingham-like nested discriminants).
+  sample binning), `Migrations` and `decaying_matrix` with `break_monotonicity`, `GradeFrequencies` with `concentrate`
+  (and a development sample for two-sample tests of the counts), and `NestedLda` (Demler et al.'s Framingham-like
+  nested discriminants).
 - `riskvalidation.harness`: `simulate` runs a registered test over repetitions with one independent stream per
   repetition (a test with its own randomness gets a fresh seed), counts undefined results, and reports rates per level
   and rule with the Monte Carlo SE of Morris, White and Crowther (2019) and the Wilson interval; `size_bound`,
