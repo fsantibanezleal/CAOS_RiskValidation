@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 568" width="900" height="568" role="img" aria-labelledby="t d">
+  <title id="t">Measured size of every test with a p-value</title>
+  <desc id="d">Rejection rate at the 5% level of every registered test on a generator where its null holds at the boundary, 4,000 repetitions each, with 95% Wilson intervals; the nominal level and the bound consistent with a size of at most 5% are drawn as vertical lines.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="898" height="566" rx="10"/>
+  <text class="t" x="24" y="28">Rejection rate at the 5% level under the null, 4,000 repetitions (Wilson 95% intervals)</text>
+  <line class="grid" x1="330.0" x2="330.0" y1="56" y2="516"/>
+  <text class="k" x="330.0" y="534" text-anchor="middle">0%</text>
+  <line class="grid" x1="403.8" x2="403.8" y1="56" y2="516"/>
+  <text class="k" x="403.8" y="534" text-anchor="middle">2%</text>
+  <line class="grid" x1="477.7" x2="477.7" y1="56" y2="516"/>
+  <text class="k" x="477.7" y="534" text-anchor="middle">4%</text>
+  <line class="grid" x1="551.5" x2="551.5" y1="56" y2="516"/>
+  <text class="k" x="551.5" y="534" text-anchor="middle">6%</text>
+  <line class="grid" x1="625.4" x2="625.4" y1="56" y2="516"/>
+  <text class="k" x="625.4" y="534" text-anchor="middle">8%</text>
+  <line class="grid" x1="699.2" x2="699.2" y1="56" y2="516"/>
+  <text class="k" x="699.2" y="534" text-anchor="middle">10%</text>
+  <line class="grid" x1="773.1" x2="773.1" y1="56" y2="516"/>
+  <text class="k" x="773.1" y="534" text-anchor="middle">12%</text>
+  <line class="ref" x1="514.6" x2="514.6" y1="56" y2="516"/>
+  <text class="k" x="510.6" y="50" text-anchor="end">nominal 5%</text>
+  <line class="l3 dash" x1="553.9" x2="553.9" y1="56" y2="516"/>
+  <text class="k" x="557.9" y="50">bound 6.06%</text>
+  <text class="s" x="320" y="74" text-anchor="end">disc.auc_vs_initial</text>
+  <line class="l0" x1="462.8" x2="508.7" y1="70" y2="70" stroke-width="1.4"/>
+  <circle class="p1" cx="484.2" cy="70" r="4"/>
+  <text class="k" x="882" y="74" text-anchor="end">4.17%</text>
+  <text class="s" x="320" y="96" text-anchor="end">disc.delong</text>
+  <line class="l0" x1="496.4" x2="547.1" y1="92" y2="92" stroke-width="1.4"/>
+  <circle class="p1" cx="520.2" cy="92" r="4"/>
+  <text class="k" x="882" y="96" text-anchor="end">5.15%</text>
+  <text class="s" x="320" y="118" text-anchor="end">pd.binomial</text>
+  <line class="l0" x1="487.8" x2="537.3" y1="114" y2="114" stroke-width="1.4"/>
+  <circle class="p1" cx="510.9" cy="114" r="4"/>
+  <text class="k" x="882" y="118" text-anchor="end">4.90%</text>
+  <text class="s" x="320" y="140" text-anchor="end">pd.binomial_vasicek</text>
+  <line class="l0" x1="491.2" x2="541.2" y1="136" y2="136" stroke-width="1.4"/>
+  <circle class="p1" cx="514.6" cy="136" r="4"/>
+  <text class="k" x="882" y="140" text-anchor="end">5.00%</text>
+  <text class="s" x="320" y="162" text-anchor="end">pd.chi2_grades</text>
+  <line class="l0" x1="505.1" x2="556.9" y1="158" y2="158" stroke-width="1.4"/>
+  <circle class="p1" cx="529.4" cy="158" r="4"/>
+  <text class="k" x="882" y="162" text-anchor="end">5.40%</text>
+  <text class="s" x="320" y="184" text-anchor="end">pd.default_profile</text>
+  <line class="l0" x1="461.1" x2="506.7" y1="180" y2="180" stroke-width="1.4"/>
+  <circle class="p1" cx="482.3" cy="180" r="4"/>
+  <text class="k" x="882" y="184" text-anchor="end">4.12%</text>
+  <text class="s" x="320" y="206" text-anchor="end">pd.hosmer_lemeshow</text>
+  <line class="l0" x1="512.0" x2="564.7" y1="202" y2="202" stroke-width="1.4"/>
+  <circle class="p1" cx="536.8" cy="202" r="4"/>
+  <text class="k" x="882" y="206" text-anchor="end">5.60%</text>
+  <text class="s" x="320" y="228" text-anchor="end">pd.jeffreys</text>
+  <line class="l0" x1="454.3" x2="498.8" y1="224" y2="224" stroke-width="1.4"/>
+  <circle class="p1" cx="474.9" cy="224" r="4"/>
+  <text class="k" x="882" y="228" text-anchor="end">3.92%</text>
+  <text class="s" x="320" y="250" text-anchor="end">pd.normal_multiperiod</text>
+  <line class="l0" x1="614.3" x2="678.2" y1="246" y2="246" stroke-width="1.4"/>
+  <circle class="p3" cx="644.8" cy="246" r="4"/>
+  <text class="k" x="882" y="250" text-anchor="end">8.53%</text>
+  <text class="s" x="320" y="272" text-anchor="end">pd.spiegelhalter</text>
+  <line class="l0" x1="496.4" x2="547.1" y1="268" y2="268" stroke-width="1.4"/>
+  <circle class="p1" cx="520.2" cy="268" r="4"/>
+  <text class="k" x="882" y="272" text-anchor="end">5.15%</text>
+  <text class="s" x="320" y="294" text-anchor="end">pd.traffic_lights</text>
+  <line class="l0" x1="462.8" x2="508.7" y1="290" y2="290" stroke-width="1.4"/>
+  <circle class="p1" cx="484.2" cy="290" r="4"/>
+  <text class="k" x="882" y="294" text-anchor="end">4.17%</text>
+  <text class="s" x="320" y="316" text-anchor="end">rating.hhi</text>
+  <line class="l0" x1="330.0" x2="333.5" y1="312" y2="312" stroke-width="1.4"/>
+  <circle class="p1" cx="330.0" cy="312" r="4"/>
+  <text class="k" x="882" y="316" text-anchor="end">0.00%</text>
+  <text class="s" x="320" y="338" text-anchor="end">rating.migration_ztests</text>
+  <line class="l0" x1="332.5" x2="342.1" y1="334" y2="334" stroke-width="1.4"/>
+  <circle class="p1" cx="335.5" cy="334" r="4"/>
+  <text class="k" x="882" y="338" text-anchor="end">0.15%</text>
+  <text class="s" x="320" y="360" text-anchor="end">stability.chi2</text>
+  <line class="l0" x1="502.5" x2="553.9" y1="356" y2="356" stroke-width="1.4"/>
+  <circle class="p1" cx="526.6" cy="356" r="4"/>
+  <text class="k" x="882" y="360" text-anchor="end">5.33%</text>
+  <text class="s" x="320" y="382" text-anchor="end">stability.csi</text>
+  <line class="l0" x1="485.2" x2="534.3" y1="378" y2="378" stroke-width="1.4"/>
+  <circle class="p1" cx="508.2" cy="378" r="4"/>
+  <text class="k" x="882" y="382" text-anchor="end">4.83%</text>
+  <text class="s" x="320" y="404" text-anchor="end">stability.ks</text>
+  <line class="l0" x1="481.7" x2="530.4" y1="400" y2="400" stroke-width="1.4"/>
+  <circle class="p1" cx="504.5" cy="400" r="4"/>
+  <text class="k" x="882" y="404" text-anchor="end">4.72%</text>
+  <text class="s" x="320" y="426" text-anchor="end">stability.psi</text>
+  <line class="l0" x1="516.3" x2="569.6" y1="422" y2="422" stroke-width="1.4"/>
+  <circle class="p1" cx="541.4" cy="422" r="4"/>
+  <text class="k" x="882" y="426" text-anchor="end">5.73%</text>
+  <text class="s" x="320" y="448" text-anchor="end">pd.hosmer_lemeshow, fitted=True (G - 2)</text>
+  <line class="l0" x1="726.6" x2="800.1" y1="444" y2="444" stroke-width="1.4"/>
+  <circle class="p3" cx="762.0" cy="444" r="4"/>
+  <text class="k" x="882" y="448" text-anchor="end">11.70%</text>
+  <text class="s" x="320" y="470" text-anchor="end">pd.traffic_lights, ties=upper</text>
+  <line class="l0" x1="526.8" x2="581.3" y1="466" y2="466" stroke-width="1.4"/>
+  <circle class="p1" cx="552.5" cy="466" r="4"/>
+  <text class="k" x="882" y="470" text-anchor="end">6.02%</text>
+  <text class="s" x="320" y="492" text-anchor="end">pd.chi2_grades, a grade expecting 0.6 defaults</text>
+  <line class="l0" x1="518.9" x2="572.5" y1="488" y2="488" stroke-width="1.4"/>
+  <circle class="p1" cx="544.2" cy="488" r="4"/>
+  <text class="k" x="882" y="492" text-anchor="end">5.80%</text>
+  <circle class="p1" cx="344" cy="554" r="3"/>
+  <text class="s" x="364" y="558">within the bound</text>
+  <circle class="p3" cx="544" cy="554" r="3"/>
+  <text class="s" x="564" y="558">above the bound</text>
+</svg>

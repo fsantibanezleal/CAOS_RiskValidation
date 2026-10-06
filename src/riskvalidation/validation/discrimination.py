@@ -132,14 +132,25 @@ def disc_auc_vs_initial(
     risk: Sequence[float],
     defaults: Sequence[int],
     *,
+    auc_initial_variance: float = 0.0,
     policy: Policy | None = None,
     model_id: str | None = None,
     segment: str | None = None,
 ) -> TestResult:
-    """S = (AUC_init - AUC_curr) / s, p = 1 - Phi(S); the development AUC is treated as fixed."""
+    """S = (AUC_init - AUC_curr) / s, p = 1 - Phi(S); the ECB treats the development AUC as a known number.
+
+    When the development AUC was itself estimated on a sample independent of the current one, pass its variance (the
+    ``s2`` of :func:`auc_with_variance` on the development sample) as ``auc_initial_variance``: the statistic then uses
+    sqrt(s^2 + s_init^2), the variance of the difference of two independent estimates. This extends the ECB formula
+    and the result says so. Measured with known-truth generators (riskvalidation 0.03.000), the ECB form rejects about
+    11% of the time at the 5% level when the development sample is as large as the current one and the AUC has not
+    changed; the extended form holds the size."""
     if not 0.0 <= auc_initial <= 1.0:
         raise ValueError("the initial AUC must lie in [0, 1]")
-    auc, s2, na, nb = auc_with_variance(risk, defaults)
+    if not (math.isfinite(auc_initial_variance) and auc_initial_variance >= 0.0):
+        raise ValueError("the variance of the initial AUC must be a non-negative number")
+    auc, s2_cur, na, nb = auc_with_variance(risk, defaults)
+    s2 = s2_cur + auc_initial_variance
     if s2 <= 0.0:
         return make_result(
             "disc.auc_vs_initial",
@@ -153,6 +164,7 @@ def disc_auc_vs_initial(
             extras={"auc_initial": auc_initial, "auc_current": auc},
         )
     s = (auc_initial - auc) / math.sqrt(s2)
+    extended = auc_initial_variance > 0.0
     return make_result(
         "disc.auc_vs_initial",
         statistic=s,
@@ -163,8 +175,11 @@ def disc_auc_vs_initial(
         n_events=na,
         model_id=model_id,
         segment=segment,
-        inputs=(auc_initial, np.asarray(risk, float), np.asarray(defaults)),
-        extras={"auc_initial": auc_initial, "auc_current": auc, "s2": s2},
+        inputs=(auc_initial, np.asarray(risk, float), np.asarray(defaults), auc_initial_variance),
+        notes="the development AUC's variance is added to the ECB statistic (an extension of the ECB 2019 formula): "
+        "both AUCs are estimates on independent samples" if extended else "",
+        extras={"auc_initial": auc_initial, "auc_current": auc, "s2": s2_cur,
+                "auc_initial_variance": auc_initial_variance, "s2_total": s2},
     )
 
 

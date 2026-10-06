@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420" role="img" aria-labelledby="t d">
+  <title id="t">True size of the count tests under asset correlation</title>
+  <desc id="d">Exact rejection probability, when the PD applied is right, of the binomial, Jeffreys and Vasicek-corrected binomial tests for 1,000 obligors at PD 1%, against the true asset correlation.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="418" rx="10"/>
+  <text class="t" x="64" y="28">True size when the PD is right: N = 1,000, PD 1% (exact)</text>
+  <line class="grid" x1="64" x2="550" y1="364.0" y2="364.0"/>
+  <text class="k" x="56" y="368.0" text-anchor="end">0%</text>
+  <line class="grid" x1="64" x2="550" y1="311.3" y2="311.3"/>
+  <text class="k" x="56" y="315.3" text-anchor="end">5%</text>
+  <line class="grid" x1="64" x2="550" y1="258.7" y2="258.7"/>
+  <text class="k" x="56" y="262.7" text-anchor="end">10%</text>
+  <line class="grid" x1="64" x2="550" y1="206.0" y2="206.0"/>
+  <text class="k" x="56" y="210.0" text-anchor="end">15%</text>
+  <line class="grid" x1="64" x2="550" y1="153.3" y2="153.3"/>
+  <text class="k" x="56" y="157.3" text-anchor="end">20%</text>
+  <line class="grid" x1="64" x2="550" y1="100.7" y2="100.7"/>
+  <text class="k" x="56" y="104.7" text-anchor="end">25%</text>
+  <line class="grid" x1="64" x2="550" y1="48.0" y2="48.0"/>
+  <text class="k" x="56" y="52.0" text-anchor="end">30%</text>
+  <line class="grid" x1="64.0" x2="64.0" y1="48" y2="364"/>
+  <text class="k" x="64.0" y="382" text-anchor="middle">0%</text>
+  <line class="grid" x1="185.5" x2="185.5" y1="48" y2="364"/>
+  <text class="k" x="185.5" y="382" text-anchor="middle">5%</text>
+  <line class="grid" x1="307.0" x2="307.0" y1="48" y2="364"/>
+  <text class="k" x="307.0" y="382" text-anchor="middle">10%</text>
+  <line class="grid" x1="428.5" x2="428.5" y1="48" y2="364"/>
+  <text class="k" x="428.5" y="382" text-anchor="middle">15%</text>
+  <line class="grid" x1="550.0" x2="550.0" y1="48" y2="364"/>
+  <text class="k" x="550.0" y="382" text-anchor="middle">20%</text>
+  <line class="ax" x1="64" x2="550" y1="364" y2="364"/>
+  <line class="ax" x1="64" x2="64" y1="48" y2="364"/>
+  <text class="s" x="307" y="406" text-anchor="middle">true asset correlation</text>
+  <line class="ref" x1="64" x2="550" y1="311.3" y2="311.3"/>
+  <line class="ref" x1="64" x2="550" y1="353.5" y2="353.5"/>
+  <polyline class="l1" points="64.0,313.6 76.2,283.4 88.3,259.0 100.4,239.7 112.6,224.5 124.8,212.2 136.9,202.3 149.1,194.1 161.2,187.4 173.3,181.7 185.5,177.0 197.6,173.0 209.8,169.7 222.0,166.8 234.1,164.5 246.2,162.5 258.4,160.8 270.5,159.4 282.7,158.3 294.9,157.4 307.0,156.7 319.1,156.1 331.3,155.7 343.4,155.4 355.6,155.3 367.8,155.3 379.9,155.3 392.1,155.5 404.2,155.7 416.3,156.0 428.5,156.4 440.6,156.8 452.8,157.3 464.9,157.8 477.1,158.4 489.2,159.0 501.4,159.7 513.5,160.4 525.7,161.1 537.8,161.9 550.0,162.7"/>
+  <line class="l1" x1="566" x2="594" y1="70" y2="70"/>
+  <text class="s" x="600" y="74">binomial and Jeffreys, nominal 5%</text>
+  <polyline class="l1 dash" points="64.0,356.7 76.2,343.7 88.3,328.5 100.4,313.6 112.6,300.1 124.8,288.1 136.9,277.6 149.1,268.3 161.2,260.2 173.3,253.1 185.5,246.8 197.6,241.2 209.8,236.3 222.0,232.0 234.1,228.1 246.2,224.6 258.4,221.6 270.5,218.8 282.7,216.4 294.9,214.2 307.0,212.3 319.1,210.5 331.3,209.0 343.4,207.6 355.6,206.4 367.8,205.4 379.9,204.5 392.1,203.7 404.2,203.0 416.3,202.4 428.5,201.9 440.6,201.5 452.8,201.1 464.9,200.9 477.1,200.7 489.2,200.6 501.4,200.5 513.5,200.5 525.7,200.6 537.8,200.7 550.0,200.8"/>
+  <line class="l1 dash" x1="566" x2="594" y1="94" y2="94"/>
+  <text class="s" x="600" y="98">binomial, nominal 1%</text>
+  <polyline class="l4 dash" points="64.0,349.4 76.2,331.0 88.3,312.2 100.4,295.2 112.6,280.5 124.8,267.9 136.9,257.1 149.1,247.8 161.2,239.9 173.3,232.9 185.5,226.9 197.6,221.7 209.8,217.1 222.0,213.1 234.1,209.6 246.2,206.5 258.4,203.8 270.5,201.4 282.7,199.3 294.9,197.4 307.0,195.8 319.1,194.4 331.3,193.2 343.4,192.1 355.6,191.2 367.8,190.4 379.9,189.8 392.1,189.2 404.2,188.8 416.3,188.5 428.5,188.2 440.6,188.0 452.8,187.9 464.9,187.9 477.1,188.0 489.2,188.1 501.4,188.2 513.5,188.4 525.7,188.6 537.8,188.9 550.0,189.3"/>
+  <line class="l4 dash" x1="566" x2="594" y1="118" y2="118"/>
+  <text class="s" x="600" y="122">Jeffreys, nominal 1%</text>
+  <polyline class="l2" points="64.0,364.0 76.2,363.3 88.3,361.1 100.4,357.4 112.6,352.4 124.8,346.8 136.9,340.9 149.1,335.0 161.2,329.2 173.3,323.6 185.5,318.3 197.6,313.3 209.8,308.6 222.0,304.1 234.1,300.0 246.2,296.1 258.4,292.5 270.5,289.2 282.7,286.0 294.9,283.1 307.0,280.3 319.1,277.8 331.3,275.4 343.4,273.2 355.6,271.2 367.8,269.2 379.9,267.5 392.1,265.8 404.2,264.2 416.3,262.8 428.5,261.5 440.6,260.2 452.8,259.1 464.9,258.0 477.1,257.0 489.2,256.1 501.4,255.3 513.5,254.5 525.7,253.8 537.8,253.1 550.0,252.5"/>
+  <line class="l2" x1="566" x2="594" y1="142" y2="142"/>
+  <text class="s" x="600" y="146">Vasicek, assumes 5%, nominal 5%</text>
+  <polyline class="l3" points="64.0,364.0 76.2,364.0 88.3,363.9 100.4,363.5 112.6,362.6 124.8,361.2 136.9,359.3 149.1,357.0 161.2,354.4 173.3,351.5 185.5,348.6 197.6,345.6 209.8,342.5 222.0,339.5 234.1,336.5 246.2,333.6 258.4,330.8 270.5,328.1 282.7,325.4 294.9,322.9 307.0,320.4 319.1,318.1 331.3,315.8 343.4,313.6 355.6,311.6 367.8,309.6 379.9,307.7 392.1,305.9 404.2,304.2 416.3,302.6 428.5,301.0 440.6,299.5 452.8,298.1 464.9,296.8 477.1,295.5 489.2,294.3 501.4,293.2 513.5,292.1 525.7,291.0 537.8,290.0 550.0,289.1"/>
+  <line class="l3" x1="566" x2="594" y1="166" y2="166"/>
+  <text class="s" x="600" y="170">Vasicek, assumes 12%, nominal 5%</text>
+  <text class="k" x="566" y="198">dashed grey: 5% and 1%</text>
+</svg>

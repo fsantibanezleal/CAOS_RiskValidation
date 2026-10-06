@@ -33,6 +33,23 @@ p-value and Holm-adjusted p-value (Holm 1979), uses the smallest adjusted p-valu
 family-wise reading) and the number of raw rejections as the statistic. The adjustment is the package's addition
 and is labelled as such.
 
+**Size and power, measured (0.03.000).** On a seven-grade matrix whose off-diagonal cells halve with every notch
+(`decaying_matrix(7)`, staying probability 0.8), one cell two notches from the diagonal is planted at a multiple of its
+closer neighbour ([drift and ratings](../generators/04_drift-and-ratings.md)). At the boundary of the null (the two
+cells equal, every other cell strictly inside) the family-wise p-value rejects 0.15% of the time at the 5% level: Holm's
+adjustment over 42 cells makes the test conservative when one cell is at issue. Power at 5%, 1,000 repetitions:
+
+| Planted cell / closer neighbour | $N_i$ = 200 per grade | 500 | 2,000 |
+|---|---|---|---|
+| 1 (boundary) | 0.1% | 0.1% | 0.1% |
+| 1.25 | 0.6% | 1.5% | 12.2% |
+| 1.5 | 2.1% | 8.5% | 61.6% |
+| 2 | 15.3% | 52.4% | 100% |
+| 3 | 65.6% | 99.6% | 100% |
+
+A migration twice as frequent two notches away as one notch away goes undetected about half the time with 500 obligors
+per grade.
+
 ## Concentration in grades (`rating.hhi`)
 
 With $R_i$ the relative frequency of grade $i$ (by number of obligors, or by exposure for the index),
@@ -48,3 +65,28 @@ $H_0$: the current Herfindahl index is lower than at development; reject (concen
 $p < \alpha$. The ECB cites Miller (1991), Communications in Statistics, Theory and Methods 20(10), 3351 to 3363,
 for the distribution of the coefficient of variation; its DOI was not verified. When the current distribution is
 uniform ($CV = 0$) the statistic is undefined and the result is not evaluated.
+
+**The statistic is bounded, so the test may be unable to reject (found in 0.03.000).** The variance term is the
+asymptotic variance of a coefficient of variation computed from $K$ observations: the test treats the $K$ grade
+frequencies as its sample, and the number of obligors does not enter. As a function of the current CV the statistic
+$S(c) = \sqrt{K-1}\,(c - CV_{init})/(c\sqrt{0.5 + c^2})$ rises, peaks and falls back towards zero, because the
+denominator grows like $c^2$. Its largest value over every possible current distribution, and its value when every
+obligor sits in one grade ($c = \sqrt{K-1}$), computed from the formula as transcribed:
+
+| Grades $K$ | $CV_{init}$ | Largest $S$ (at $CV$) | $S$ with all obligors in one grade |
+|---|---|---|---|
+| 7 | 0.3 | 1.435 (0.82) | 0.843 |
+| 10 | 0.3 | 1.757 (0.82) | 0.876 |
+| 10 | 0.6 | 1.094 (1.36) | 0.779 |
+| 20 | 0.6 | 1.589 (1.36) | 0.851 |
+| 26 | 0.6 | 1.823 (1.36) | 0.871 |
+| 26 | 1.0 | 1.182 (2.11) | 0.792 |
+
+A one-sided test at 5% needs $S > 1.645$, so with ten grades and an initial CV of 0.6 no current distribution is
+rejected, and full concentration in a single grade gives $p \approx 0.22$. Measured on ten grades with an initial CV of
+0.60 (`GradeFrequencies`, 2,000 repetitions): moving 5% to 50% of every grade's mass into the modal grade (HI from 0.13
+to 0.58) was rejected in none of the repetitions, at 1,000 and at 5,000 obligors; under the boundary null the size is
+0.0%. Read the index (and its change) descriptively, and test concentration on the obligor counts instead, for example
+with the chi-square test of homogeneity in [stability](04_stability.md): on the same ten grades with 5,000 obligors in
+the development and the current sample, it rejects 94.5% of the time when 5% of the mass moves into the modal grade, and
+every time at 10% (`GradeFrequencies(development_obligors=...)`, 1,000 repetitions).

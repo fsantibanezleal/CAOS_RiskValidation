@@ -36,3 +36,10 @@ analysis "should involve a range of tests because any individual test will have 
 
 "Descriptive" measures have no thresholds in the default policy: they are shown with their value and no colour
 unless an institution's policy sets bands for them.
+
+Every test with a p-value has a measured size: its rejection rate on a known-truth generator where its null holds at
+the boundary, with the Monte Carlo error ([generators and the size and power harness](generators.md)). Each family's
+page states the measurements, the published simulations they reproduce and where a test departs from its nominal
+level.
+
+![Measured size of every test with a p-value](assets/size-of-every-test.svg)
