@@ -20,15 +20,16 @@ def test_core_imports_without_optional_deps():
 
 
 def test_core_dependencies():
-    """RV-211: the U2 modules import without optional dependencies and every result names its source."""
+    """RV-211 and RV-315: the U2 and U3 modules (regulatory functions, engines, generators, harness) import without
+    optional dependencies, and every result names its source."""
     code = (
         "import sys, riskvalidation.regulatory, riskvalidation.engines.vasicek, riskvalidation.engines.low_default,"
-        " riskvalidation.engines.pd_curve;"
+        " riskvalidation.engines.pd_curve, riskvalidation.generators, riskvalidation.harness;"
         f"bad=[m for m in {HEAVY!r} if m in sys.modules];"
         "print(','.join(bad)); sys.exit(1 if bad else 0)"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
-    assert out.returncode == 0, f"heavy modules imported by U2: {out.stdout.strip()} {out.stderr}"
+    assert out.returncode == 0, f"heavy modules imported by U2 or U3: {out.stdout.strip()} {out.stderr}"
 
     from riskvalidation.engines import low_default, pd_curve
     from riskvalidation.regulatory import REGIMES, capital_requirement, el_versus_provisions

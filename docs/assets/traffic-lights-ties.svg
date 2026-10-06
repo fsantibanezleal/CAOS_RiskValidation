@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" width="800" height="420" role="img" aria-labelledby="t d">
+  <title id="t">The traffic-lights test: printed tie rule and WP14's simulation</title>
+  <desc id="d">Exact size of the traffic-lights test with independent years for WP14's scenarios I_SC (PD 0.3%) and I_LC (PD 3%) under the printed tie rule and the upper-colour rule, against WP14 Table 7.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="798" height="418" rx="10"/>
+  <text class="t" x="64" y="28">Traffic lights, five independent years of 1,000 obligors: exact size</text>
+  <line class="grid" x1="64" x2="540" y1="364.0" y2="364.0"/>
+  <text class="k" x="56" y="368.0" text-anchor="end">0%</text>
+  <line class="grid" x1="64" x2="540" y1="258.7" y2="258.7"/>
+  <text class="k" x="56" y="262.7" text-anchor="end">5%</text>
+  <line class="grid" x1="64" x2="540" y1="153.3" y2="153.3"/>
+  <text class="k" x="56" y="157.3" text-anchor="end">10%</text>
+  <line class="grid" x1="64" x2="540" y1="48.0" y2="48.0"/>
+  <text class="k" x="56" y="52.0" text-anchor="end">15%</text>
+  <line class="grid" x1="64.0" x2="64.0" y1="48" y2="364"/>
+  <text class="k" x="64.0" y="382" text-anchor="middle">10%</text>
+  <line class="grid" x1="159.2" x2="159.2" y1="48" y2="364"/>
+  <text class="k" x="159.2" y="382" text-anchor="middle">5%</text>
+  <line class="grid" x1="254.4" x2="254.4" y1="48" y2="364"/>
+  <text class="k" x="254.4" y="382" text-anchor="middle">2.5%</text>
+  <line class="grid" x1="349.6" x2="349.6" y1="48" y2="364"/>
+  <text class="k" x="349.6" y="382" text-anchor="middle">1%</text>
+  <line class="grid" x1="444.8" x2="444.8" y1="48" y2="364"/>
+  <text class="k" x="444.8" y="382" text-anchor="middle">0.5%</text>
+  <line class="grid" x1="540.0" x2="540.0" y1="48" y2="364"/>
+  <text class="k" x="540.0" y="382" text-anchor="middle">0.1%</text>
+  <line class="ax" x1="64" x2="540" y1="364" y2="364"/>
+  <line class="ax" x1="64" x2="64" y1="48" y2="364"/>
+  <text class="s" x="302" y="406" text-anchor="middle">nominal level</text>
+  <polyline class="ref" points="64.0,153.3 159.2,258.7 254.4,311.3 349.6,342.9 444.8,353.5 540.0,361.9"/>
+  <polyline class="l1 dash" points="64.0,288.1 159.2,320.5 254.4,353.6 349.6,357.8 444.8,359.9 540.0,362.3"/>
+  <line class="l1 dash" x1="556" x2="584" y1="70" y2="70"/>
+  <text class="s" x="590" y="74">I_SC, ties=lower</text>
+  <polyline class="l1" points="64.0,81.7 159.2,187.2 254.4,274.0 349.6,338.4 444.8,350.0 540.0,360.6"/>
+  <line class="l1" x1="556" x2="584" y1="94" y2="94"/>
+  <text class="s" x="590" y="98">I_SC, ties=upper</text>
+  <circle class="p1" cx="64.0" cy="79.6" r="4"/>
+  <circle class="p1" cx="159.2" cy="184.9" r="4"/>
+  <circle class="p1" cx="254.4" cy="273.4" r="4"/>
+  <circle class="p1" cx="349.6" cy="340.8" r="4"/>
+  <circle class="p1" cx="444.8" cy="349.3" r="4"/>
+  <circle class="p1" cx="540.0" cy="361.9" r="4"/>
+  <polyline class="l2 dash" points="64.0,223.0 159.2,284.2 254.4,332.4 349.6,348.5 444.8,356.7 540.0,361.8"/>
+  <line class="l2 dash" x1="556" x2="584" y1="118" y2="118"/>
+  <text class="s" x="590" y="122">I_LC, ties=lower</text>
+  <polyline class="l2" points="64.0,153.5 159.2,237.0 254.4,303.8 349.6,340.1 444.8,353.8 540.0,361.3"/>
+  <line class="l2" x1="556" x2="584" y1="142" y2="142"/>
+  <text class="s" x="590" y="146">I_LC, ties=upper</text>
+  <circle class="p2" cx="64.0" cy="144.9" r="4"/>
+  <circle class="p2" cx="159.2" cy="233.4" r="4"/>
+  <circle class="p2" cx="254.4" cy="300.8" r="4"/>
+  <circle class="p2" cx="349.6" cy="336.6" r="4"/>
+  <circle class="p2" cx="444.8" cy="353.5" r="4"/>
+  <circle class="p2" cx="540.0" cy="361.9" r="4"/>
+  <circle class="p0" cx="570" cy="166" r="3"/>
+  <text class="s" x="590" y="170">WP14 Table 7, printed</text>
+  <line class="ref" x1="556" x2="584" y1="190" y2="190"/>
+  <text class="s" x="590" y="194">nominal level</text>
+</svg>
