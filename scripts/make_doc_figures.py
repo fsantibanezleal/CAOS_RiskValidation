@@ -7,6 +7,8 @@
 - docs/assets/irb-risk-weights.svg, lhp-distribution.svg, most-prudent-bounds.svg, pd-curve-sp.svg: the U2
   engines drawn by the package itself against their published values (CRE99 Table 1, Pluto and Tasche, Tasche
   2013); theme-aware.
+- docs/assets/binomial-true-size.svg, traffic-lights-ties.svg, hhi-statistic.svg (exact), size-of-every-test.svg and
+  published-reproductions.svg (the harness on the suite's own scenarios and seeds, a few minutes): U3; theme-aware.
 
 Usage: python scripts/make_doc_figures.py
 """
@@ -430,6 +432,265 @@ def pd_curve_sp_svg() -> str:
     return "\n".join(out) + "\n"
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# U3: the size and power of the tests, measured by the harness on the suite's own scenarios
+
+
+def _u3_imports():
+    sys.path.insert(0, str(ROOT / "tests"))  # the figures draw what the suite measures, from the suite's scenarios
+    import test_reproductions as reproductions
+    import test_size as size
+
+    return size, reproductions
+
+
+def size_of_every_test_svg() -> str:
+    from riskvalidation.generators import DefaultCounts, LogisticPortfolio, feed_grades
+    from riskvalidation.harness import simulate, size_bound
+
+    size, _ = _u3_imports()
+    rows = []
+    seed = 5000
+    for tid, (gen, feed, kw) in sorted(size.NULL_SCENARIOS.items()):
+        seed += 1
+        sim = simulate(tid, gen, n_rep=size.N_REP, seed=seed, feed=feed, test_kwargs=kw)
+        rows.append((tid, sim.rate(0.05)))
+    extra = [
+        ("pd.hosmer_lemeshow, fitted=True (G - 2)", simulate("pd.hosmer_lemeshow", LogisticPortfolio(n=5000),
+                                                              n_rep=size.N_REP, seed=6001,
+                                                              test_kwargs={"fitted": True}).rate(0.05)),
+        ("pd.traffic_lights, ties=upper", simulate("pd.traffic_lights", size.NULL_SCENARIOS["pd.traffic_lights"][0],
+                                                   n_rep=size.N_REP, seed=6201, feed=size.feed_series(),
+                                                   test_kwargs={"ties": "upper"}).rate(0.05)),
+        ("pd.chi2_grades, a grade expecting 0.6 defaults",
+         simulate("pd.chi2_grades", DefaultCounts(size.THIN_N, size.GRADES_PD), n_rep=size.N_REP, seed=6101,
+                  feed=feed_grades()).rate(0.05)),
+    ]
+    rows += extra
+    bound = size_bound(0.05, size.N_REP)
+    w, ml, mr, mt, row_h = 900, 330, 90, 64, 22
+    h = mt + row_h * len(rows) + 64
+    x_max = 0.13
+    fx = lambda v: ml + v / x_max * (w - ml - mr)  # noqa: E731
+    out = _open(w, h, "Measured size of every test with a p-value",
+                "Rejection rate at the 5% level of every registered test on a generator where its null holds at the "
+                "boundary, 4,000 repetitions each, with 95% Wilson intervals; the nominal level and the bound "
+                "consistent with a size of at most 5% are drawn as vertical lines.")
+    out.append('  <text class="t" x="24" y="28">Rejection rate at the 5% level under the null, 4,000 repetitions '
+               '(Wilson 95% intervals)</text>')
+    for xv in (0.0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12):
+        out.append(f'  <line class="grid" x1="{fx(xv):.1f}" x2="{fx(xv):.1f}" y1="{mt - 8}" y2="{h - 52}"/>')
+        out.append(f'  <text class="k" x="{fx(xv):.1f}" y="{h - 34}" text-anchor="middle">{100 * xv:.0f}%</text>')
+    out.append(f'  <line class="ref" x1="{fx(0.05):.1f}" x2="{fx(0.05):.1f}" y1="{mt - 8}" y2="{h - 52}"/>')
+    out.append(f'  <text class="k" x="{fx(0.05) - 4:.1f}" y="{mt - 14}" text-anchor="end">nominal 5%</text>')
+    out.append(f'  <line class="l3 dash" x1="{fx(bound):.1f}" x2="{fx(bound):.1f}" y1="{mt - 8}" y2="{h - 52}"/>')
+    out.append(f'  <text class="k" x="{fx(bound) + 4:.1f}" y="{mt - 14}">bound {100 * bound:.2f}%</text>')
+    for i, (label, r) in enumerate(rows):
+        y = mt + row_h * i + 6
+        lo, hi = r.interval
+        cls = "p3" if r.rate > bound else "p1"
+        out.append(f'  <text class="s" x="{ml - 10}" y="{y + 4}" text-anchor="end">{label}</text>')
+        out.append(f'  <line class="l0" x1="{fx(lo):.1f}" x2="{fx(min(hi, x_max)):.1f}" y1="{y}" y2="{y}" '
+                   'stroke-width="1.4"/>')
+        out.append(f'  <circle class="{cls}" cx="{fx(min(r.rate, x_max)):.1f}" cy="{y}" r="4"/>')
+        out.append(f'  <text class="k" x="{w - 18}" y="{y + 4}" text-anchor="end">{100 * r.rate:.2f}%</text>')
+    _legend(out, ml, h - 14, "p1", "within the bound", dot=True)
+    _legend(out, ml + 200, h - 14, "p3", "above the bound", dot=True)
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def binomial_true_size_svg() -> str:
+    from riskvalidation.harness import rejection_probability
+
+    w, h, ml, mr, mt, mb = 800, 420, 64, 250, 48, 56
+    rhos = np.linspace(0.0, 0.20, 41)
+    y_max = 0.30
+    fx = lambda r: ml + r / 0.20 * (w - ml - mr)  # noqa: E731
+    fy = lambda v: h - mb - min(v, y_max) / y_max * (h - mt - mb)  # noqa: E731
+    curves = [
+        ("pd.binomial", 0.05, {}, "l1", "", "binomial and Jeffreys, nominal 5%"),
+        ("pd.binomial", 0.01, {}, "l1", " dash", "binomial, nominal 1%"),
+        ("pd.jeffreys", 0.01, {}, "l4", " dash", "Jeffreys, nominal 1%"),
+        ("pd.binomial_vasicek", 0.05, {"rho": 0.05}, "l2", "", "Vasicek, assumes 5%, nominal 5%"),
+        ("pd.binomial_vasicek", 0.05, {"rho": 0.12}, "l3", "", "Vasicek, assumes 12%, nominal 5%"),
+    ]
+    out = _open(w, h, "True size of the count tests under asset correlation",
+                "Exact rejection probability, when the PD applied is right, of the binomial, Jeffreys and "
+                "Vasicek-corrected binomial tests for 1,000 obligors at PD 1%, against the true asset correlation.")
+    out.append(f'  <text class="t" x="{ml}" y="28">True size when the PD is right: N = 1,000, PD 1% (exact)</text>')
+    for yv in (0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(yv):.1f}" y2="{fy(yv):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(yv) + 4:.1f}" text-anchor="end">{100 * yv:.0f}%</text>')
+    for rv in (0.0, 0.05, 0.10, 0.15, 0.20):
+        out.append(f'  <line class="grid" x1="{fx(rv):.1f}" x2="{fx(rv):.1f}" y1="{mt}" y2="{h - mb}"/>')
+        out.append(f'  <text class="k" x="{fx(rv):.1f}" y="{h - mb + 18}" text-anchor="middle">{100 * rv:.0f}%</text>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">true asset '
+               'correlation</text>')
+    for yv in (0.05, 0.01):
+        out.append(f'  <line class="ref" x1="{ml}" x2="{w - mr}" y1="{fy(yv):.1f}" y2="{fy(yv):.1f}"/>')
+    for i, (tid, a, kw, cls, dash, label) in enumerate(curves):
+        ys = [rejection_probability(tid, 1000, 0.01, a, rho_true=float(r), **kw)["probability"] for r in rhos]
+        pts = " ".join(f"{fx(r):.1f},{fy(v):.1f}" for r, v in zip(rhos, ys, strict=True))
+        out.append(f'  <polyline class="{cls}{dash}" points="{pts}"/>')
+        _legend(out, w - mr + 16, mt + 22 + 24 * i, f"{cls}{dash}", label)
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 22 + 24 * 5 + 8}">dashed grey: 5% and 1%</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def traffic_lights_ties_svg() -> str:
+    from riskvalidation.harness import traffic_lights_rejection_probability as tlr
+
+    fx_ = json.loads((ROOT / "tests" / "fixtures" / "wp14_tables_5_to_8.json").read_text(encoding="utf-8"))
+    levels = fx_["levels"]
+    w, h, ml, mr, mt, mb = 800, 420, 64, 260, 48, 56
+    fx = lambda i: ml + i / (len(levels) - 1) * (w - ml - mr)  # noqa: E731
+    y_max = 0.15
+    fy = lambda v: h - mb - min(v, y_max) / y_max * (h - mt - mb)  # noqa: E731
+    out = _open(w, h, "The traffic-lights test: printed tie rule and WP14's simulation",
+                "Exact size of the traffic-lights test with independent years for WP14's scenarios I_SC (PD 0.3%) "
+                "and I_LC (PD 3%) under the printed tie rule and the upper-colour rule, against WP14 Table 7.")
+    out.append(f'  <text class="t" x="{ml}" y="28">Traffic lights, five independent years of 1,000 obligors: exact '
+               'size</text>')
+    for yv in (0.0, 0.05, 0.10, 0.15):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(yv):.1f}" y2="{fy(yv):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(yv) + 4:.1f}" text-anchor="end">{100 * yv:.0f}%</text>')
+    for i, a in enumerate(levels):
+        out.append(f'  <line class="grid" x1="{fx(i):.1f}" x2="{fx(i):.1f}" y1="{mt}" y2="{h - mb}"/>')
+        out.append(f'  <text class="k" x="{fx(i):.1f}" y="{h - mb + 18}" text-anchor="middle">{_pct(a)}</text>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">nominal level</text>')
+    nominal = " ".join(f"{fx(i):.1f},{fy(a):.1f}" for i, a in enumerate(levels))
+    out.append(f'  <polyline class="ref" points="{nominal}"/>')
+    k = 0
+    for name, cls in (("I_SC", "l1"), ("I_LC", "l2")):
+        pf = np.array(fx_["scenarios_type_i"][name]["forecast_pct"]) / 100.0
+        for ties, dash in (("lower", " dash"), ("upper", "")):
+            ys = [tlr([1000] * 5, pf, a, ties=ties)["probability"] for a in levels]
+            pts = " ".join(f"{fx(i):.1f},{fy(v):.1f}" for i, v in enumerate(ys))
+            out.append(f'  <polyline class="{cls}{dash}" points="{pts}"/>')
+            _legend(out, w - mr + 16, mt + 22 + 24 * k, f"{cls}{dash}", f"{name}, ties={ties}")
+            k += 1
+        dot = "p1" if cls == "l1" else "p2"
+        for i, v in enumerate(fx_["table_7_type_i"][name]["traffic"]):
+            out.append(f'  <circle class="{dot}" cx="{fx(i):.1f}" cy="{fy(v):.1f}" r="4"/>')
+    _legend(out, w - mr + 16, mt + 22 + 24 * 4, "p0", "WP14 Table 7, printed", dot=True)
+    _legend(out, w - mr + 16, mt + 22 + 24 * 5, "ref", "nominal level")
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def published_reproductions_svg() -> str:
+    from riskvalidation.generators import DefaultCounts, TwoSample, feed_series
+    from riskvalidation.harness import metric_above, simulate
+
+    _, rep = _u3_imports()
+    fx_ = json.loads((ROOT / "tests" / "fixtures" / "wp14_tables_5_to_8.json").read_text(encoding="utf-8"))
+    pts: dict[str, list[tuple[float, float, str, bool]]] = {"wp14_i": [], "wp14_ii": [], "yn": []}
+    for table, scen, pub, seed0, key in (("7", fx_["scenarios_type_i"], fx_["table_7_type_i"], 1000, "wp14_i"),
+                                         ("8", fx_["scenarios_type_ii"], fx_["table_8_type_ii"], 2000, "wp14_ii")):
+        seed = seed0
+        for name, sc in scen.items():
+            gen = DefaultCounts.over_years([1000] * 5, np.array(sc["true_pct"]) / 100.0, rho=sc["rho"],
+                                           pd_forecast=np.array(sc["forecast_pct"]) / 100.0, theta=sc["theta"])
+            for short, (tid, kw) in rep.TESTS.items():
+                seed += 1
+                sim = simulate(tid, gen, n_rep=25_000, seed=seed, feed=feed_series(), alphas=fx_["levels"],
+                               test_kwargs=kw)
+                for level, p in zip(fx_["levels"], pub[name][short], strict=True):
+                    r = sim.rate(level)
+                    v = r.rate if table == "7" else 1.0 - r.rate
+                    bad = (table, name, short, level) in rep.WP14_NOT_REPRODUCED
+                    pts[key].append((p, v, short, bad))
+    yn = json.loads((ROOT / "tests" / "fixtures" / "yurdakul_naranjo_table4.json").read_text(encoding="utf-8"))
+    seed = 2000
+    for row in yn["rows"]:
+        for si, shift in enumerate((0.0, 0.25, 0.5)):
+            seed += 1
+            sim = simulate("stability.psi", TwoSample(n_base=row["n"], n_target=row["m"], shift=shift), n_rep=10_000,
+                           seed=seed, alphas=(0.05,), rules=(metric_above(0.10), metric_above(0.25)))
+            for label, p in zip(("metric>0.1", "metric>0.25", "p<0.05"), row["rates"][3 * si: 3 * si + 3],
+                                strict=True):
+                bad = (row["m"], row["n"], shift, label) in rep.YN_NOT_REPRODUCED
+                pts["yn"].append((p, sim.rate(label).rate, label, bad))
+    w, h = 1040, 410
+    panels = [("wp14_i", "WP14 Table 7, type I errors", 0.15), ("wp14_ii", "WP14 Table 8, type II errors", 1.0),
+              ("yn", "Yurdakul-Naranjo Table 4", 1.0)]
+    out = _open(w, h, "Published simulation studies reproduced by the harness",
+                "Each published rejection rate against the harness's rate on the same design: BCBS WP14 Tables 7 and 8 "
+                "(normal and traffic-lights tests, 25,000 runs) and Yurdakul and Naranjo Table 4 (PSI, 10,000 runs). "
+                "Points on the diagonal agree; hollow circles are the two cells that do not reproduce.")
+    out.append('  <text class="t" x="24" y="28">Published rate (horizontal) against the harness (vertical), cell by '
+               'cell</text>')
+    pw, ph, top, gap, left = 270, 270, 60, 66, 64
+    cls_of = {"normal": "p1", "traffic": "p2", "metric>0.1": "p3", "metric>0.25": "p4", "p<0.05": "p1"}
+    for k, (key, title, vmax) in enumerate(panels):
+        x0 = left + k * (pw + gap)
+        fx = lambda v, x0=x0, vmax=vmax: x0 + min(v, vmax) / vmax * pw  # noqa: E731
+        fy = lambda v, vmax=vmax: top + ph - min(v, vmax) / vmax * ph  # noqa: E731
+        out.append(f'  <rect class="pn" x="{x0}" y="{top}" width="{pw}" height="{ph}"/>')
+        out.append(f'  <text class="s" x="{x0}" y="{top - 8}">{title}</text>')
+        out.append(f'  <line class="ref" x1="{fx(0):.1f}" y1="{fy(0):.1f}" x2="{fx(vmax):.1f}" y2="{fy(vmax):.1f}"/>')
+        for tv in ((0.0, 0.05, 0.10, 0.15) if vmax < 0.5 else (0.0, 0.25, 0.5, 0.75, 1.0)):
+            out.append(f'  <text class="k" x="{fx(tv):.1f}" y="{top + ph + 16}" text-anchor="middle">'
+                       f'{100 * tv:.0f}%</text>')
+            out.append(f'  <text class="k" x="{x0 - 6}" y="{fy(tv) + 4:.1f}" text-anchor="end">{100 * tv:.0f}%</text>')
+        for p, v, lab, bad in pts[key]:
+            if bad:
+                out.append(f'  <circle class="hollow" cx="{fx(p):.1f}" cy="{fy(v):.1f}" r="6"/>')
+            out.append(f'  <circle class="{cls_of[lab]}" cx="{fx(p):.1f}" cy="{fy(v):.1f}" r="2.6"/>')
+    _legend(out, left, h - 26, "p1", "normal test; PSI chi-square benchmark", dot=True)
+    _legend(out, left + 300, h - 26, "p2", "traffic lights (ties=upper)", dot=True)
+    _legend(out, left + 520, h - 26, "p3", "PSI > 0.10", dot=True)
+    _legend(out, left + 650, h - 26, "p4", "PSI > 0.25", dot=True)
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def hhi_statistic_svg() -> str:
+    w, h, ml, mr, mt, mb = 800, 420, 64, 250, 48, 56
+    y_lo, y_hi = 0.0, 2.5
+    fx = lambda v: ml + v / 5.0 * (w - ml - mr)  # noqa: E731
+    fy = lambda v: h - mb - (max(min(v, y_hi), y_lo) - y_lo) / (y_hi - y_lo) * (h - mt - mb)  # noqa: E731
+    out = _open(w, h, "The ECB concentration statistic against the current coefficient of variation",
+                "The statistic of the ECB Herfindahl index test as a function of the current CV, for 10 and 26 grades "
+                "and several initial CVs; it rises, peaks and falls, and for an initial CV of 0.6 with ten grades it "
+                "never reaches the 5% critical value 1.645.")
+    out.append(f'  <text class="t" x="{ml}" y="28">ECB HHI test statistic S against the current CV</text>')
+    for yv in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(yv):.1f}" y2="{fy(yv):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(yv) + 4:.1f}" text-anchor="end">{yv:g}</text>')
+    for xv in range(0, 6):
+        out.append(f'  <line class="grid" x1="{fx(xv):.1f}" x2="{fx(xv):.1f}" y1="{mt}" y2="{h - mb}"/>')
+        out.append(f'  <text class="k" x="{fx(xv):.1f}" y="{h - mb + 18}" text-anchor="middle">{xv}</text>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">current coefficient '
+               'of variation</text>')
+    out.append(f'  <line class="l3 dash" x1="{ml}" x2="{w - mr}" y1="{fy(1.645):.1f}" y2="{fy(1.645):.1f}"/>')
+    out.append(f'  <text class="k" x="{w - mr - 4}" y="{fy(1.645) - 6:.1f}" text-anchor="end">reject at 5% above '
+               '1.645</text>')
+    cases = [(10, 0.3, "l1", ""), (10, 0.6, "l1", " dash"), (10, 1.0, "l2", ""), (26, 0.6, "l4", "")]
+    for i, (k, ci, cls, dash) in enumerate(cases):
+        c = np.linspace(ci, np.sqrt(k - 1), 400)  # from no change to every obligor in one grade (CV sqrt(k - 1))
+        s = np.sqrt(k - 1) * (c - ci) / (c * np.sqrt(0.5 + c * c))
+        pts = " ".join(f"{fx(x):.1f},{fy(y):.1f}" for x, y in zip(c, s, strict=True))
+        out.append(f'  <polyline class="{cls}{dash}" points="{pts}"/>')
+        end = np.sqrt(k - 1)
+        s_end = np.sqrt(k - 1) * (end - ci) / (end * np.sqrt(0.5 + end * end))
+        out.append(f'  <circle class="p0" cx="{fx(end):.1f}" cy="{fy(s_end):.1f}" r="3.4"/>')
+        _legend(out, w - mr + 16, mt + 22 + 24 * i, f"{cls}{dash}", f"K = {k}, initial CV {ci}")
+    _legend(out, w - mr + 16, mt + 22 + 24 * 4, "p0", "all obligors in one grade", dot=True)
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 22 + 24 * 5 + 8}">each curve starts at its initial '
+               'CV (S = 0)</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
 def main() -> None:
     ASSETS.mkdir(parents=True, exist_ok=True)
     (ASSETS / "psi-benchmark.svg").write_text(psi_benchmark_svg(), encoding="utf-8", newline="\n")
@@ -438,7 +699,13 @@ def main() -> None:
           "most-prudent-bounds.svg": most_prudent_svg, "pd-curve-sp.svg": pd_curve_sp_svg}
     for name, make in u2.items():
         (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
-    print("wrote docs/assets/" + ", ".join(["psi-benchmark.svg", "roc-cap.svg", *u2]))
+    u3 = {"binomial-true-size.svg": binomial_true_size_svg, "traffic-lights-ties.svg": traffic_lights_ties_svg,
+          "hhi-statistic.svg": hhi_statistic_svg, "size-of-every-test.svg": size_of_every_test_svg,
+          "published-reproductions.svg": published_reproductions_svg}
+    for name, make in u3.items():
+        print("drawing", name, flush=True)
+        (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
+    print("wrote docs/assets/" + ", ".join(["psi-benchmark.svg", "roc-cap.svg", *u2, *u3]))
 
 
 if __name__ == "__main__":

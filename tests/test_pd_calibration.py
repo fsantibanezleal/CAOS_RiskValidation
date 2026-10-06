@@ -83,10 +83,13 @@ def test_chi2_spiegelhalter_hl_normal_formulas():
     for g in np.array_split(order, 10):
         og, eg = y[g].sum(), f[g].sum()
         hl += (og - eg) ** 2 / (eg * (1 - eg / g.size))
-    res = pd_hosmer_lemeshow(y, f)
+    res = pd_hosmer_lemeshow(y, f)  # PDs given before the outcomes: as many degrees of freedom as groups
     assert res.statistic == pytest.approx(hl)
-    assert res.p_value == pytest.approx(stats.chi2.sf(hl, 8))
-    assert pd_hosmer_lemeshow(y, f, dof=10).extras["dof"] == 10
+    assert res.p_value == pytest.approx(stats.chi2.sf(hl, 10))
+    assert res.extras["dof"] == 10 and res.extras["fitted"] is False
+    fitted = pd_hosmer_lemeshow(y, f, fitted=True)  # PDs estimated on these observations: G - 2
+    assert fitted.p_value == pytest.approx(stats.chi2.sf(hl, 8)) and fitted.extras["dof"] == 8
+    assert pd_hosmer_lemeshow(y, f, dof=7).extras["dof"] == 7
     # normal multi-period test
     dr = np.array([0.012, 0.018, 0.009, 0.025, 0.015])
     pdt = np.full(5, 0.012)
@@ -144,3 +147,28 @@ def test_brier_murphy_identity():
     ece = pd_ece(y2, f2, bins=2)
     assert ece.metric == pytest.approx(0.5 * abs(1 / 3 - 0.1) + 0.5 * abs(2 / 3 - 0.6))
     assert len(ece.extras["bins"]) == 2
+
+
+def test_traffic_lights_table_equals_enumeration():
+    """RV-313: the cached profile table equals a fresh multinomial enumeration for every profile of up to nine years;
+    a year on the green boundary is green under the printed rule and yellow under ``ties="upper"``."""
+    from riskvalidation.validation.calibration import traffic_light_colours, traffic_profile_cdf
+
+    for probs in ((0.5, 0.3, 0.15, 0.05), (0.25, 0.25, 0.25, 0.25), (0.6, 0.2, 0.15, 0.05)):
+        for t in range(1, 10):
+            table = traffic_profile_cdf(t, probs)
+            profiles = sorted(table)
+            assert len(profiles) == (t + 1) * (t + 2) * (t + 3) // 6
+            for prof in profiles:
+                fresh = sum(stats.multinomial.pmf(q, t, probs) for q in profiles if q <= prof)
+                assert table[prof] == pytest.approx(min(1.0, fresh), abs=1e-12)
+    n, pd = np.full(5, 1000), np.full(5, 0.03)
+    d = np.array([30, 30, 30, 30, 30])  # exactly N p defaults every year: R = 0, on the green boundary
+    assert list(traffic_light_colours(n, d, pd)) == [0] * 5
+    assert list(traffic_light_colours(n, d, pd, ties="upper")) == [1] * 5
+    lower = pd_traffic_lights(n, d, pd)
+    upper = pd_traffic_lights(n, d, pd, ties="upper")
+    assert lower.extras["green"] == 5 and upper.extras["yellow"] == 5 and upper.p_value < lower.p_value
+    assert lower.p_value == pytest.approx(1.0) and upper.p_value == pytest.approx(0.5**5)  # no green year
+    with pytest.raises(ValueError):
+        pd_traffic_lights(n, d, pd, ties="middle")
