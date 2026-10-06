@@ -79,7 +79,9 @@ def test_wp14_traffic_lights_tie_rule():
 
 
 def test_yurdakul_naranjo_table4():
-    """RV-309: 53 of the 54 cells of Table 4, the PSI's rule-of-thumb bands and the chi-square benchmark."""
+    """RV-309: 53 of the 54 cells of Table 4, the PSI's rule-of-thumb bands and the chi-square benchmark, with the
+    suite's seed. The harness sits slightly above the paper on average (a mean z near +0.8, a spread near 1.5), so the
+    count depends on the seed; the mean z is held below 1.2 so the documented offset cannot grow unnoticed."""
     fx = json.loads((FIXTURES / "yurdakul_naranjo_table4.json").read_text(encoding="utf-8"))
     rules = (metric_above(0.10), metric_above(0.25))
     labels = ("metric>0.1", "metric>0.25", "p<0.05")
@@ -96,6 +98,8 @@ def test_yurdakul_naranjo_table4():
     assert len(out) == 54
     failed = {k for k, v in out.items() if not v[0]}
     assert failed == YN_NOT_REPRODUCED, {k: out[k] for k in failed ^ YN_NOT_REPRODUCED}
+    zs = [v[3] for v in out.values() if 0.0 < v[2] < 1.0]
+    assert 0.0 < sum(zs) / len(zs) < 1.2
     # the paper's reading: PSI > 0.10 has too large a type I error unless both samples exceed 400
     assert out[(100, 100, 0.0, "metric>0.1")][1] > 0.8 and out[(400, 400, 0.0, "metric>0.1")][1] < 0.05
 
