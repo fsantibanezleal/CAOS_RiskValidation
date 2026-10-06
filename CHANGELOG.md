@@ -4,6 +4,56 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.03.000] - 2026-10-05
+
+### Added
+
+- `riskvalidation.generators`: known-truth data-generating mechanisms, each a frozen configuration that serialises
+  itself, draws one dataset per seed, returns its exact truth and verifies itself on its own stream:
+  `DefaultCounts` (BCBS WP14's one-factor model with factor correlation across years; the default correlation
+  reproduces WP14's examples), `BinormalScores` (exact AUC and AUC variance; decay, an estimated development AUC, a
+  challenger, a leaked feature), `LogisticPortfolio` (true PDs, a planted calibration intercept and slope, an omitted
+  quadratic term, covariate shift, one-factor dependence), `TwoSample` (Yurdakul and Naranjo's design, population or
+  sample binning), `Migrations` and `decaying_matrix` with `break_monotonicity`, `GradeFrequencies` with `concentrate`,
+  and `NestedLda` (Demler et al.'s Framingham-like nested discriminants).
+- `riskvalidation.harness`: `simulate` runs a registered test over repetitions with one independent stream per
+  repetition (a test with its own randomness gets a fresh seed), counts undefined results, and reports rates per level
+  and rule with the Monte Carlo SE of Morris, White and Crowther (2019) and the Wilson interval; `size_bound`,
+  `within_size`, `agrees`, `agrees_with_published`; exact rejection probabilities for the count tests
+  (`rejection_probability`, `critical_count`, `count_pmf`) and for the traffic-lights test with independent years;
+  WP14's large-portfolio true confidence; `estimator_performance` (bias, empirical SE, model SE, coverage).
+- Published simulations reproduced by the suite: BCBS WP14 Tables 7 and 8 (143 of 144 cells, 25,000 runs), Yurdakul
+  and Naranjo (2020) Table 4 (53 of 54, 10,000 runs), Demler, Pencina and D'Agostino (2012) (1 rejection in 1,000);
+  the two cells that do not reproduce are listed with their evidence.
+- The size of every registered test with a p-value, measured under its null (`tests/test_size.py`).
+- `pd.traffic_lights(ties=...)`: the colour of a year on a boundary; `"lower"` (default) is WP14's printed mapping,
+  `"upper"` the rule its own simulation must have used. `traffic_light_colours` and `traffic_profile_cdf` expose the
+  colour rule and the profile table.
+- Docs: the generators section (four pages), the measured sizes and the findings on every test family's page, five
+  computed theme-aware figures, `examples/size_power.py` (run by the suite).
+
+### Changed
+
+- `pd.hosmer_lemeshow` uses as many degrees of freedom as groups by default (PDs given before the outcomes, the
+  validation case) and G - 2 only with `fitted=True`. Measured on independent samples with the true PDs, G - 2
+  rejects 11.7% of the time at the 5% level and G 5.1%. Results computed with the old default on validation samples
+  had p-values that were too small.
+- The traffic-lights p-value is a lookup in a cached profile table, and the normal test, the traffic lights and the
+  PSI call SciPy's special functions directly: identical numbers, several times faster.
+- A standardised default rate within 1e-12 of a traffic-lights boundary is on the boundary (it was coloured by
+  rounding noise).
+
+### Documented (found by the harness)
+
+- The normal test over five years rejects 8.5% of the time at the 5% level, as WP14's own Table 7 shows, while WP14's
+  summary calls it conservative.
+- The chi-square test over grades exceeds its level when a grade expects under one default.
+- The ECB AUC test treats the development AUC as known; estimated on a sample as large as the current one, it rejects
+  10.9% of the time at the 5% level.
+- The ECB concentration statistic is bounded in the current CV: with ten grades and an initial CV of 0.6 it cannot
+  reject at 5%, whatever the current distribution.
+- The Jeffreys test's exact size for 1,000 obligors at PD 1% is 1.38% at the 1% level.
+
 ## [0.02.000] - 2026-10-05
 
 ### Added
