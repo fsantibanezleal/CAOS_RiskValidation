@@ -27,8 +27,9 @@ Options, each a validator's question:
 - **Discrimination decay**: `separation_development` above `separation` gives a current AUC below the development
   AUC (the alternative of `disc.auc_vs_initial`).
 - **An estimated development AUC**: `development_size=m` draws a development sample $m$ times the current one and
-  passes its empirical AUC as `auc_initial`; `None` passes the true development AUC, the known constant the ECB test
-  assumes. Measured: with $m = 1$ the ECB test rejects 10.9% of the time at the 5% level when the AUC has not changed
+  passes its empirical AUC as `auc_initial` (and its variance as `development_auc_variance`, which a feed hands to
+  the extended test as `auc_initial_variance`); `None` passes the true development AUC, the known constant the ECB
+  test assumes. Measured: with $m = 1$ the ECB test rejects 10.9% of the time at the 5% level when the AUC has not changed
   ([discrimination](../tests/02_discrimination.md)).
 - **A challenger**: `challenger_separation` and `challenger_correlation` add a second score, correlated within each
   class, with AUC $\Phi(\delta_2/\sqrt 2)$; with equal separations it is a DeLong null of two non-nested models.
