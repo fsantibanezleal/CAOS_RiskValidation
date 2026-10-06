@@ -21,7 +21,8 @@ MORRIS = "Morris, White and Crowther (2019), Using simulation studies to evaluat
 
 
 def wilson_interval(k: int, n: int, z: float = Z95) -> tuple[float, float]:
-    """Wilson score interval for k successes in n trials."""
+    """Wilson score interval for k successes in n trials. At k = 0 and k = n the closed form gives exactly 0 and 1;
+    those bounds are returned exactly, since ``centre - half`` leaves a residue of about 1e-20 for some n."""
     if n <= 0:
         raise ValueError("n must be positive")
     if not 0 <= k <= n:
@@ -30,7 +31,9 @@ def wilson_interval(k: int, n: int, z: float = Z95) -> tuple[float, float]:
     denom = 1.0 + z * z / n
     centre = (p + z * z / (2.0 * n)) / denom
     half = z * math.sqrt(p * (1.0 - p) / n + z * z / (4.0 * n * n)) / denom
-    return max(0.0, centre - half), min(1.0, centre + half)
+    low = 0.0 if k == 0 else max(0.0, centre - half)
+    high = 1.0 if k == n else min(1.0, centre + half)
+    return low, high
 
 
 @dataclass(frozen=True)

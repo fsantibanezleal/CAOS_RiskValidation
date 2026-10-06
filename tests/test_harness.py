@@ -42,6 +42,13 @@ def test_streams_rates_and_intervals():
     assert wilson_interval(0, 10)[0] == 0.0 and wilson_interval(0, 10)[1] == pytest.approx(0.27753, abs=1e-5)
     lo, hi = wilson_interval(50, 1000)
     assert lo < 0.05 < hi and lo == pytest.approx(0.03813, abs=1e-5)
+    # the interval contains its rate for every k, with the bounds exact at 0 and n (at n = 4,000 the closed form's
+    # subtraction left 5.4e-20 above a zero rate, issue #18)
+    for n in (10, 999, 1000, 2000, 4000, 25_000, 200_000):
+        assert wilson_interval(0, n)[0] == 0.0 and wilson_interval(n, n)[1] == 1.0
+        for k in sorted({0, 1, 2, n // 7, n // 2, n - 2, n - 1, n}):
+            lo_k, hi_k = wilson_interval(k, n)
+            assert 0.0 <= lo_k <= k / n <= hi_k <= 1.0, (k, n)
     r = Rate(50, 1000)
     assert r.rate == 0.05 and r.se == pytest.approx(math.sqrt(0.05 * 0.95 / 1000))
     json.dumps(r.to_dict())
