@@ -130,12 +130,17 @@ def concentrate(probabilities: Any, share: float) -> np.ndarray:
 class GradeFrequencies(GeneratorBase):
     """``obligors`` obligors over grades with the current population's ``probabilities``; ``initial`` is the grade
     distribution at development, given to the test as fixed (the current population when omitted: the boundary of the
-    ECB concentration null)."""
+    ECB concentration null).
+
+    With ``development_obligors`` the draw also holds a development sample of that size from ``initial``, binned like
+    the current one (``expected_counts`` and ``actual_counts``), so a two-sample test of the counts (the chi-square test
+    of homogeneity, the PSI) can be measured on the same data as the ECB concentration test."""
 
     name: ClassVar[str] = "grade_frequencies"
     obligors: int
     probabilities: Any
     initial: Any = None
+    development_obligors: int | None = None
 
     def __post_init__(self) -> None:
         p = np.asarray(self.probabilities, dtype=float)
@@ -147,13 +152,22 @@ class GradeFrequencies(GeneratorBase):
             raise ValueError("current and initial distributions must cover the same grades")
         if int(self.obligors) < 1:
             raise ValueError("at least one obligor is required")
+        if self.development_obligors is not None and int(self.development_obligors) < 1:
+            raise ValueError("a development sample needs at least one obligor")
         object.__setattr__(self, "obligors", int(self.obligors))
+        if self.development_obligors is not None:
+            object.__setattr__(self, "development_obligors", int(self.development_obligors))
         object.__setattr__(self, "probabilities", frozen_array(p))
         object.__setattr__(self, "initial", frozen_array(q))
 
     def draw(self, rng: np.random.Generator) -> dict[str, Any]:
+        """The current counts, then (with ``development_obligors``) the development counts."""
         f = rng.multinomial(self.obligors, np.asarray(self.probabilities))
-        return {"freq_current": f, "freq_initial": np.asarray(self.initial)}
+        out: dict[str, Any] = {"freq_current": f, "freq_initial": np.asarray(self.initial)}
+        if self.development_obligors is not None:
+            out["expected_counts"] = rng.multinomial(self.development_obligors, np.asarray(self.initial))
+            out["actual_counts"] = f
+        return out
 
     def truth(self) -> dict[str, Any]:
         cv_c, hi_c = concentration(self.probabilities)
