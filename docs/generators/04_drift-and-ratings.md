@@ -22,11 +22,16 @@ the population PSI $\sum (q_i - p_i)\ln(q_i/p_i)$, and for a pure shift the Wass
 
 **Table 4, reproduced.** 53 of the 54 cells agree within 3.29 combined standard errors (`test_yurdakul_naranjo_table4`,
 fixture `tests/fixtures/yurdakul_naranjo_table4.json`). The cell that does not: $m = 100$ (target), $n = 400$ (base),
-shift 1/2, PSI > 0.25: printed 0.787, measured 0.817 at 10,000 runs and 0.8175 at 20,000. The paper does not say how
-an empty bin is treated; the shifted target leaves its lowest decile empty in 2.8% of the samples, but no treatment
+shift 1/2, PSI > 0.25: printed 0.787, measured 0.817 at 10,000 runs and 0.8175 at 20,000. The paper does not say how an
+empty bin is treated; the shifted target leaves its lowest decile empty in 2.8% of the samples, but no treatment
 explains the gap (floor at half an observation 0.8175, drop the empty bins 0.8075, add one half to every bin 0.7406,
-which breaks the other rows). The finding that matters reproduces everywhere: PSI > 0.10 rejects 85% of the time
-when nothing changed and samples are 100, and PSI > 0.25 loses power as samples grow.
+which breaks the other rows). Beyond that cell, the harness's rates sit slightly above the paper's on average: over the
+cells strictly between 0 and 1 the mean z of the difference is +0.8 with the suite's seed and +0.65 with another (each
+rule's 18 cells are independent runs, so a mean of 0 would carry a standard error of 0.24), and its spread is about 1.5
+instead of 1. How many cells pass 3.29 combined standard errors therefore depends on the seed (53 here, 50 with the
+other). The source of the offset, an unstated detail of the paper's implementation, was not identified; every
+qualitative finding of the paper reproduces. The finding that matters reproduces everywhere: PSI > 0.10 rejects 85% of
+the time when nothing changed and samples are 100, and PSI > 0.25 loses power as samples grow.
 
 **Binning.** The chi-square benchmark assumes bins fixed in advance. Measured with 4,000 repetitions on equal samples,
 the base sample's own deciles give the same size within Monte Carlo error (7.45% against 7.67% at 100, 5.03% against

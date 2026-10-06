@@ -4,6 +4,14 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.03.001] - 2026-10-06
+
+### Fixed
+
+- Docs: the reproduction of Yurdakul and Naranjo's Table 4 now states its small systematic offset (the harness sits
+  about 0.7 standard errors above the paper on average, so how many of the 54 cells pass depends on the seed: 53 with
+  the suite's, 50 with another), which "53 of 54" alone hid; the suite holds the mean z below 1.2. No code changed.
+
 ## [0.03.000] - 2026-10-05
 
 ### Added
