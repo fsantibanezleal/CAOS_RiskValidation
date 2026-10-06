@@ -8,11 +8,12 @@ one period or several, independent or correlated defaults); read them together, 
 
 from __future__ import annotations
 
+import functools
 import math
 from collections.abc import Sequence
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 
 from riskvalidation.core.build import make_result
 from riskvalidation.core.policy import Policy
@@ -351,15 +352,19 @@ def pd_hosmer_lemeshow(
     pd: Sequence[float],
     *,
     groups: int = 10,
+    fitted: bool = False,
     dof: int | None = None,
     policy: Policy | None = None,
     model_id: str | None = None,
     segment: str | None = None,
 ) -> TestResult:
-    """Groups by quantiles of predicted PD; chi-square with ``groups - 2`` degrees of freedom by default.
+    """Groups by quantiles of predicted PD; chi-square with ``groups`` degrees of freedom for PDs given before the
+    outcomes (validation), ``groups - 2`` when ``fitted`` (the PDs were estimated on these same observations, the
+    original in-sample statistic). ``dof`` overrides both; the choice is recorded.
 
-    The G - 2 degrees of freedom are those of the original in-sample statistic; on an independent hold-out sample
-    some authors use G. Pass ``dof`` to choose, and the choice is recorded.
+    For given PDs each group's standardised difference is asymptotically an independent chi-square with one degree of
+    freedom, as BCBS WP14 states for the test over grades. On independent samples with the true PDs, G - 2 rejects
+    far more often than the nominal level (the size harness of riskvalidation 0.03.000; see the test's page).
     """
     y = as_binary(defaults)
     p = check_pd(pd)
@@ -372,7 +377,7 @@ def pd_hosmer_lemeshow(
     for idx in np.array_split(order, groups):
         o, e, m = float(y[idx].sum()), float(p[idx].sum()), idx.size
         hl += (o - e) ** 2 / (e * (1.0 - e / m))
-    k = groups - 2 if dof is None else int(dof)
+    k = int(dof) if dof is not None else (groups - 2 if fitted else groups)
     return make_result(
         "pd.hosmer_lemeshow",
         statistic=hl,
@@ -384,7 +389,7 @@ def pd_hosmer_lemeshow(
         model_id=model_id,
         segment=segment,
         inputs=(y, p, groups, k),
-        extras={"groups": groups, "dof": k},
+        extras={"groups": groups, "dof": k, "fitted": bool(fitted)},
     )
 
 
@@ -471,18 +476,76 @@ def pd_normal_multiperiod(
     return make_result(
         "pd.normal_multiperiod",
         statistic=stat,
-        p_value=float(stats.norm.sf(stat)),
+        p_value=float(special.ndtr(-stat)),
         policy=policy,
         alternative="at least one yearly PD is underestimated",
         n=t,
         model_id=model_id,
         segment=segment,
         inputs=(dr, pdt),
+        notes="above the nominal level over short series: measured size 8.5% at the 5% level for five years of 1,000 "
+        "obligors at PD 3% (WP14 Table 7: 8.1%)",
         extras={"years": t, "sigma_hat": math.sqrt(var)},
     )
 
 
 WP14_TRAFFIC_PROBS = (0.5, 0.3, 0.15, 0.05)
+
+
+@functools.lru_cache(maxsize=64)
+def _traffic_profile_cdf(t: int, probs: tuple[float, ...]) -> dict[tuple[int, int, int, int], float]:
+    """P(profile <= p) for every colour profile p of ``t`` years, the profiles in lexicographic order of
+    (A_g, A_y, A_o, A_r); the same additions in the same order as a full enumeration, computed once per (t, probs)."""
+    out: dict[tuple[int, int, int, int], float] = {}
+    acc = 0.0
+    for a_g in range(t + 1):
+        for a_y in range(t - a_g + 1):
+            for a_o in range(t - a_g - a_y + 1):
+                prof = (a_g, a_y, a_o, t - a_g - a_y - a_o)
+                acc += float(stats.multinomial.pmf(prof, t, probs))
+                out[prof] = min(1.0, acc)
+    return out
+
+
+@functools.lru_cache(maxsize=64)
+def _traffic_cuts(q: tuple[float, ...]) -> np.ndarray:
+    """Phi^-1 of the cumulative colour probabilities (norm.ppf is ndtri inside SciPy)."""
+    return special.ndtri(np.cumsum(q)[:3])
+
+
+def _traffic_colours(n_a: np.ndarray, d_a: np.ndarray, pd_a: np.ndarray, q: np.ndarray,
+                     ties: str) -> tuple[np.ndarray, np.ndarray]:
+    if q.shape != (4,) or np.any(q <= 0) or not math.isclose(float(q.sum()), 1.0, abs_tol=1e-12):
+        raise ValueError("probs must be four positive numbers summing to 1")
+    if ties not in ("lower", "upper"):
+        raise ValueError("ties is 'lower' (the printed WP14 mapping) or 'upper'")
+    r = (d_a - n_a * pd_a) / np.sqrt(n_a * pd_a * (1.0 - pd_a))
+    cuts = _traffic_cuts(tuple(float(v) for v in q))
+    tol = 1e-12  # a rate within rounding of a boundary is on it
+    if ties == "lower":
+        colour = np.sum(cuts[None, :] < r[:, None] - tol, axis=1)  # 0 green, 1 yellow, 2 orange, 3 red
+    else:
+        colour = np.sum(cuts[None, :] <= r[:, None] + tol, axis=1)
+    return r, colour
+
+
+def traffic_light_colours(
+    n: Sequence[int], d: Sequence[int], pd: Sequence[float], *, probs: Sequence[float] = WP14_TRAFFIC_PROBS,
+    ties: str = "lower",
+) -> np.ndarray:
+    """The colour of each year in the traffic-lights test, 0 green to 3 red: the standardised default rate
+    (D - N p) / sqrt(N p (1 - p)) against Phi^-1 of the cumulative colour probabilities (WP14), with ``ties`` as in
+    :func:`pd_traffic_lights`."""
+    n_a, d_a = check_counts(n, d)
+    pd_a = check_pd(pd)
+    if pd_a.shape != n_a.shape:
+        raise ValueError("one PD per year is required")
+    return _traffic_colours(n_a, d_a, pd_a, np.asarray(probs, dtype=float), ties)[1]
+
+
+def traffic_profile_cdf(t: int, probs: Sequence[float] = WP14_TRAFFIC_PROBS) -> dict[tuple[int, int, int, int], float]:
+    """P(profile <= p) under the multinomial null for every colour profile of ``t`` years (lexicographic order)."""
+    return dict(_traffic_profile_cdf(int(t), tuple(float(v) for v in probs)))
 
 
 @register(
@@ -499,6 +562,7 @@ def pd_traffic_lights(
     pd: Sequence[float],
     *,
     probs: Sequence[float] = WP14_TRAFFIC_PROBS,
+    ties: str = "lower",
     policy: Policy | None = None,
     model_id: str | None = None,
     segment: str | None = None,
@@ -506,27 +570,23 @@ def pd_traffic_lights(
     """Colour each year by its standardised default rate; p = P(colour profile no better than observed).
 
     Profiles are ordered as V = 1000 A_g + 100 A_y + 10 A_o + A_r (WP14), which for any T is the lexicographic
-    order of (A_g, A_y, A_o, A_r); P(V <= v_obs) is computed by exact multinomial enumeration.
+    order of (A_g, A_y, A_o, A_r); P(V <= v_obs) is a lookup in the exact multinomial table.
+
+    ``ties`` decides the colour of a year whose standardised rate sits on a colour boundary (within 1e-12), which
+    happens with positive probability when N p is an integer (a year with exactly the expected number of defaults):
+    ``"lower"`` gives it the better colour, as WP14's printed mapping does (green if x <= Phi^-1(q_g)); ``"upper"``
+    gives it the worse one, which is what WP14's own simulation study must have used: its Tables 7 and 8 are
+    reproduced exactly with ``"upper"`` and not with the printed rule (riskvalidation 0.03.000, the size harness).
     """
     n_a, d_a = check_counts(n, d)
     pd_a = check_pd(pd)
     if pd_a.shape != n_a.shape:
         raise ValueError("one PD per year is required")
     q = np.asarray(probs, dtype=float)
-    if q.shape != (4,) or np.any(q <= 0) or not math.isclose(float(q.sum()), 1.0, abs_tol=1e-12):
-        raise ValueError("probs must be four positive numbers summing to 1")
-    r = (d_a - n_a * pd_a) / np.sqrt(n_a * pd_a * (1.0 - pd_a))
-    cuts = stats.norm.ppf(np.cumsum(q)[:3])
-    colour = np.searchsorted(cuts, r, side="left")  # 0 green, 1 yellow, 2 orange, 3 red
+    r, colour = _traffic_colours(n_a, d_a, pd_a, q, ties)
     counts = tuple(int(np.sum(colour == c)) for c in range(4))
     t = int(n_a.size)
-    p_le = 0.0
-    for a_g in range(t + 1):
-        for a_y in range(t - a_g + 1):
-            for a_o in range(t - a_g - a_y + 1):
-                prof = (a_g, a_y, a_o, t - a_g - a_y - a_o)
-                if prof <= counts:
-                    p_le += float(stats.multinomial.pmf(prof, t, q))
+    p_le = _traffic_profile_cdf(t, tuple(float(v) for v in q))[counts]
     v = 1000 * counts[0] + 100 * counts[1] + 10 * counts[2] + counts[3]
     return make_result(
         "pd.traffic_lights",
@@ -538,8 +598,9 @@ def pd_traffic_lights(
         n_events=int(d_a.sum()),
         model_id=model_id,
         segment=segment,
-        inputs=(n_a, d_a, pd_a, q),
+        inputs=(n_a, d_a, pd_a, q, ties),
         extras={
+            "ties": ties,
             "green": counts[0],
             "yellow": counts[1],
             "orange": counts[2],
@@ -690,5 +751,7 @@ __all__ = [
     "pd_normal_multiperiod",
     "pd_spiegelhalter",
     "pd_traffic_lights",
+    "traffic_light_colours",
+    "traffic_profile_cdf",
 ]
 
