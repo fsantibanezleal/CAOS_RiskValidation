@@ -27,8 +27,9 @@ The harness found, and the unit acted on: the Hosmer-Lemeshow default of G - 2 d
 validation samples (11.7% at 5%), so the default is now G (`fitted=True` for G - 2); WP14's traffic-lights tables come
 from a tie rule opposite to its printed mapping (`ties` option); the chi-square test over grades exceeds its level with
 a grade expecting under one default; the ECB AUC test over-rejects when the development AUC is itself an estimate
-(10.9% at 5% for equal samples); the ECB concentration statistic is bounded and, with ten grades and an initial CV of
-0.6, cannot reject at 5%. Refuted: the PSI with bins at the development sample's deciles keeps the benchmark's size.
+(11.6% at 5% for equal samples), so `auc_initial_variance` adds the estimate's variance (5.4%, RV-317); the ECB concentration statistic is bounded and, with ten grades and an initial CV of
+0.6, cannot reject at 5%, while the chi-square test of homogeneity on the counts
+catches a 5% shift 94.5% of the time (`GradeFrequencies(development_obligors=...)`). Refuted: the PSI with bins at the development sample's deciles keeps the benchmark's size.
 
 Open, for the product: Contraste case C22 runs every defect family over the tests built so far and shows the exact
 size and power of the count tests live.
