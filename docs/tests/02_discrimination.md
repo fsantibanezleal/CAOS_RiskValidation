@@ -69,8 +69,16 @@ difference has about $1 + 1/m$ times the variance the test assumes, and under an
 | 4 times the current | 6.75% | 1.43% | 7.1% |
 | as large as the current | 10.88% | 3.62% | 12.2% |
 
-A validator applying the test to a development AUC measured on a sample of similar size should widen $s$ by the
-development sample's own variance, or read the p-value as an early warning.
+**The extension (0.03.000).** When the development AUC is an estimate on an independent sample, pass its variance (the
+$s^2$ of the development sample) as `auc_initial_variance`; the statistic becomes
+
+$$S = \frac{\mathrm{AUC}_{init} - \mathrm{AUC}_{curr}}{\sqrt{s^2_{curr} + s^2_{init}}},$$
+
+the difference of two independent estimates, and the result's notes state that it extends the ECB formula. Measured on
+the same design (4,000 repetitions): with a development sample as large as the current one the ECB form rejects 11.58%
+of the time at 5% and the extended form 5.42%; with a development sample 0.467 times the current (a 14% calibration
+slice against a 30% holdout) 17.22% against 5.80%; at four times, 5.55% against 3.82%
+(`test_auc_vs_initial_with_an_estimated_development_auc`).
 
 ## DeLong test (`disc.delong`)
 
