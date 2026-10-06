@@ -87,4 +87,6 @@ rejected, and full concentration in a single grade gives $p \approx 0.22$. Measu
 0.60 (`GradeFrequencies`, 2,000 repetitions): moving 5% to 50% of every grade's mass into the modal grade (HI from 0.13
 to 0.58) was rejected in none of the repetitions, at 1,000 and at 5,000 obligors; under the boundary null the size is
 0.0%. Read the index (and its change) descriptively, and test concentration on the obligor counts instead, for example
-with the chi-square test of homogeneity in [stability](04_stability.md).
+with the chi-square test of homogeneity in [stability](04_stability.md): on the same ten grades with 5,000 obligors in
+the development and the current sample, it rejects 94.5% of the time when 5% of the mass moves into the modal grade, and
+every time at 10% (`GradeFrequencies(development_obligors=...)`, 1,000 repetitions).
