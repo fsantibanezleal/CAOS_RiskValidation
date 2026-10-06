@@ -48,14 +48,17 @@ obligors per grade and always with 2,000.
 
 ## 3. Grade frequencies and concentration
 
-`GradeFrequencies(obligors, probabilities, initial)` draws the current grade counts, multinomial, and hands the test the
-development distribution as fixed; `concentrate(p, share)` moves `share` of every grade's mass into the modal grade,
+`GradeFrequencies(obligors, probabilities, initial, development_obligors=None)` draws the current grade counts,
+multinomial, and hands the ECB test the development distribution as fixed; with `development_obligors` it also draws a
+development sample from `initial`, so a two-sample test of the counts runs on the same data; `concentrate(p, share)` moves `share` of every grade's mass into the modal grade,
 $(1 - s)\,p + s\,e_{mode}$, which raises the Herfindahl index. The truth holds the CV and HI of both distributions.
 
 The ECB's concentration test cannot reject in common settings: its statistic
 $S(c) = \sqrt{K-1}\,(c - CV_{init})/(c\sqrt{0.5 + c^2})$ is bounded in the current CV $c$, and with ten grades and an
 initial CV of 0.6 its maximum, 1.094, is below the 5% critical value. Moving half of every grade's mass into the modal
-grade (HI from 0.13 to 0.58) was rejected in none of 2,000 repetitions.
+grade (HI from 0.13 to 0.58) was rejected in none of 2,000 repetitions. The chi-square test of homogeneity on the
+counts sees it: with 5,000 obligors in each sample (1,000 repetitions) it rejects 6.1% of the time with no change and
+9.2%, 23.6%, 94.5% and 100% when 1%, 2%, 5% and 10% of the mass moves into the modal grade.
 
 ![The ECB concentration statistic against the current CV](../assets/hhi-statistic.svg)
 

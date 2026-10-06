@@ -73,6 +73,7 @@ def test_generators_refuse_bad_parameters():
         lambda: TwoSample(10, 10, binning="other"),
         lambda: Migrations((10, 10), ((0.5, 0.6), (0.5, 0.5))),
         lambda: GradeFrequencies(10, (0.5, 0.6)),
+        lambda: GradeFrequencies(10, (0.5, 0.5), development_obligors=0),
         lambda: break_monotonicity(decaying_matrix(4), 2, 1, 2.0),
     ):
         with pytest.raises(ValueError):
@@ -183,6 +184,11 @@ def test_rating_generators_truth():
     assert not gf.truth()["null_holds"] and GradeFrequencies(5000, p).truth()["null_holds"]
     checks = gf.verify(n_draws=2_000)
     assert all(ch.ok() for ch in checks), [ch.to_dict() for ch in checks if not ch.ok()]
+    # a development sample from the initial distribution, for two-sample tests of the counts
+    two = GradeFrequencies(5000, c, p, development_obligors=4000).draw(np.random.default_rng(5))
+    assert two["expected_counts"].sum() == 4000 and np.array_equal(two["actual_counts"], two["freq_current"])
+    one = GradeFrequencies(5000, c, p).draw(np.random.default_rng(5))
+    assert np.array_equal(one["freq_current"], two["freq_current"]) and "expected_counts" not in one
 
 
 def test_nested_lda_truth():
