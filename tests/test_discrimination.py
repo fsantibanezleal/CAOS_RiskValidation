@@ -90,3 +90,17 @@ def test_bootstrap_ci_seeded():
     # stratified: every replicate keeps the observed default count, so the default rate never varies
     lo, hi = bootstrap_ci(lambda sc, yy: float(yy.mean()), s, y, n_boot=100, seed=0)
     assert lo == hi == pytest.approx(y.mean())
+
+
+def test_auc_vs_initial_with_the_development_variance():
+    """The extension: with the development AUC's variance the statistic divides by sqrt(s^2 + s_init^2)."""
+    rng = np.random.default_rng(3)
+    y = np.r_[np.ones(80, dtype=int), np.zeros(920, dtype=int)]
+    risk = np.r_[rng.normal(1.0, 1.0, 80), rng.normal(0.0, 1.0, 920)]
+    ecb = disc_auc_vs_initial(0.78, risk, y)
+    ext = disc_auc_vs_initial(0.78, risk, y, auc_initial_variance=ecb.extras["s2"])
+    assert ext.statistic == pytest.approx(ecb.statistic / math.sqrt(2.0))
+    assert ext.extras["s2_total"] == pytest.approx(2.0 * ecb.extras["s2"]) and "extension" in ext.notes
+    assert ecb.notes == "" and ecb.extras["auc_initial_variance"] == 0.0
+    with pytest.raises(ValueError):
+        disc_auc_vs_initial(0.78, risk, y, auc_initial_variance=-1.0)

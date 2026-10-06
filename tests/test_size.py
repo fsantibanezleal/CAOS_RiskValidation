@@ -90,3 +90,18 @@ def test_chi2_grades_over_rejects_with_few_expected_defaults():
     assert sim.rate(0.01).rate > size_bound(0.01, N_REP)
     text = (ROOT / "docs" / "tests" / "01_pd-calibration.md").read_text(encoding="utf-8")
     assert f"{100 * sim.rate(0.01).rate:.2f}%" in text
+
+
+def test_auc_vs_initial_with_an_estimated_development_auc():
+    """The ECB AUC test treats the development AUC as known; estimated on a sample as large as the current one it
+    over-rejects, and adding the estimate's variance (`auc_initial_variance`) holds the size."""
+
+    def extended(d):
+        return {"auc_initial": d["auc_initial"], "risk": d["risk"], "defaults": d["defaults"],
+                "auc_initial_variance": d["development_auc_variance"]}
+
+    gen = BinormalScores(150, 4850, separation=1.2, development_size=1.0)
+    ecb = simulate("disc.auc_vs_initial", gen, n_rep=N_REP, seed=7410)
+    ext = simulate("disc.auc_vs_initial", gen, n_rep=N_REP, seed=7410, feed=extended)
+    assert ecb.rate(0.05).rate > size_bound(0.05, N_REP) and ecb.rate(0.01).rate > size_bound(0.01, N_REP)
+    assert within_size(ext.rate(0.05), 0.05) and within_size(ext.rate(0.01), 0.01)

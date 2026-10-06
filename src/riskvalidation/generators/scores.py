@@ -134,7 +134,10 @@ class BinormalScores(GeneratorBase):
         if self.development_size is None:
             out["auc_initial"] = self.truth_auc_development
         else:
-            out["auc_initial"] = auc_with_variance(out["development_risk"], out["development_defaults"])[0]
+            auc_dev, s2_dev, _, _ = auc_with_variance(out["development_risk"], out["development_defaults"])
+            out["auc_initial"] = auc_dev
+            # the estimate's variance, for the extended AUC test (feed it as auc_initial_variance)
+            out["development_auc_variance"] = s2_dev
         return out
 
     @property

@@ -27,6 +27,9 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
   and Naranjo (2020) Table 4 (53 of 54, 10,000 runs), Demler, Pencina and D'Agostino (2012) (1 rejection in 1,000);
   the two cells that do not reproduce are listed with their evidence.
 - The size of every registered test with a p-value, measured under its null (`tests/test_size.py`).
+- `disc.auc_vs_initial(auc_initial_variance=...)`: when the development AUC is itself an estimate, its variance is
+  added to the statistic (an extension of the ECB formula, stated in the result); the ECB form rejects 11.6% of the
+  time at 5% with equal development and current samples, the extended form 5.4%.
 - `pd.traffic_lights(ties=...)`: the colour of a year on a boundary; `"lower"` (default) is WP14's printed mapping,
   `"upper"` the rule its own simulation must have used. `traffic_light_colours` and `traffic_profile_cdf` expose the
   colour rule and the profile table.
@@ -50,7 +53,7 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
   summary calls it conservative.
 - The chi-square test over grades exceeds its level when a grade expects under one default.
 - The ECB AUC test treats the development AUC as known; estimated on a sample as large as the current one, it rejects
-  10.9% of the time at the 5% level.
+  10.9% of the time at the 5% level (the extension above holds the size).
 - The ECB concentration statistic is bounded in the current CV: with ten grades and an initial CV of 0.6 it cannot
   reject at 5%, whatever the current distribution.
 - The Jeffreys test's exact size for 1,000 obligors at PD 1% is 1.38% at the 1% level.
