@@ -154,6 +154,17 @@ def test_estimator_performance():
     assert perf["model_se"] == pytest.approx(exact_se, rel=0.01)
     assert abs(perf["empirical_se"] - exact_se) < 4 * perf["empirical_se_mcse"]
     assert abs(perf["coverage"] - 0.95) < 4 * perf["coverage_mcse"]
+    # the MSE (Table 6) and its root: MSE = bias^2 + (n - 1)/n EmpSE^2 exactly; the MSE's Monte Carlo SE is the
+    # standard error of a mean of squared errors; the root's, the delta method's MCSE(MSE) / (2 RMSE)
+    err2 = (est_a - tr["auc_current"]) ** 2
+    n = est_a.size
+    assert perf["mse"] == pytest.approx(err2.mean(), rel=1e-12)
+    assert perf["mse"] == pytest.approx(perf["bias"] ** 2 + (n - 1) / n * perf["empirical_se"] ** 2, rel=1e-9)
+    assert perf["mse_mcse"] == pytest.approx(err2.std(ddof=1) / math.sqrt(n), rel=1e-9)
+    assert perf["rmse"] == pytest.approx(math.sqrt(perf["mse"]), rel=1e-12)
+    assert perf["rmse_mcse"] == pytest.approx(perf["mse_mcse"] / (2 * perf["rmse"]), rel=1e-12)
+    exact = estimator_performance([0.3, 0.3, 0.3], 0.3)
+    assert exact["mse"] == exact["rmse"] == exact["mse_mcse"] == exact["rmse_mcse"] == 0.0
     json.dumps(perf)
 
 

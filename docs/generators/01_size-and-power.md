@@ -99,7 +99,11 @@ simulating.
 `estimator_performance(estimates, truth, model_se=..., lower=..., upper=...)` returns the measures of Morris et al.'s
 Table 6 with their Monte Carlo SEs: bias $\bar\theta - \theta$ (SE $\sqrt{\sum(\hat\theta_i - \bar\theta)^2/(n(n-1))}$),
 empirical SE (SE $\mathrm{EmpSE}/\sqrt{2(n-1)}$), the average model SE and its relative error against the empirical SE,
-and the coverage of an interval (SE $\sqrt{c(1-c)/n}$). On the AUC of binormal scores the ECB standard error averages
+the mean squared error $\overline{(\hat\theta_i - \theta)^2}$ (SE $\sqrt{\sum[(\hat\theta_i - \theta)^2 -
+\mathrm{MSE}]^2/(n(n-1))}$) and its root, and the coverage of an interval (SE $\sqrt{c(1-c)/n}$). Morris et al. favour
+the root mean squared error for being on the scale of the empirical SE (section 5.2) and give no Monte Carlo SE for it;
+the package carries the MSE's to the root by the delta method, $\mathrm{MCSE}(\mathrm{MSE})/(2\,\mathrm{RMSE})$, its
+own step (0.04.002). On the AUC of binormal scores the ECB standard error averages
 the exact one and the normal 95% interval covers 93% to 95% ([discrimination](../tests/02_discrimination.md)).
 
 ## 6. Published simulations reproduced

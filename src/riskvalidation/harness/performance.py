@@ -6,6 +6,11 @@ r"""Performance of an estimator against its known truth, with Monte Carlo standa
 - average model SE $\sqrt{\overline{\widehat{\mathrm{Var}}}}$ and its relative error against the empirical SE,
   Monte Carlo SE
   $100\,(\mathrm{ModSE}/\mathrm{EmpSE})\sqrt{\mathrm{Var}[\widehat{\mathrm{Var}}]/(4n\,\mathrm{ModSE}^4) + 1/(2(n-1))}$;
+- mean squared error $\overline{(\hat\theta_i - \theta)^2}$, Monte Carlo SE
+  $\sqrt{\sum[(\hat\theta_i - \theta)^2 - \mathrm{MSE}]^2/(n(n-1))}$, and its root, which Morris et al. favour
+  for being on the scale of the empirical SE (section 5.2) but give no Monte Carlo SE for: the package carries the
+  MSE's to the root by the delta method, $\mathrm{MCSE}(\mathrm{MSE})/(2\,\mathrm{RMSE})$ (0 when every estimate is
+  exact), and labels it as its own step;
 - coverage of an interval, Monte Carlo SE $\sqrt{c(1-c)/n}$.
 """
 
@@ -28,6 +33,10 @@ def estimator_performance(estimates: Any, truth: float, *, model_se: Any = None,
         raise ValueError("at least two estimates are required")
     mean = float(est.mean())
     emp_se = float(est.std(ddof=1))
+    sq = (est - float(truth)) ** 2
+    mse = float(sq.mean())
+    mse_mcse = math.sqrt(float(np.sum((sq - mse) ** 2)) / (n * (n - 1)))
+    rmse = math.sqrt(mse)
     out: dict[str, Any] = {
         "n": n,
         "truth": float(truth),
@@ -36,6 +45,11 @@ def estimator_performance(estimates: Any, truth: float, *, model_se: Any = None,
         "bias_mcse": emp_se / math.sqrt(n),
         "empirical_se": emp_se,
         "empirical_se_mcse": emp_se / math.sqrt(2.0 * (n - 1)),
+        "mse": mse,
+        "mse_mcse": mse_mcse,
+        "rmse": rmse,
+        # the delta method (the package's step: Morris et al.'s Table 6 stops at the MSE)
+        "rmse_mcse": mse_mcse / (2.0 * rmse) if rmse > 0.0 else 0.0,
     }
     if model_se is not None:
         var = np.asarray(model_se, dtype=float) ** 2
