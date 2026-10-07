@@ -9,9 +9,9 @@ Requirements: [`requirements.md`](requirements.md). Research: Contraste dossier 
 | `riskvalidation.transitions.estimators` | `cohort(counts, withdrawals="exclude" or "state")`, `pooled_cohort(counts_by_period)`, `duration_generator(paths)`, `aalen_johansen(paths, s, t)` |
 | `riskvalidation.transitions.embedding` | `log_series(P)`, `embedding_diagnostics(P)` (S, the three Theorem 3 conditions, stochastic monotonicity), `generator(P, method="diagonal" or "weighted" or "jlt")`, `l1_distance(P, Q, t=1)` |
 | `riskvalidation.transitions.em` | `em_generator(counts_by_step, dt, q0=None, tol, max_iter)` returning the generator, the log-likelihood path and the expected jumps and holding times |
-| `riskvalidation.transitions.intervals` | `pd_wald(defaults, firm_years)`, `pd_jeffreys(defaults, n)`, `pd_bootstrap(q, n_by_grade, horizon, n_boot, rng)` |
+| `riskvalidation.transitions.intervals` | `pd_wald(defaults, n, rho=0, trials=None)`, `pd_agresti_coull(defaults, n, rho=0, trials=None)`, `effective_n(n, rho, trials)` (Schuermann and Hanson's (3.4)), `pd_jeffreys(defaults, n)`, `pd_bootstrap(paths, n_states, method="resample" or "parametric", horizon, n_boot, seed)` |
 | `riskvalidation.transitions.mobility` | `svd_mobility(P)`, `trace_mobility(P)` |
-| `riskvalidation.transitions.ttc` | `ttc_portfolio(T, origination)`, `project(T, w0, origination, years)` |
+| `riskvalidation.transitions.ttc` | `ttc_portfolio(T, origination)`, `project(T, w0, origination, years)` (one matrix or one per year), `propagation_matrix(T, origination)`, `is_primitive(A)` |
 | `riskvalidation.validation.transitions` | the registered tests `rating.time_homogeneity`, `rating.markov_order`, `rating.matrix_reference`, `rating.momentum` |
 | `riskvalidation.generators.paths` | `RatingPaths` (paths, snapshots, truth, verifier) |
 
@@ -52,4 +52,10 @@ checks.
 
 Israel, Rosenthal and Wei (2001) section 4: the paper's PDF in the device data root (`RISKVALIDATION_DATA`), read and
 checked against its print (the matrices' rows, the nine distances); the test skips without it (dossier 13, item 6 of
-its open list).
+its open list). Engelmann (2024) section 4 the same way (`engelmann-2024/2401.08892v1.pdf`): the matrix (11) is a
+rating agency's data reprinted from Trueck and Rachev (2009). Schuermann and Hanson (2004) Table 5 carries no data,
+only results (twelve interval bounds and lengths for 531 obligors), so its printed values are in the test.
+
+A printed matrix rounds its rows (Engelmann's (11) sums to 1 +- 0.0001): the TTC module keeps it as printed and holds
+the balance at one by rescaling the portfolio each period, the paper's step 5; renormalising the rows instead misses
+two printed entries of the TTC portfolio by 0.0002.
