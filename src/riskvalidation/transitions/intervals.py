@@ -26,6 +26,12 @@ published as Hanson and Schuermann 2006, Journal of Banking and Finance 30(8), 2
 Jeffreys: the equal-tailed interval of the Beta(D + 1/2, N - D + 1/2) posterior, with the lower bound 0 when D = 0
 and the upper bound 1 when D = N (Brown, Cai and DasGupta 2001, doi:10.1214/ss/1009213286, as defined in Zhou, Li and
 Yang 2008, doi:10.1098/rsta.2008.0037, Appendix C), the posterior of the ECB's Jeffreys test (``pd.jeffreys``).
+
+Exact properties of the analytical intervals for a binomial count (independent defaults), finite sums over the count
+and therefore exact, never simulated: the coverage $C(p) = \sum_{d=0}^{N}\binom{N}{d}p^d(1-p)^{N-d}\,1\{p \in CI(d)\}$
+and the expected length (``exact_coverage``), and the probability that the intervals of two grades overlap
+(``overlap_probability``), the measure of Schuermann and Hanson's finding that investment-grade PDs "cannot be
+distinguished" at the notch level.
 """
 
 from __future__ import annotations
@@ -237,4 +243,64 @@ def pd_bootstrap(paths: Mapping[str, Any], n_states: int, *, method: str = "resa
     return out
 
 
-__all__ = ["effective_n", "pd_agresti_coull", "pd_bootstrap", "pd_jeffreys", "pd_wald"]
+#: the analytical intervals ``exact_coverage`` and ``overlap_probability`` enumerate
+INTERVALS = {"wald": pd_wald, "agresti_coull": pd_agresti_coull, "jeffreys": pd_jeffreys}
+
+
+def _bounds(method: str, n: int, level: float) -> tuple[np.ndarray, np.ndarray]:
+    """The interval of every count 0 to n of n obligors (independent defaults: no dependence correction)."""
+    if method not in INTERVALS:
+        raise ValueError(f"unknown interval {method!r}: one of {sorted(INTERVALS)}")
+    if isinstance(n, bool) or int(n) != n or n < 1:
+        raise ValueError("n must be a positive whole number of obligors")
+    n = int(n)
+    r = INTERVALS[method](np.arange(n + 1, dtype=float), np.full(n + 1, float(n)), level=level)
+    return np.asarray(r["lower"], dtype=float), np.asarray(r["upper"], dtype=float)
+
+
+def _pds(pd: Any) -> tuple[np.ndarray, bool]:
+    p = np.asarray(pd, dtype=float)
+    scalar = p.ndim == 0
+    p = np.atleast_1d(p)
+    if not np.all(np.isfinite(p)) or np.any(p < 0.0) or np.any(p > 1.0):
+        raise ValueError("a true PD must lie in [0, 1]")
+    return p, scalar
+
+
+def exact_coverage(method: str, n: int, pd: Any, *, level: float = 0.95) -> dict[str, Any]:
+    """The exact coverage and expected length of ``method``'s interval for ``n`` obligors whose defaults are
+    independent with probability ``pd`` (a scalar or an array of true PDs, one result each): sums over the binomial
+    count 0 to n. ``method`` is ``"wald"``, ``"agresti_coull"`` or ``"jeffreys"``."""
+    lo, hi = _bounds(method, n, level)
+    p, scalar = _pds(pd)
+    pmf = stats.binom.pmf(np.arange(lo.size)[None, :], lo.size - 1, p[:, None])  # true PD x count
+    inside = (lo[None, :] <= p[:, None]) & (p[:, None] <= hi[None, :])
+    coverage = (pmf * inside).sum(axis=1)
+    length = pmf @ (hi - lo)
+
+    def pick(a: np.ndarray) -> Any:
+        return float(a[0]) if scalar else a
+
+    return {"method": method, "n": int(n), "level": level, "pd": pick(p), "coverage": pick(coverage),
+            "expected_length": pick(length), "reference": "exact: the binomial count enumerated, independent defaults"}
+
+
+def overlap_probability(method: str, n: int, pd_a: float, pd_b: float, *, level: float = 0.95,
+                        n_b: int | None = None) -> float:
+    """The probability that the intervals of two grades overlap: grade a with ``n`` obligors and true PD ``pd_a``,
+    grade b with ``n_b`` (default ``n``) and ``pd_b``, their defaults independent, summed exactly over every pair of
+    counts. Near 1 for two grades whose PDs the intervals cannot tell apart at these sizes."""
+    lo_a, hi_a = _bounds(method, n, level)
+    lo_b, hi_b = (lo_a, hi_a) if n_b is None or n_b == n else _bounds(method, n_b, level)
+    pa, _ = _pds(pd_a)
+    pb, _ = _pds(pd_b)
+    if pa.size != 1 or pb.size != 1:
+        raise ValueError("overlap_probability takes one true PD per grade")
+    pmf_a = stats.binom.pmf(np.arange(lo_a.size), lo_a.size - 1, pa[0])
+    pmf_b = stats.binom.pmf(np.arange(lo_b.size), lo_b.size - 1, pb[0])
+    meet = (lo_a[:, None] <= hi_b[None, :]) & (lo_b[None, :] <= hi_a[:, None])
+    return float(pmf_a @ meet.astype(float) @ pmf_b)
+
+
+__all__ = ["INTERVALS", "effective_n", "exact_coverage", "overlap_probability", "pd_agresti_coull", "pd_bootstrap",
+           "pd_jeffreys", "pd_wald"]

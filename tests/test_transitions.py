@@ -262,9 +262,32 @@ def test_pd_intervals():
     for (n, p), covs in expected.items():
         d = np.arange(n + 1)
         weight = stats.binom.pmf(d, n, p)
-        for f, c in zip((iv.pd_wald, iv.pd_agresti_coull, iv.pd_jeffreys), covs, strict=True):
+        for (name, f), c in zip(iv.INTERVALS.items(), covs, strict=True):
             r = f(d, np.full(n + 1, n))
-            assert float(np.sum(weight * ((r["lower"] <= p) & (p <= r["upper"])))) == pytest.approx(c, abs=5e-5)
+            by_hand = float(np.sum(weight * ((r["lower"] <= p) & (p <= r["upper"]))))
+            ex = iv.exact_coverage(name, n, p)
+            assert ex["coverage"] == pytest.approx(by_hand, rel=1e-12) == pytest.approx(c, abs=5e-5)
+            assert ex["expected_length"] == pytest.approx(float(weight @ (r["upper"] - r["lower"])), rel=1e-12)
+    # vectorised over true PDs; a PD of 0 is covered only by an interval that reaches 0 at no default
+    many = iv.exact_coverage("jeffreys", 200, [0.0, 0.005, 0.02])
+    assert many["coverage"].shape == (3,) and many["coverage"][0] == 1.0
+    assert iv.exact_coverage("wald", 200, 0.0)["coverage"] == 1.0  # the Wald interval at d = 0 is [0, 0]
+    # the overlap of two grades' intervals: symmetric, the double sum by hand, near 1 for close PDs, 0 for far ones
+    jb = iv.pd_jeffreys(np.arange(51.0), np.full(51, 50.0))
+    lo, hi = jb["lower"], jb["upper"]
+    pa, pb = stats.binom.pmf(np.arange(51), 50, 0.01), stats.binom.pmf(np.arange(51), 50, 0.03)
+    by_hand = sum(pa[i] * pb[j] for i in range(51) for j in range(51) if lo[i] <= hi[j] and lo[j] <= hi[i])
+    assert iv.overlap_probability("jeffreys", 50, 0.01, 0.03) == pytest.approx(by_hand, rel=1e-12)
+    assert iv.overlap_probability("jeffreys", 50, 0.03, 0.01) == pytest.approx(by_hand, rel=1e-12)
+    assert iv.overlap_probability("jeffreys", 1000, 0.0002, 0.0005) > 0.99  # two investment grades: inseparable
+    assert iv.overlap_probability("jeffreys", 1000, 0.01, 0.2) < 1e-12
+    assert iv.overlap_probability("wald", 100, 0.02, 0.05, n_b=400) == pytest.approx(
+        iv.overlap_probability("wald", 400, 0.05, 0.02, n_b=100), rel=1e-12)
+    for bad in ((lambda: iv.exact_coverage("score", 10, 0.1)), (lambda: iv.exact_coverage("wald", 0, 0.1)),
+                (lambda: iv.exact_coverage("wald", 10, 1.5)), (lambda: iv.exact_coverage("wald", 10.5, 0.1)),
+                (lambda: iv.overlap_probability("jeffreys", 10, [0.1, 0.2], 0.1))):
+        with pytest.raises(ValueError):
+            bad()
     # the bootstraps of the duration PD: both cover the truth in every grade of this draw, with similar errors
     d = RatingPaths(Q6, (2000,) * 5, horizon=3.0).draw(np.random.default_rng(41))
     truth = expm(Q6)[:5, -1]

@@ -82,6 +82,17 @@ happens with probability $(1 - p)^N \approx e^{-1}$. The best grades of a CEREP 
 is every low-default portfolio. Agresti-Coull and Jeffreys hold near their level across the range, with the sawtooth a
 discrete count imposes. None of the three accounts for default correlation; (3.4) does, given a $\rho$.
 
+`exact_coverage(method, n, pd, level=0.95)` computes the sum above and the expected length $\sum_d \Pr(d)\,|CI(d)|$
+for one or many true PDs, for `"wald"`, `"agresti_coull"` or `"jeffreys"` (independent defaults: the count is
+binomial). Whether two adjacent grades can be told apart is the same kind of sum over two independent counts:
+
+$$\Pr[\text{overlap}] = \sum_{d_a=0}^{N_a} \sum_{d_b=0}^{N_b} \Pr(d_a)\Pr(d_b)\,
+1\{L(d_a) \le U(d_b),\ L(d_b) \le U(d_a)\},$$
+
+`overlap_probability(method, n, pd_a, pd_b, n_b=None, level=0.95)`. At 1,000 obligors per grade the Jeffreys intervals
+of PDs of 2bp and 5bp overlap with probability above 0.99: Schuermann and Hanson's finding that "it is impossible to
+distinguish notch-level PDs for investment grade ratings" is a property of the counts, before any data.
+
 ## 5. Bootstrap of the duration PD
 
 "As it is not clear how to obtain asymptotic expressions for $\widehat{PD}_R$ obtained via the duration or hazard
