@@ -4,6 +4,20 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.04.003] - 2026-10-07
+
+### Fixed
+
+- `generators.paths.RatingPaths` refuses a generator with a non-finite rate. Its checks compared entries, and every
+  comparison is False on NaN: a NaN rate passed and made a draw run without end; an infinite rate balancing an
+  infinite diagonal passed the row sums. Found by the adversarial review of Contraste's case C04.
+
+### Documented
+
+- `docs/transitions/03_markov-tests.md`: which form of the order test holds its size depends on the design, measured on
+  two seven-grade chains (Contraste C04's S&P-like chain: the chi-square over-rejects, the likelihood ratio holds; a
+  hand-made chain: the reverse at 5%). The default stays the chi-square, chosen on the size study's chain.
+
 ## [0.04.002] - 2026-10-07
 
 ### Added
