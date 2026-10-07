@@ -9,8 +9,11 @@
   2013); theme-aware.
 - docs/assets/binomial-true-size.svg, traffic-lights-ties.svg, hhi-statistic.svg (exact), size-of-every-test.svg and
   published-reproductions.svg (the harness on the suite's own scenarios and seeds, a few minutes): U3; theme-aware.
+- docs/assets/transition-estimators.svg, markov-test-forms.svg (the harness at the size study's seeds),
+  markov-test-power.svg (the harness against planted momentum and a recession regime), interval-coverage.svg (exact),
+  ttc-drift.svg, rating-momentum.svg: U4, on the size study's Markov chain; theme-aware.
 
-Usage: python scripts/make_doc_figures.py
+Usage: python scripts/make_doc_figures.py [figure.svg ...] (only the computed U3 and U4 figures named; all by default)
 """
 
 from __future__ import annotations
@@ -450,10 +453,8 @@ def size_of_every_test_svg() -> str:
 
     size, _ = _u3_imports()
     rows = []
-    seed = 5000
     for tid, (gen, feed, kw) in sorted(size.NULL_SCENARIOS.items()):
-        seed += 1
-        sim = simulate(tid, gen, n_rep=size.N_REP, seed=seed, feed=feed, test_kwargs=kw)
+        sim = simulate(tid, gen, n_rep=size.N_REP, seed=size.SEEDS[tid], feed=feed, test_kwargs=kw)
         rows.append((tid, sim.rate(0.05)))
     extra = [
         ("pd.hosmer_lemeshow, fitted=True (G - 2)", simulate("pd.hosmer_lemeshow", LogisticPortfolio(n=5000),
@@ -691,21 +692,386 @@ def hhi_statistic_svg() -> str:
     return "\n".join(out) + "\n"
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# U4: rating transitions, drawn by the package on its own generator (the size study's Markov chain, no agency data)
+
+
+def _q6() -> np.ndarray:
+    size, _ = _u3_imports()
+    return np.asarray(size.Q6, dtype=float)
+
+
+def transition_estimators_svg() -> str:
+    from scipy.linalg import expm
+
+    from riskvalidation.generators.paths import RatingPaths
+    from riskvalidation.transitions.estimators import cohort, duration_generator
+
+    q = _q6()
+    truth = expm(q)[:5, -1]
+    gen = RatingPaths(q, (1000,) * 5, horizon=1.0, snapshots=(0.0, 1.0))
+    rng = np.random.default_rng(2026)
+    n_years = 1000
+    coh = np.empty((n_years, 5))
+    dur = np.empty((n_years, 5))
+    for y in range(n_years):
+        d = gen.draw(rng)
+        coh[y] = cohort(d["steps"][0]["counts"], d["steps"][0]["withdrawn"])["matrix"][:5, -1]
+        dur[y] = expm(duration_generator(d["segments"], 6)["generator"])[:5, -1]
+    w, h = 1000, 470
+    out = _open(w, h, "Cohort against duration PDs by grade on a known generator",
+                "One-year PD by grade estimated from 1,000 simulated years of 1,000 obligors per grade: the median "
+                "and the 5% to 95% range of the cohort and duration estimates against the true PD (log scale), and "
+                "the share of years in which each estimate is exactly zero.")
+    out.append('  <text class="t" x="24" y="28">One-year PD by grade, 1,000 obligors per grade, 1,000 simulated years '
+               '(generator known)</text>')
+    # left: PD by grade on a log scale
+    x0, top, pw, ph = 84, 64, 520, 300
+    lo_e, hi_e = -6.0, 0.0  # 1e-6 to 1
+    zero_y = top + ph + 22  # an estimate of exactly zero has no place on a log scale: its own row below
+    fx = lambda g: x0 + (g + 0.5) / 5 * pw  # noqa: E731
+    fy = lambda v: zero_y if v <= 0 else top + ph - (np.log10(max(v, 10**lo_e)) - lo_e) / (hi_e - lo_e) * ph  # noqa: E731
+    out.append(f'  <rect class="pn" x="{x0}" y="{top}" width="{pw}" height="{ph}"/>')
+    out.append(f'  <line class="ref" x1="{x0}" x2="{x0 + pw}" y1="{zero_y}" y2="{zero_y}"/>')
+    out.append(f'  <text class="k" x="{x0 - 6}" y="{zero_y + 4}" text-anchor="end">0</text>')
+    for e in range(int(lo_e), int(hi_e) + 1):
+        y = fy(10.0**e)
+        out.append(f'  <line class="grid" x1="{x0}" x2="{x0 + pw}" y1="{y:.1f}" y2="{y:.1f}"/>')
+        label = {-6: "0.01bp", -5: "0.1bp", -4: "1bp", -3: "10bp", -2: "1%", -1: "10%", 0: "100%"}[e]
+        out.append(f'  <text class="k" x="{x0 - 6}" y="{y + 4:.1f}" text-anchor="end">{label}</text>')
+    for g in range(5):
+        out.append(f'  <text class="k" x="{fx(g):.1f}" y="{zero_y + 22}" text-anchor="middle">grade {g + 1}</text>')
+    pts = " ".join(f"{fx(g):.1f},{fy(truth[g]):.1f}" for g in range(5))
+    out.append(f'  <polyline class="l0" points="{pts}"/>')
+    for off, est, cls in ((-12, coh, "1"), (12, dur, "2")):
+        for g in range(5):
+            lo, med, hi = np.quantile(est[:, g], [0.05, 0.5, 0.95])
+            x = fx(g) + off
+            out.append(f'  <line class="l{cls}" x1="{x:.1f}" x2="{x:.1f}" y1="{fy(hi):.1f}" y2="{fy(lo):.1f}" '
+                       'stroke-width="3"/>')
+            out.append(f'  <circle class="p{cls}" cx="{x:.1f}" cy="{fy(med):.1f}" r="4.5"/>')
+    _legend(out, x0, h - 30, "l0", "true PD")
+    _legend(out, x0 + 130, h - 30, "p1", "cohort: median, 5% to 95%", dot=True)
+    _legend(out, x0 + 360, h - 30, "p2", "duration: median, 5% to 95%", dot=True)
+    # right: share of years with a zero estimate
+    x1, pw2 = 680, 280
+    fy2 = lambda v: top + ph - v * ph  # noqa: E731
+    out.append(f'  <rect class="pn" x="{x1}" y="{top}" width="{pw2}" height="{ph}"/>')
+    out.append(f'  <text class="s" x="{x1}" y="{top - 10}">share of years with a zero PD estimate</text>')
+    out.append(f'  <text class="k" x="{x1 + pw2 - 8}" y="{top + 18}" text-anchor="end">the duration estimate is never '
+               'zero</text>')
+    for v in (0.0, 0.25, 0.5, 0.75, 1.0):
+        out.append(f'  <line class="grid" x1="{x1}" x2="{x1 + pw2}" y1="{fy2(v):.1f}" y2="{fy2(v):.1f}"/>')
+        out.append(f'  <text class="k" x="{x1 - 6}" y="{fy2(v) + 4:.1f}" text-anchor="end">{100 * v:.0f}%</text>')
+    bw = pw2 / 5
+    for g in range(5):
+        for k, (est, cls) in enumerate(((coh, "p1"), (dur, "p2"))):
+            share = float(np.mean(est[:, g] == 0.0))
+            x = x1 + g * bw + 10 + k * (bw - 20) / 2
+            out.append(f'  <rect class="{cls}" x="{x:.1f}" y="{fy2(share):.1f}" width="{(bw - 20) / 2 - 2:.1f}" '
+                       f'height="{top + ph - fy2(share):.1f}"/>')
+            if share > 0:
+                out.append(f'  <text class="k" x="{x + (bw - 20) / 4:.1f}" y="{fy2(share) - 4:.1f}" '
+                           f'text-anchor="middle">{100 * share:.0f}%</text>')
+        out.append(f'  <text class="k" x="{x1 + (g + 0.5) * bw:.1f}" y="{top + ph + 18}" text-anchor="middle">'
+                   f'grade {g + 1}</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+MARKOV_FORMS = [
+    ("rating.time_homogeneity", {}, "time homogeneity, chi-square (3.8), default"),
+    ("rating.time_homogeneity", {"form": "lr"}, "time homogeneity, likelihood ratio (3.5)"),
+    ("rating.markov_order", {}, "order, grouped by direction, chi-square, default"),
+    ("rating.markov_order", {"form": "lr"}, "order, grouped by direction, likelihood ratio"),
+    ("rating.markov_order", {"grouping": "none"}, "order, full table, chi-square (3.14)"),
+    ("rating.markov_order", {"grouping": "none", "form": "lr"}, "order, full table, likelihood ratio (3.12)"),
+    ("rating.matrix_reference", {}, "reference matrix, likelihood ratio, default"),
+    ("rating.matrix_reference", {"form": "chi2"}, "reference matrix, chi-square (3.1) as printed"),
+    ("rating.momentum", {}, "momentum, downward, default"),
+    ("rating.momentum", {"direction": "up"}, "momentum, upward"),
+]
+
+
+def markov_test_forms_svg() -> str:
+    from riskvalidation.harness import simulate, size_bound
+
+    size, _ = _u3_imports()
+    rows = []
+    for tid, kw, label in MARKOV_FORMS:
+        gen, feed, base = size.NULL_SCENARIOS[tid]
+        sim = simulate(tid, gen, n_rep=size.N_REP, seed=size.SEEDS[tid], feed=feed, test_kwargs={**base, **kw})
+        rows.append((label, sim.rate(0.05), sim.rate(0.01)))
+    b5, b1 = size_bound(0.05, size.N_REP), size_bound(0.01, size.N_REP)
+    w, ml, mr, mt, row_h = 1000, 360, 150, 70, 26
+    h = mt + row_h * len(rows) + 70
+    x_max = 0.15
+    fx = lambda v: ml + min(v, x_max) / x_max * (w - ml - mr)  # noqa: E731
+    out = _open(w, h, "Size of every form of the four transition tests",
+                "Rejection rate at the 5% level of each form of the time-homogeneity, order, reference-matrix and "
+                "momentum tests on a Markov chain (the null), 4,000 repetitions with 95% Wilson intervals; the "
+                "default forms hold the bound, three printed forms do not.")
+    out.append('  <text class="t" x="24" y="28">Rejection rate under the null at the 5% level (dot) and the 1% level '
+               '(ring), 4,000 repetitions</text>')
+    for xv in (0.0, 0.025, 0.05, 0.075, 0.10, 0.125, 0.15):
+        out.append(f'  <line class="grid" x1="{fx(xv):.1f}" x2="{fx(xv):.1f}" y1="{mt - 10}" y2="{h - 58}"/>')
+        out.append(f'  <text class="k" x="{fx(xv):.1f}" y="{h - 40}" text-anchor="middle">{100 * xv:g}%</text>')
+    for v, lab, cls in ((0.05, "5%", "ref"), (0.01, "1%", "ref")):
+        out.append(f'  <line class="{cls}" x1="{fx(v):.1f}" x2="{fx(v):.1f}" y1="{mt - 10}" y2="{h - 58}"/>')
+        out.append(f'  <text class="k" x="{fx(v):.1f}" y="{mt - 16}" text-anchor="middle">{lab}</text>')
+    for v in (b5, b1):
+        out.append(f'  <line class="l3 dash" x1="{fx(v):.1f}" x2="{fx(v):.1f}" y1="{mt - 10}" y2="{h - 58}" '
+                   'stroke-width="1.4"/>')
+    out.append(f'  <text class="k" x="{w - 18}" y="{mt - 16}" text-anchor="end">at 5% / at 1%</text>')
+    for i, (label, r5, r1) in enumerate(rows):
+        y = mt + row_h * i + 8
+        bad = r5.rate > b5 or r1.rate > b1
+        lo, hi = r5.interval
+        out.append(f'  <text class="s" x="{ml - 10}" y="{y + 4}" text-anchor="end">{label}</text>')
+        out.append(f'  <line class="l0" x1="{fx(lo):.1f}" x2="{fx(hi):.1f}" y1="{y}" y2="{y}" stroke-width="1.4"/>')
+        out.append(f'  <circle class="{"p3" if bad else "p1"}" cx="{fx(r5.rate):.1f}" cy="{y}" r="4.5"/>')
+        out.append(f'  <circle class="hollow" cx="{fx(r1.rate):.1f}" cy="{y}" r="4.5"/>')
+        out.append(f'  <text class="k" x="{w - 18}" y="{y + 4}" text-anchor="end">{100 * r5.rate:.2f}% / '
+                   f'{100 * r1.rate:.2f}%</text>')
+    _legend(out, ml, h - 16, "p1", "within the bound", dot=True)
+    _legend(out, ml + 170, h - 16, "p3", "above the bound", dot=True)
+    out.append(f'  <line class="l3 dash" x1="{ml + 340}" x2="{ml + 368}" y1="{h - 16}" y2="{h - 16}"/>')
+    out.append(f'  <text class="s" x="{ml + 374}" y="{h - 12}">bounds {100 * b5:.2f}% and {100 * b1:.2f}%</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def interval_coverage_svg() -> str:
+    from riskvalidation.transitions.intervals import pd_agresti_coull, pd_jeffreys, pd_wald
+
+    n = 200
+    ps = np.linspace(0.001, 0.06, 237)
+    d = np.arange(n + 1)
+    nn = np.full(n + 1, n)
+    curves = []
+    for f, cls, label in ((pd_wald, "l3", "Wald (2.2)"), (pd_agresti_coull, "l1", "Agresti-Coull (3.3)"),
+                          (pd_jeffreys, "l2", "Jeffreys")):
+        r = f(d, nn)
+        cov = [float(np.sum(stats.binom.pmf(d, n, p) * ((r["lower"] <= p) & (p <= r["upper"])))) for p in ps]
+        curves.append((cls, label, cov))
+    w, h, ml, mr, mt, mb = 900, 420, 70, 220, 52, 56
+    y_lo, y_hi = 0.0, 1.0
+    fx = lambda p: ml + (p - ps[0]) / (ps[-1] - ps[0]) * (w - ml - mr)  # noqa: E731
+    fy = lambda v: h - mb - (max(v, y_lo) - y_lo) / (y_hi - y_lo) * (h - mt - mb)  # noqa: E731
+    out = _open(w, h, "Exact coverage of three 95% intervals for a PD",
+                "Coverage probability, computed exactly by enumerating the binomial, of the Wald, Agresti-Coull and "
+                "Jeffreys 95% intervals for a grade of 200 obligors, against the true PD from 0.1% to 6%.")
+    out.append(f'  <text class="t" x="{ml}" y="30">Exact coverage of a nominal 95% interval, N = 200 obligors</text>')
+    for v in (0.0, 0.2, 0.4, 0.6, 0.8, 1.0):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(v):.1f}" y2="{fy(v):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(v) + 4:.1f}" text-anchor="end">{100 * v:.0f}%</text>')
+    for p in (0.01, 0.02, 0.03, 0.04, 0.05, 0.06):
+        out.append(f'  <line class="grid" x1="{fx(p):.1f}" x2="{fx(p):.1f}" y1="{mt}" y2="{h - mb}"/>')
+        out.append(f'  <text class="k" x="{fx(p):.1f}" y="{h - mb + 18}" text-anchor="middle">{100 * p:.0f}%</text>')
+    out.append(f'  <line class="ref" x1="{ml}" x2="{w - mr}" y1="{fy(0.95):.1f}" y2="{fy(0.95):.1f}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">true PD (expected '
+               'defaults = 200 x PD)</text>')
+    for i, (cls, label, cov) in enumerate(curves):
+        pts = " ".join(f"{fx(p):.1f},{fy(c):.1f}" for p, c in zip(ps, cov, strict=True))
+        out.append(f'  <polyline class="{cls}" points="{pts}" stroke-width="1.6"/>')
+        _legend(out, w - mr + 16, mt + 20 + 26 * i, cls, label)
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 20 + 26 * 3 + 6}">dashed grey: 95%</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def ttc_drift_svg() -> str:
+    from scipy.linalg import expm
+
+    from riskvalidation.transitions.ttc import project
+
+    p = expm(_q6())
+    o = [0.0, 0.3, 0.4, 0.3, 0.0]
+    years = 40
+    starts = [([1.0, 0, 0, 0, 0], "l1", "all in grade 1"), ([0, 0, 0, 0, 1.0], "l3", "all in grade 5"),
+              ([0, 0.3, 0.4, 0.3, 0], "l2", "the origination mix"), ([0.2] * 5, "l4 dash", "uniform")]
+    paths = [(project(p, s, o, years), cls, label) for s, cls, label in starts]
+    ttc_pd = paths[0][0]["ttc"]["default_rate"]
+    w, h, ml, mr, mt, mb = 900, 420, 70, 230, 52, 56
+    y_max = 0.20
+    fx = lambda t: ml + t / (years - 1) * (w - ml - mr)  # noqa: E731
+    fy = lambda v: h - mb - min(v, y_max) / y_max * (h - mt - mb)  # noqa: E731
+    out = _open(w, h, "Projected portfolio default rate under an unstressed matrix",
+                "Default rate of four starting portfolios projected under the same one-year matrix with defaults "
+                "re-originated (Engelmann's propagation): every path converges to the TTC portfolio's default rate, "
+                "and none of the movement comes from a scenario.")
+    out.append(f'  <text class="t" x="{ml}" y="30">Portfolio default rate by year, one unstressed matrix, defaults '
+               're-originated</text>')
+    for v in (0.0, 0.04, 0.08, 0.12, 0.16, 0.20):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(v):.1f}" y2="{fy(v):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(v) + 4:.1f}" text-anchor="end">{100 * v:.0f}%</text>')
+    for year in (1, 5, 10, 15, 20, 25, 30, 35, 40):
+        out.append(f'  <text class="k" x="{fx(year - 1):.1f}" y="{h - mb + 18}" text-anchor="middle">{year}</text>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">projection '
+               'year</text>')
+    out.append(f'  <line class="ref" x1="{ml}" x2="{w - mr}" y1="{fy(ttc_pd):.1f}" y2="{fy(ttc_pd):.1f}"/>')
+    for i, (pr, cls, label) in enumerate(paths):
+        pts = " ".join(f"{fx(t):.1f},{fy(v):.1f}" for t, v in enumerate(pr["default_rate"]))
+        out.append(f'  <polyline class="{cls}" points="{pts}"/>')
+        _legend(out, w - mr + 16, mt + 20 + 26 * i, cls, label)
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 20 + 26 * 4 + 6}">dashed grey: the TTC portfolio, '
+               f'{100 * ttc_pd:.2f}%</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def rating_momentum_svg() -> str:
+    q = _q6()
+    exit_rate = -np.diag(q)
+    alpha, beta = 1.0, 1.0
+    # an illustrative history: grade 2 from 0, downgraded to 3 at 1.0 and to 4 at 1.8, upgraded to 3 at 3.4
+    moves = [(0.0, 1), (1.0, 2), (1.8, 3), (3.4, 2)]
+    downs = [1.0, 1.8]
+    ts = np.linspace(0.0, 5.0, 1001)
+    state = np.array([[s for t0, s in moves if t0 <= t][-1] for t in ts])
+    base = exit_rate[state]
+    exc = np.zeros_like(ts)
+    for tau in downs:
+        exc += np.where(ts >= tau, beta * alpha * np.exp(-beta * (ts - tau)), 0.0)
+    w, h, ml, mr, mt, mb = 900, 400, 70, 250, 52, 56
+    y_max = 2.6
+    fx = lambda t: ml + t / 5.0 * (w - ml - mr)  # noqa: E731
+    fy = lambda v: h - mb - min(v, y_max) / y_max * (h - mt - mb)  # noqa: E731
+    out = _open(w, h, "A self-exciting downgrade intensity",
+                "The intensity of an obligor's next transition in dos Reis, Pfeuffer and Smith's momentum model: the "
+                "Markov baseline of its current grade plus a term that jumps by beta times alpha at each downgrade and "
+                "decays at rate beta (alpha = beta = 1 here).")
+    out.append(f'  <text class="t" x="{ml}" y="30">Intensity of the next transition, baseline plus momentum '
+               '(alpha = beta = 1)</text>')
+    for v in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5):
+        out.append(f'  <line class="grid" x1="{ml}" x2="{w - mr}" y1="{fy(v):.1f}" y2="{fy(v):.1f}"/>')
+        out.append(f'  <text class="k" x="{ml - 8}" y="{fy(v) + 4:.1f}" text-anchor="end">{v:g}</text>')
+    for t in range(6):
+        out.append(f'  <text class="k" x="{fx(t):.1f}" y="{h - mb + 18}" text-anchor="middle">{t}</text>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{w - mr}" y1="{h - mb}" y2="{h - mb}"/>')
+    out.append(f'  <line class="ax" x1="{ml}" x2="{ml}" y1="{mt}" y2="{h - mb}"/>')
+    out.append(f'  <text class="s" x="{(ml + w - mr) / 2:.0f}" y="{h - 14}" text-anchor="middle">years</text>')
+    pts_b = " ".join(f"{fx(t):.1f},{fy(v):.1f}" for t, v in zip(ts, base, strict=True))
+    pts_t = " ".join(f"{fx(t):.1f},{fy(v):.1f}" for t, v in zip(ts, base + exc, strict=True))
+    out.append(f'  <polyline class="l2 dash" points="{pts_b}"/>')
+    out.append(f'  <polyline class="l1" points="{pts_t}"/>')
+    for t0, s in moves[1:]:
+        kind = "down" if t0 in downs else "up"
+        out.append(f'  <line class="ref" x1="{fx(t0):.1f}" x2="{fx(t0):.1f}" y1="{mt}" y2="{h - mb}"/>')
+        out.append(f'  <text class="k" x="{fx(t0) + 4:.1f}" y="{mt + 12}">{kind} to {s + 1}</text>')
+    _legend(out, w - mr + 16, mt + 20, "l1", "total intensity")
+    _legend(out, w - mr + 16, mt + 46, "l2 dash", "Markov baseline q_i")
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 80}">each downgrade adds</text>')
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 96}">beta x alpha, decaying</text>')
+    out.append(f'  <text class="k" x="{w - mr + 16}" y="{mt + 112}">as exp(-beta (t - tau))</text>')
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
+def _downgrades_times(q: np.ndarray, k: float) -> np.ndarray:
+    """The generator with every downgrade rate multiplied by k (a recession regime)."""
+    r = q.copy()
+    r[np.triu_indices(r.shape[0], k=1)] *= k
+    r[-1] = 0.0
+    np.fill_diagonal(r, 0.0)
+    np.fill_diagonal(r, -r.sum(axis=1))
+    return r
+
+
+MARKOV_POWER_TESTS = [
+    ("rating.time_homogeneity", lambda d: {"counts_by_period": [s["counts"] for s in d["steps"]]}, "time homogeneity",
+     "p1"),
+    ("rating.markov_order", lambda d: {"triplets": d["triplets"]}, "order (grouped)", "p2"),
+    ("rating.momentum", lambda d: {"paths": d["segments"]}, "momentum hazard", "p3"),
+]
+
+
+def markov_test_power_rows() -> list[tuple[str, list[float]]]:
+    """Rejection rates at 5% of the three path tests against two planted defects, 400 repetitions each."""
+    from riskvalidation.generators.paths import RatingPaths
+    from riskvalidation.harness import simulate
+
+    q = _q6()
+    snaps = (0.0, 1.0, 2.0, 3.0, 4.0, 5.0)
+    designs = [("no defect (the null)", RatingPaths(q, (1000,) * 5, horizon=5.0, snapshots=snaps))]
+    for a in (0.25, 0.5, 1.0):
+        designs.append((f"momentum, alpha = {a:g}", RatingPaths(q, (1000,) * 5, horizon=5.0, snapshots=snaps,
+                                                                 momentum=((a, 1.0), (a, 1.0)), investment_grades=3)))
+    for k in (1.25, 1.5, 2.0):
+        designs.append((f"downgrades x {k:g} from year 2", RatingPaths(q, (1000,) * 5, horizon=5.0, snapshots=snaps,
+                                                                        regimes=((2.0, _downgrades_times(q, k)),))))
+    rows = []
+    seed = 7400
+    for label, gen in designs:
+        rates = []
+        for tid, feed, _, _ in MARKOV_POWER_TESTS:
+            seed += 1
+            rates.append(simulate(tid, gen, n_rep=400, seed=seed, feed=feed).rate(0.05).rate)
+        rows.append((label, rates))
+    return rows
+
+
+def markov_test_power_svg() -> str:
+    rows = markov_test_power_rows()
+    w, ml, mr, mt, row_h = 1000, 250, 80, 74, 52
+    h = mt + row_h * len(rows) + 60
+    fx = lambda v: ml + v * (w - ml - mr)  # noqa: E731
+    out = _open(w, h, "Which transition test sees which defect",
+                "Rejection rate at the 5% level of the time-homogeneity, order and momentum tests on the rating-path "
+                "generator with no defect, with downward momentum of three strengths, and with a recession regime "
+                "that multiplies every downgrade rate from the third year, 400 repetitions each.")
+    out.append('  <text class="t" x="24" y="28">Rejection rate at the 5% level, 1,000 obligors per grade, five annual '
+               'snapshots, 400 repetitions</text>')
+    for v in (0.0, 0.25, 0.5, 0.75, 1.0):
+        out.append(f'  <line class="grid" x1="{fx(v):.1f}" x2="{fx(v):.1f}" y1="{mt - 10}" y2="{h - 50}"/>')
+        out.append(f'  <text class="k" x="{fx(v):.1f}" y="{h - 34}" text-anchor="middle">{100 * v:.0f}%</text>')
+    out.append(f'  <line class="ref" x1="{fx(0.05):.1f}" x2="{fx(0.05):.1f}" y1="{mt - 10}" y2="{h - 50}"/>')
+    out.append(f'  <text class="k" x="{fx(0.05):.1f}" y="{mt - 16}" text-anchor="middle">5%</text>')
+    bar = 12
+    for i, (label, rates) in enumerate(rows):
+        y0 = mt + row_h * i
+        out.append(f'  <text class="s" x="{ml - 10}" y="{y0 + 18}" text-anchor="end">{label}</text>')
+        for k, ((_, _, _, cls), r) in enumerate(zip(MARKOV_POWER_TESTS, rates, strict=True)):
+            y = y0 + 2 + k * (bar + 3)
+            out.append(f'  <rect class="{cls}" x="{ml}" y="{y}" width="{max(fx(r) - ml, 1.0):.1f}" height="{bar}"/>')
+            out.append(f'  <text class="k" x="{fx(r) + 6:.1f}" y="{y + bar - 1}">{100 * r:.1f}%</text>')
+    for k, (_, _, name, cls) in enumerate(MARKOV_POWER_TESTS):
+        _legend(out, ml + 220 * k, h - 12, cls, name, dot=True)
+    out.append("</svg>")
+    return "\n".join(out) + "\n"
+
+
 def main() -> None:
     ASSETS.mkdir(parents=True, exist_ok=True)
-    (ASSETS / "psi-benchmark.svg").write_text(psi_benchmark_svg(), encoding="utf-8", newline="\n")
-    (ASSETS / "roc-cap.svg").write_text(roc_cap_svg(), encoding="utf-8", newline="\n")
+    only = set(sys.argv[1:])
     u2 = {"irb-risk-weights.svg": irb_risk_weights_svg, "lhp-distribution.svg": lhp_distribution_svg,
           "most-prudent-bounds.svg": most_prudent_svg, "pd-curve-sp.svg": pd_curve_sp_svg}
-    for name, make in u2.items():
-        (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
+    if not only:
+        (ASSETS / "psi-benchmark.svg").write_text(psi_benchmark_svg(), encoding="utf-8", newline="\n")
+        (ASSETS / "roc-cap.svg").write_text(roc_cap_svg(), encoding="utf-8", newline="\n")
+        for name, make in u2.items():
+            (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
     u3 = {"binomial-true-size.svg": binomial_true_size_svg, "traffic-lights-ties.svg": traffic_lights_ties_svg,
           "hhi-statistic.svg": hhi_statistic_svg, "size-of-every-test.svg": size_of_every_test_svg,
           "published-reproductions.svg": published_reproductions_svg}
-    for name, make in u3.items():
+    u4 = {"transition-estimators.svg": transition_estimators_svg, "markov-test-forms.svg": markov_test_forms_svg,
+          "markov-test-power.svg": markov_test_power_svg, "interval-coverage.svg": interval_coverage_svg,
+          "ttc-drift.svg": ttc_drift_svg, "rating-momentum.svg": rating_momentum_svg}
+    unknown = only - set(u3) - set(u4)
+    if unknown:
+        raise SystemExit(f"unknown figures: {sorted(unknown)}")
+    drawn = []
+    for name, make in {**u3, **u4}.items():
+        if only and name not in only:
+            continue
         print("drawing", name, flush=True)
         (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
-    print("wrote docs/assets/" + ", ".join(["psi-benchmark.svg", "roc-cap.svg", *u2, *u3]))
+        drawn.append(name)
+    print("wrote docs/assets/" + ", ".join(([] if only else ["psi-benchmark.svg", "roc-cap.svg", *u2]) + drawn))
 
 
 if __name__ == "__main__":

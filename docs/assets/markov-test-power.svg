@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 498" width="1000" height="498" role="img" aria-labelledby="t d">
+  <title id="t">Which transition test sees which defect</title>
+  <desc id="d">Rejection rate at the 5% level of the time-homogeneity, order and momentum tests on the rating-path generator with no defect, with downward momentum of three strengths, and with a recession regime that multiplies every downgrade rate from the third year, 400 repetitions each.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="998" height="496" rx="10"/>
+  <text class="t" x="24" y="28">Rejection rate at the 5% level, 1,000 obligors per grade, five annual snapshots, 400 repetitions</text>
+  <line class="grid" x1="250.0" x2="250.0" y1="64" y2="448"/>
+  <text class="k" x="250.0" y="464" text-anchor="middle">0%</text>
+  <line class="grid" x1="417.5" x2="417.5" y1="64" y2="448"/>
+  <text class="k" x="417.5" y="464" text-anchor="middle">25%</text>
+  <line class="grid" x1="585.0" x2="585.0" y1="64" y2="448"/>
+  <text class="k" x="585.0" y="464" text-anchor="middle">50%</text>
+  <line class="grid" x1="752.5" x2="752.5" y1="64" y2="448"/>
+  <text class="k" x="752.5" y="464" text-anchor="middle">75%</text>
+  <line class="grid" x1="920.0" x2="920.0" y1="64" y2="448"/>
+  <text class="k" x="920.0" y="464" text-anchor="middle">100%</text>
+  <line class="ref" x1="283.5" x2="283.5" y1="64" y2="448"/>
+  <text class="k" x="283.5" y="58" text-anchor="middle">5%</text>
+  <text class="s" x="240" y="92" text-anchor="end">no defect (the null)</text>
+  <rect class="p1" x="250" y="76" width="25.1" height="12"/>
+  <text class="k" x="281.1" y="87">3.8%</text>
+  <rect class="p2" x="250" y="91" width="30.1" height="12"/>
+  <text class="k" x="286.1" y="102">4.5%</text>
+  <rect class="p3" x="250" y="106" width="30.1" height="12"/>
+  <text class="k" x="286.1" y="117">4.5%</text>
+  <text class="s" x="240" y="144" text-anchor="end">momentum, alpha = 0.25</text>
+  <rect class="p1" x="250" y="128" width="90.4" height="12"/>
+  <text class="k" x="346.4" y="139">13.5%</text>
+  <rect class="p2" x="250" y="143" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="154">100.0%</text>
+  <rect class="p3" x="250" y="158" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="169">100.0%</text>
+  <text class="s" x="240" y="196" text-anchor="end">momentum, alpha = 0.5</text>
+  <rect class="p1" x="250" y="180" width="408.7" height="12"/>
+  <text class="k" x="664.7" y="191">61.0%</text>
+  <rect class="p2" x="250" y="195" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="206">100.0%</text>
+  <rect class="p3" x="250" y="210" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="221">100.0%</text>
+  <text class="s" x="240" y="248" text-anchor="end">momentum, alpha = 1</text>
+  <rect class="p1" x="250" y="232" width="641.5" height="12"/>
+  <text class="k" x="897.5" y="243">95.8%</text>
+  <rect class="p2" x="250" y="247" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="258">100.0%</text>
+  <rect class="p3" x="250" y="262" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="273">100.0%</text>
+  <text class="s" x="240" y="300" text-anchor="end">downgrades x 1.25 from year 2</text>
+  <rect class="p1" x="250" y="284" width="547.7" height="12"/>
+  <text class="k" x="803.7" y="295">81.8%</text>
+  <rect class="p2" x="250" y="299" width="35.2" height="12"/>
+  <text class="k" x="291.2" y="310">5.2%</text>
+  <rect class="p3" x="250" y="314" width="28.5" height="12"/>
+  <text class="k" x="284.5" y="325">4.2%</text>
+  <text class="s" x="240" y="352" text-anchor="end">downgrades x 1.5 from year 2</text>
+  <rect class="p1" x="250" y="336" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="347">100.0%</text>
+  <rect class="p2" x="250" y="351" width="38.5" height="12"/>
+  <text class="k" x="294.5" y="362">5.8%</text>
+  <rect class="p3" x="250" y="366" width="26.8" height="12"/>
+  <text class="k" x="282.8" y="377">4.0%</text>
+  <text class="s" x="240" y="404" text-anchor="end">downgrades x 2 from year 2</text>
+  <rect class="p1" x="250" y="388" width="670.0" height="12"/>
+  <text class="k" x="926.0" y="399">100.0%</text>
+  <rect class="p2" x="250" y="403" width="63.6" height="12"/>
+  <text class="k" x="319.6" y="414">9.5%</text>
+  <rect class="p3" x="250" y="418" width="28.5" height="12"/>
+  <text class="k" x="284.5" y="429">4.2%</text>
+  <circle class="p1" cx="264" cy="486" r="3"/>
+  <text class="s" x="284" y="490">time homogeneity</text>
+  <circle class="p2" cx="484" cy="486" r="3"/>
+  <text class="s" x="504" y="490">order (grouped)</text>
+  <circle class="p3" cx="704" cy="486" r="3"/>
+  <text class="s" x="724" y="490">momentum hazard</text>
+</svg>

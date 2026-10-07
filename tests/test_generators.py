@@ -197,3 +197,69 @@ def test_nested_lda_truth():
     assert tr["null_holds"] and tr["auc_full"] == pytest.approx(tr["auc_reduced"])
     assert 0.75 < tr["auc_full"] < 0.85
     assert NestedLda(added_effect=0.25).truth()["auc_full"] > tr["auc_full"]
+
+
+def test_rating_paths():
+    """RV-412: exact Markov paths (the verifier), CEREP's stock-model snapshots, and each planted defect visible in the
+    paths: momentum raises the downgrade hazard after a downgrade, a regime changes the rates after its start, and
+    informative withdrawals take ratings out before they default."""
+    from scipy.linalg import expm
+
+    from riskvalidation.generators.paths import RatingPaths
+
+    q = np.array([
+        [-0.12, 0.10, 0.015, 0.004, 0.001, 0.0],
+        [0.02, -0.15, 0.11, 0.015, 0.004, 0.001],
+        [0.002, 0.04, -0.17, 0.11, 0.015, 0.003],
+        [0.0, 0.004, 0.06, -0.22, 0.14, 0.016],
+        [0.0, 0.0, 0.005, 0.08, -0.30, 0.215],
+        [0.0] * 6,
+    ])
+    ob = (2000, 3000, 4000, 3000, 2000)
+    base = RatingPaths(q, ob, horizon=5.0, snapshots=(0.0, 1.0, 2.0))
+    assert all(c.ok() for c in base.verify())
+    truth = base.truth()
+    np.testing.assert_allclose(truth["one_year_matrix"], expm(q))
+    np.testing.assert_allclose(truth["pd_by_grade"]["1"], expm(q)[:5, 5])
+    d = base.draw(np.random.default_rng(3))
+    assert d["steps"][0]["counts"].sum() + d["steps"][0]["withdrawn"].sum() == sum(ob)
+    # nobody withdrawn: every rating is seen at all three dates
+    assert d["triplets"].sum() == d["steps"][1]["counts"].sum() == sum(ob)
+    assert json.dumps(base.config())
+
+    def down_rate(seg, entered_by_downgrade):
+        """Downgrades per unit of time spent in grades 1 to 4, by how the stay began."""
+        st, to, start, stop, ob_ = seg["state"], seg["to"], seg["start"], seg["stop"], seg["obligor"]
+        prev = np.full(st.size, -1)
+        same = np.r_[False, ob_[1:] == ob_[:-1]]
+        prev[same] = st[np.flatnonzero(same) - 1]
+        by_down = same & (prev < st)
+        sel = (st >= 1) & (st <= 4) & (by_down == entered_by_downgrade)
+        return np.sum(to[sel] > st[sel]) / np.sum(stop[sel] - start[sel])
+
+    mom = RatingPaths(q, ob, horizon=5.0, momentum=((1.0, 1.0), (1.0, 1.0)), investment_grades=3)
+    dm = mom.draw(np.random.default_rng(4))
+    assert down_rate(dm["segments"], True) > 1.5 * down_rate(dm["segments"], False)
+    assert down_rate(d["segments"], True) < 1.3 * down_rate(d["segments"], False)  # no momentum in the Markov case
+
+    q2 = q.copy()
+    up = np.triu_indices(6, k=1)
+    q2[up] *= 3.0
+    q2[-1] = 0.0
+    np.fill_diagonal(q2, 0.0)
+    np.fill_diagonal(q2, -q2.sum(axis=1))
+    reg = RatingPaths(q, ob, horizon=5.0, regimes=((2.5, q2),))
+    sg = reg.draw(np.random.default_rng(5))["segments"]
+    moved = sg["to"] >= 0
+    early = np.sum(moved & (sg["to"] > sg["state"]) & (sg["stop"] < 2.5))
+    late = np.sum(moved & (sg["to"] > sg["state"]) & (sg["stop"] >= 2.5))
+    assert late > 1.8 * early
+
+    plain = RatingPaths(q, ob, horizon=5.0, withdrawal_rate=0.05)
+    informative = RatingPaths(q, ob, horizon=5.0, withdrawal_rate=0.05, informative=20.0, window=1.0)
+    n_def = [np.sum(g.draw(np.random.default_rng(6))["segments"]["to"] == 5) for g in (plain, informative)]
+    assert n_def[1] < 0.8 * n_def[0]
+    with pytest.raises(ValueError):
+        RatingPaths(q, (1, 2, 3), horizon=5.0)
+    with pytest.raises(ValueError):
+        RatingPaths(q, ob, momentum=((1.0, 1.0), (1.0, 1.0)))

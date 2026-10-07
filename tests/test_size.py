@@ -19,6 +19,7 @@ from riskvalidation.generators import (
     feed_grades,
     feed_series,
 )
+from riskvalidation.generators.paths import RatingPaths
 from riskvalidation.harness import simulate, size_bound, within_size
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,25 @@ GRADES_N = (2500, 2000, 1500, 1500, 800, 400, 150)
 GRADES_PD = (0.002, 0.005, 0.01, 0.02, 0.04, 0.08, 0.16)
 # the same scale with a thin best grade: 0.6 expected defaults (WP14: slow convergence for small PDs)
 THIN_N = (300, 800, 1500, 1500, 800, 400, 150)
+
+# a Markov chain with five grades and default (U4): five annual snapshots in CEREP's stock model, the paths kept
+Q6 = (
+    (-0.12, 0.10, 0.015, 0.004, 0.00099, 0.00001),
+    (0.02, -0.15, 0.11, 0.015, 0.004, 0.001),
+    (0.002, 0.04, -0.17, 0.11, 0.015, 0.003),
+    (0.0, 0.004, 0.06, -0.22, 0.14, 0.016),
+    (0.0, 0.0, 0.005, 0.08, -0.30, 0.215),
+    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+)
+CHAIN = RatingPaths(Q6, (1000,) * 5, horizon=5.0, snapshots=(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+
+
+def _expm_q6():
+    import numpy as np
+    from scipy.linalg import expm
+
+    return expm(np.asarray(Q6))
+
 
 # test id -> (generator under the null, feed, keyword arguments)
 NULL_SCENARIOS = {
@@ -48,19 +68,38 @@ NULL_SCENARIOS = {
     "stability.ks": (TwoSample(2000, 2000), None, {}),
     "rating.migration_ztests": (Migrations([500] * 7, break_monotonicity(decaying_matrix(7), 3, 1, 1.0)), None, {}),
     "rating.hhi": (GradeFrequencies(5000, (0.02, 0.05, 0.10, 0.15, 0.20, 0.18, 0.13, 0.09, 0.05, 0.03)), None, {}),
+    "rating.time_homogeneity": (CHAIN, lambda d: {"counts_by_period": [s["counts"] for s in d["steps"]]}, {}),
+    "rating.markov_order": (CHAIN, lambda d: {"triplets": d["triplets"]}, {}),
+    "rating.matrix_reference": (CHAIN, lambda d: {"counts": d["steps"][0]["counts"], "reference": _expm_q6()}, {}),
+    "rating.momentum": (CHAIN, lambda d: {"paths": d["segments"]}, {}),
+}
+# each test's seed, fixed when it joins the study, so that adding a test never moves another test's measurement (the
+# pages quote them); the U3 tests keep the seeds their sorted order gave them in 0.03.000
+SEEDS = {
+    "disc.auc_vs_initial": 5001, "disc.delong": 5002, "pd.binomial": 5003, "pd.binomial_vasicek": 5004,
+    "pd.chi2_grades": 5005, "pd.default_profile": 5006, "pd.hosmer_lemeshow": 5007, "pd.jeffreys": 5008,
+    "pd.normal_multiperiod": 5009, "pd.spiegelhalter": 5010, "pd.traffic_lights": 5011, "rating.hhi": 5012,
+    "rating.migration_ztests": 5013, "stability.chi2": 5014, "stability.csi": 5015, "stability.ks": 5016,
+    "stability.psi": 5017,
+    # U4 (0.04.000)
+    "rating.markov_order": 5018, "rating.matrix_reference": 5019, "rating.momentum": 5020,
+    "rating.time_homogeneity": 5021,
 }
 # tests whose measured size exceeds the bound in their null scenario: the page states the measured size
 DOCUMENTED_EXCESS = {"pd.normal_multiperiod": ROOT / "docs" / "tests" / "01_pd-calibration.md"}
+# tests whose page states the measured size of their default form at 5% and at 1% (the form was chosen by it)
+MARKOV_PAGE = ROOT / "docs" / "transitions" / "03_markov-tests.md"
+DOCUMENTED_SIZE = {tid: MARKOV_PAGE for tid in ("rating.time_homogeneity", "rating.markov_order",
+                                                "rating.matrix_reference", "rating.momentum")}
 
 
 def test_size_of_every_p_value_test():
     p_value_tests = {s.test_id for s in catalogue() if s.decision == "p_value" and s.family != "selftest"}
-    assert p_value_tests == set(NULL_SCENARIOS), p_value_tests ^ set(NULL_SCENARIOS)
-    seed = 5000
+    assert p_value_tests == set(NULL_SCENARIOS) == set(SEEDS), p_value_tests ^ set(NULL_SCENARIOS)
+    assert len(set(SEEDS.values())) == len(SEEDS)
     measured = {}
     for tid, (gen, feed, kw) in sorted(NULL_SCENARIOS.items()):
-        seed += 1
-        sim = simulate(tid, gen, n_rep=N_REP, seed=seed, feed=feed, test_kwargs=kw)
+        sim = simulate(tid, gen, n_rep=N_REP, seed=SEEDS[tid], feed=feed, test_kwargs=kw)
         measured[tid] = sim.rate(0.05)
         holds = within_size(sim.rate(0.05), 0.05) and within_size(sim.rate(0.01), 0.01)
         if tid in DOCUMENTED_EXCESS:
@@ -69,6 +108,10 @@ def test_size_of_every_p_value_test():
             assert "measured size" in text and f"{100 * sim.rate(0.05).rate:.1f}%" in text, tid
         else:
             assert holds, (tid, sim.rate(0.05).to_dict(), sim.rate(0.01).to_dict())
+        if tid in DOCUMENTED_SIZE:
+            text = DOCUMENTED_SIZE[tid].read_text(encoding="utf-8")
+            for level in (0.05, 0.01):
+                assert f"{100 * sim.rate(level).rate:.2f}%" in text, (tid, level, "the page must state it")
     # the ECB concentration test never rejects at the boundary of its null (its statistic ignores the obligor count)
     assert measured["rating.hhi"].rate == 0.0
 

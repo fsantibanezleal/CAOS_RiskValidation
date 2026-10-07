@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" width="1000" height="400" role="img" aria-labelledby="t d">
+  <title id="t">Size of every form of the four transition tests</title>
+  <desc id="d">Rejection rate at the 5% level of each form of the time-homogeneity, order, reference-matrix and momentum tests on a Markov chain (the null), 4,000 repetitions with 95% Wilson intervals; the default forms hold the bound, three printed forms do not.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="998" height="398" rx="10"/>
+  <text class="t" x="24" y="28">Rejection rate under the null at the 5% level (dot) and the 1% level (ring), 4,000 repetitions</text>
+  <line class="grid" x1="360.0" x2="360.0" y1="60" y2="342"/>
+  <text class="k" x="360.0" y="360" text-anchor="middle">0%</text>
+  <line class="grid" x1="441.7" x2="441.7" y1="60" y2="342"/>
+  <text class="k" x="441.7" y="360" text-anchor="middle">2.5%</text>
+  <line class="grid" x1="523.3" x2="523.3" y1="60" y2="342"/>
+  <text class="k" x="523.3" y="360" text-anchor="middle">5%</text>
+  <line class="grid" x1="605.0" x2="605.0" y1="60" y2="342"/>
+  <text class="k" x="605.0" y="360" text-anchor="middle">7.5%</text>
+  <line class="grid" x1="686.7" x2="686.7" y1="60" y2="342"/>
+  <text class="k" x="686.7" y="360" text-anchor="middle">10%</text>
+  <line class="grid" x1="768.3" x2="768.3" y1="60" y2="342"/>
+  <text class="k" x="768.3" y="360" text-anchor="middle">12.5%</text>
+  <line class="grid" x1="850.0" x2="850.0" y1="60" y2="342"/>
+  <text class="k" x="850.0" y="360" text-anchor="middle">15%</text>
+  <line class="ref" x1="523.3" x2="523.3" y1="60" y2="342"/>
+  <text class="k" x="523.3" y="54" text-anchor="middle">5%</text>
+  <line class="ref" x1="392.7" x2="392.7" y1="60" y2="342"/>
+  <text class="k" x="392.7" y="54" text-anchor="middle">1%</text>
+  <line class="l3 dash" x1="558.1" x2="558.1" y1="60" y2="342" stroke-width="1.4"/>
+  <line class="l3 dash" x1="408.5" x2="408.5" y1="60" y2="342" stroke-width="1.4"/>
+  <text class="k" x="982" y="54" text-anchor="end">at 5% / at 1%</text>
+  <text class="s" x="350" y="82" text-anchor="end">time homogeneity, chi-square (3.8), default</text>
+  <line class="l0" x1="498.1" x2="541.6" y1="78" y2="78" stroke-width="1.4"/>
+  <circle class="p1" cx="518.4" cy="78" r="4.5"/>
+  <circle class="hollow" cx="386.9" cy="78" r="4.5"/>
+  <text class="k" x="982" y="82" text-anchor="end">4.85% / 0.83%</text>
+  <text class="s" x="350" y="108" text-anchor="end">time homogeneity, likelihood ratio (3.5)</text>
+  <line class="l0" x1="590.5" x2="645.0" y1="104" y2="104" stroke-width="1.4"/>
+  <circle class="p3" cx="616.4" cy="104" r="4.5"/>
+  <circle class="hollow" cx="412.3" cy="104" r="4.5"/>
+  <text class="k" x="982" y="108" text-anchor="end">7.85% / 1.60%</text>
+  <text class="s" x="350" y="134" text-anchor="end">order, grouped by direction, chi-square, default</text>
+  <line class="l0" x1="496.5" x2="539.9" y1="130" y2="130" stroke-width="1.4"/>
+  <circle class="p1" cx="516.8" cy="130" r="4.5"/>
+  <circle class="hollow" cx="400.8" cy="130" r="4.5"/>
+  <text class="k" x="982" y="134" text-anchor="end">4.80% / 1.25%</text>
+  <text class="s" x="350" y="160" text-anchor="end">order, grouped by direction, likelihood ratio</text>
+  <line class="l0" x1="512.6" x2="558.1" y1="156" y2="156" stroke-width="1.4"/>
+  <circle class="p1" cx="534.0" cy="156" r="4.5"/>
+  <circle class="hollow" cx="392.7" cy="156" r="4.5"/>
+  <text class="k" x="982" y="160" text-anchor="end">5.33% / 1.00%</text>
+  <text class="s" x="350" y="186" text-anchor="end">order, full table, chi-square (3.14)</text>
+  <line class="l0" x1="776.2" x2="846.0" y1="182" y2="182" stroke-width="1.4"/>
+  <circle class="p3" cx="810.0" cy="182" r="4.5"/>
+  <circle class="hollow" cx="665.4" cy="182" r="4.5"/>
+  <text class="k" x="982" y="186" text-anchor="end">13.78% / 9.35%</text>
+  <text class="s" x="350" y="212" text-anchor="end">order, full table, likelihood ratio (3.12)</text>
+  <line class="l0" x1="373.2" x2="389.1" y1="208" y2="208" stroke-width="1.4"/>
+  <circle class="p1" cx="379.6" cy="208" r="4.5"/>
+  <circle class="hollow" cx="360.8" cy="208" r="4.5"/>
+  <text class="k" x="982" y="212" text-anchor="end">0.60% / 0.03%</text>
+  <text class="s" x="350" y="238" text-anchor="end">reference matrix, likelihood ratio, default</text>
+  <line class="l0" x1="473.7" x2="513.7" y1="234" y2="234" stroke-width="1.4"/>
+  <circle class="p1" cx="492.3" cy="234" r="4.5"/>
+  <circle class="hollow" cx="376.3" cy="234" r="4.5"/>
+  <text class="k" x="982" y="238" text-anchor="end">4.05% / 0.50%</text>
+  <text class="s" x="350" y="264" text-anchor="end">reference matrix, chi-square (3.1) as printed</text>
+  <line class="l0" x1="555.7" x2="606.4" y1="260" y2="260" stroke-width="1.4"/>
+  <circle class="p3" cx="579.7" cy="260" r="4.5"/>
+  <circle class="hollow" cx="458.8" cy="260" r="4.5"/>
+  <text class="k" x="982" y="264" text-anchor="end">6.73% / 3.02%</text>
+  <text class="s" x="350" y="290" text-anchor="end">momentum, downward, default</text>
+  <line class="l0" x1="496.5" x2="539.9" y1="286" y2="286" stroke-width="1.4"/>
+  <circle class="p1" cx="516.8" cy="286" r="4.5"/>
+  <circle class="hollow" cx="387.8" cy="286" r="4.5"/>
+  <text class="k" x="982" y="290" text-anchor="end">4.80% / 0.85%</text>
+  <text class="s" x="350" y="316" text-anchor="end">momentum, upward</text>
+  <line class="l0" x1="501.1" x2="545.1" y1="312" y2="312" stroke-width="1.4"/>
+  <circle class="p1" cx="521.7" cy="312" r="4.5"/>
+  <circle class="hollow" cx="385.3" cy="312" r="4.5"/>
+  <text class="k" x="982" y="316" text-anchor="end">4.95% / 0.78%</text>
+  <circle class="p1" cx="374" cy="384" r="3"/>
+  <text class="s" x="394" y="388">within the bound</text>
+  <circle class="p3" cx="544" cy="384" r="3"/>
+  <text class="s" x="564" y="388">above the bound</text>
+  <line class="l3 dash" x1="700" x2="728" y1="384" y2="384"/>
+  <text class="s" x="734" y="388">bounds 6.06% and 1.49%</text>
+</svg>

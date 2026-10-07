@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 470" width="1000" height="470" role="img" aria-labelledby="t d">
+  <title id="t">Cohort against duration PDs by grade on a known generator</title>
+  <desc id="d">One-year PD by grade estimated from 1,000 simulated years of 1,000 obligors per grade: the median and the 5% to 95% range of the cohort and duration estimates against the true PD (log scale), and the share of years in which each estimate is exactly zero.</desc>
+
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .ax { stroke: #334155; stroke-width: 1.2; }
+    .grid { stroke: #e2e8f0; stroke-width: 1; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .l0, .l1, .l2, .l3, .l4 { fill: none; stroke-width: 2.2; }
+    .l0 { stroke: #0f172a; }
+    .l1 { stroke: #4338ca; } .l2 { stroke: #0f766e; } .l3 { stroke: #c2410c; } .l4 { stroke: #7c3aed; }
+    .dash { stroke-dasharray: 7 4; }
+    .p0 { fill: #0f172a; } .p1 { fill: #4338ca; } .p2 { fill: #0f766e; } .p3 { fill: #c2410c; } .p4 { fill: #7c3aed; }
+    .hollow { fill: none; stroke: #0f172a; stroke-width: 1.4; }
+    .ref { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .ax { stroke: #8b949e; }
+      .grid { stroke: #21262d; }
+      .t, .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .l0 { stroke: #c9d1d9; }
+      .l1 { stroke: #58a6ff; } .l2 { stroke: #3fb950; } .l3 { stroke: #d29922; } .l4 { stroke: #bc8cff; }
+      .p0 { fill: #c9d1d9; } .p1 { fill: #58a6ff; } .p2 { fill: #3fb950; } .p3 { fill: #d29922; } .p4 { fill: #bc8cff; }
+      .hollow { stroke: #c9d1d9; }
+      .ref { stroke: #8b949e; }
+    }
+  </style>
+  <rect class="bg" x="1" y="1" width="998" height="468" rx="10"/>
+  <text class="t" x="24" y="28">One-year PD by grade, 1,000 obligors per grade, 1,000 simulated years (generator known)</text>
+  <rect class="pn" x="84" y="64" width="520" height="300"/>
+  <line class="ref" x1="84" x2="604" y1="386" y2="386"/>
+  <text class="k" x="78" y="390" text-anchor="end">0</text>
+  <line class="grid" x1="84" x2="604" y1="364.0" y2="364.0"/>
+  <text class="k" x="78" y="368.0" text-anchor="end">0.01bp</text>
+  <line class="grid" x1="84" x2="604" y1="314.0" y2="314.0"/>
+  <text class="k" x="78" y="318.0" text-anchor="end">0.1bp</text>
+  <line class="grid" x1="84" x2="604" y1="264.0" y2="264.0"/>
+  <text class="k" x="78" y="268.0" text-anchor="end">1bp</text>
+  <line class="grid" x1="84" x2="604" y1="214.0" y2="214.0"/>
+  <text class="k" x="78" y="218.0" text-anchor="end">10bp</text>
+  <line class="grid" x1="84" x2="604" y1="164.0" y2="164.0"/>
+  <text class="k" x="78" y="168.0" text-anchor="end">1%</text>
+  <line class="grid" x1="84" x2="604" y1="114.0" y2="114.0"/>
+  <text class="k" x="78" y="118.0" text-anchor="end">10%</text>
+  <line class="grid" x1="84" x2="604" y1="64.0" y2="64.0"/>
+  <text class="k" x="78" y="68.0" text-anchor="end">100%</text>
+  <text class="k" x="136.0" y="408" text-anchor="middle">grade 1</text>
+  <text class="k" x="240.0" y="408" text-anchor="middle">grade 2</text>
+  <text class="k" x="344.0" y="408" text-anchor="middle">grade 3</text>
+  <text class="k" x="448.0" y="408" text-anchor="middle">grade 4</text>
+  <text class="k" x="552.0" y="408" text-anchor="middle">grade 5</text>
+  <polyline class="l0" points="136.0,243.9 240.0,202.3 344.0,177.3 448.0,142.3 552.0,100.5"/>
+  <line class="l1" x1="124.0" x2="124.0" y1="214.0" y2="386.0" stroke-width="3"/>
+  <circle class="p1" cx="124.0" cy="386.0" r="4.5"/>
+  <line class="l1" x1="228.0" x2="228.0" y1="183.9" y2="386.0" stroke-width="3"/>
+  <circle class="p1" cx="228.0" cy="198.9" r="4.5"/>
+  <line class="l1" x1="332.0" x2="332.0" y1="166.3" y2="198.9" stroke-width="3"/>
+  <circle class="p1" cx="332.0" cy="179.1" r="4.5"/>
+  <line class="l1" x1="436.0" x2="436.0" y1="136.2" y2="150.1" stroke-width="3"/>
+  <circle class="p1" cx="436.0" cy="142.4" r="4.5"/>
+  <line class="l1" x1="540.0" x2="540.0" y1="98.2" y2="103.0" stroke-width="3"/>
+  <circle class="p1" cx="540.0" cy="100.4" r="4.5"/>
+  <line class="l2" x1="148.0" x2="148.0" y1="229.9" y2="265.9" stroke-width="3"/>
+  <circle class="p2" cx="148.0" cy="246.3" r="4.5"/>
+  <line class="l2" x1="252.0" x2="252.0" y1="186.2" y2="226.8" stroke-width="3"/>
+  <circle class="p2" cx="252.0" cy="203.1" r="4.5"/>
+  <line class="l2" x1="356.0" x2="356.0" y1="167.7" y2="190.9" stroke-width="3"/>
+  <circle class="p2" cx="356.0" cy="178.3" r="4.5"/>
+  <line class="l2" x1="460.0" x2="460.0" y1="138.1" y2="148.0" stroke-width="3"/>
+  <circle class="p2" cx="460.0" cy="142.6" r="4.5"/>
+  <line class="l2" x1="564.0" x2="564.0" y1="98.3" y2="102.9" stroke-width="3"/>
+  <circle class="p2" cx="564.0" cy="100.4" r="4.5"/>
+  <line class="l0" x1="84" x2="112" y1="440" y2="440"/>
+  <text class="s" x="118" y="444">true PD</text>
+  <circle class="p1" cx="228" cy="440" r="3"/>
+  <text class="s" x="248" y="444">cohort: median, 5% to 95%</text>
+  <circle class="p2" cx="458" cy="440" r="3"/>
+  <text class="s" x="478" y="444">duration: median, 5% to 95%</text>
+  <rect class="pn" x="680" y="64" width="280" height="300"/>
+  <text class="s" x="680" y="54">share of years with a zero PD estimate</text>
+  <text class="k" x="952" y="82" text-anchor="end">the duration estimate is never zero</text>
+  <line class="grid" x1="680" x2="960" y1="364.0" y2="364.0"/>
+  <text class="k" x="674" y="368.0" text-anchor="end">0%</text>
+  <line class="grid" x1="680" x2="960" y1="289.0" y2="289.0"/>
+  <text class="k" x="674" y="293.0" text-anchor="end">25%</text>
+  <line class="grid" x1="680" x2="960" y1="214.0" y2="214.0"/>
+  <text class="k" x="674" y="218.0" text-anchor="end">50%</text>
+  <line class="grid" x1="680" x2="960" y1="139.0" y2="139.0"/>
+  <text class="k" x="674" y="143.0" text-anchor="end">75%</text>
+  <line class="grid" x1="680" x2="960" y1="64.0" y2="64.0"/>
+  <text class="k" x="674" y="68.0" text-anchor="end">100%</text>
+  <rect class="p1" x="690.0" y="130.3" width="16.0" height="233.7"/>
+  <text class="k" x="699.0" y="126.3" text-anchor="middle">78%</text>
+  <rect class="p2" x="708.0" y="364.0" width="16.0" height="0.0"/>
+  <text class="k" x="708.0" y="382" text-anchor="middle">grade 1</text>
+  <rect class="p1" x="746.0" y="307.3" width="16.0" height="56.7"/>
+  <text class="k" x="755.0" y="303.3" text-anchor="middle">19%</text>
+  <rect class="p2" x="764.0" y="364.0" width="16.0" height="0.0"/>
+  <text class="k" x="764.0" y="382" text-anchor="middle">grade 2</text>
+  <rect class="p1" x="802.0" y="361.9" width="16.0" height="2.1"/>
+  <text class="k" x="811.0" y="357.9" text-anchor="middle">1%</text>
+  <rect class="p2" x="820.0" y="364.0" width="16.0" height="0.0"/>
+  <text class="k" x="820.0" y="382" text-anchor="middle">grade 3</text>
+  <rect class="p1" x="858.0" y="364.0" width="16.0" height="0.0"/>
+  <rect class="p2" x="876.0" y="364.0" width="16.0" height="0.0"/>
+  <text class="k" x="876.0" y="382" text-anchor="middle">grade 4</text>
+  <rect class="p1" x="914.0" y="364.0" width="16.0" height="0.0"/>
+  <rect class="p2" x="932.0" y="364.0" width="16.0" height="0.0"/>
+  <text class="k" x="932.0" y="382" text-anchor="middle">grade 5</text>
+</svg>
