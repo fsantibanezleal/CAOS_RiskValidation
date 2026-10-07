@@ -45,6 +45,23 @@ def test_regimes():
     assert capital_requirement("qrre", low, 0.85, revolver=True, regime="basel3").pd_applied == 0.0010
     assert capital_requirement("qrre", low, 0.85, regime="basel3").pd_applied == 0.0005  # a transactor
     assert capital_requirement("sovereign", low, 0.45, regime="basel3").pd_applied == low  # exempt (CRE32.4)
+    # a PD of 0 (a grade that never defaulted) is what the floor is for: it takes the floor wherever one applies ...
+    for asset, kwargs, regime, floor in (("corporate", {}, "basel3", 0.0005), ("corporate", {}, "crr3", 0.0005),
+                                         ("corporate", {}, "basel2", 0.0003), ("bank", {}, "basel3", 0.0005),
+                                         ("qrre", {"revolver": True}, "basel3", 0.0010), ("qrre", {}, "basel3", 0.0005),
+                                         ("corporate", {}, "cl_ran21_6", 0.0005), ("sme", {}, "cl_ran21_6", 0.0005)):
+        lgd = 0.85 if asset == "qrre" else 0.45
+        zero = capital_requirement(asset, 0.0, lgd, regime=regime, **kwargs)
+        at_floor = capital_requirement(asset, floor, lgd, regime=regime, **kwargs)
+        assert zero.pd_input == 0.0 and zero.pd_applied == floor and zero.k == at_floor.k, (asset, regime)
+        assert any("floored" in n for n in zero.notes)
+    # ... and is refused where none applies (sovereigns are exempt under Basel III final, CRR3 and Basel II)
+    for regime in ("basel3", "crr3", "basel2"):
+        with pytest.raises(ValueError, match="only where the regime floors it"):
+            capital_requirement("sovereign", 0.0, 0.45, regime=regime)
+    for bad in (-1e-9, 1.0, float("nan")):
+        with pytest.raises(ValueError, match="pd must lie in"):
+            capital_requirement("corporate", bad, 0.45)
     # Chile, RAN 21-6: the corporate curve is Basel's; PYMES have their own curve; NBFI 1.25 times; 61.3% consumer LGD
     for pd in (0.0005, 0.01, 0.2):
         assert capital_requirement("corporate", pd, 0.45, regime="cl_ran21_6").k == pytest.approx(

@@ -13,7 +13,7 @@ same wheel runs in a Python pipeline and in the browser under Pyodide.
 
 ## Status
 
-Version 0.04.000: the core contracts (result record, policy, registry, suite runner); 27 validation tests for
+Version 0.04.001: the core contracts (result record, policy, registry, suite runner); 27 validation tests for
 PD calibration, discrimination, rating-system stability, population stability and rating transitions; the IRB
 risk-weight functions under four regimes; three reference engines (the one-factor model with its large homogeneous
 portfolio, most prudent estimation for low-default portfolios, PD curve calibration after Tasche 2013); rating
