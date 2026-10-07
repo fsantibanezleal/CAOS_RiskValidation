@@ -1,7 +1,5 @@
 # U4 rating transitions
 
-Status: planned
-
 Sources: research dossier 13 of the Contraste initiative (read from the primary sources on 2026-10-06: Israel,
 Rosenthal and Wei 2001 for the embedding problem and its three published matrices; Anderson and Goodman 1957 for the
 estimators and the time-homogeneity, order and specified-probability tests; Schuermann and Hanson 2004 (FRBNY Staff
