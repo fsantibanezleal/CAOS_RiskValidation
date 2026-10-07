@@ -1,6 +1,6 @@
 {
   "policy_id": "riskvalidation-default",
-  "version": "2026.10.0",
+  "version": "2026.10.1",
   "description": "Conventional thresholds for illustration and comparison. They are policy choices, not regulatory thresholds: the ECB 2019 IRB validation-reporting instructions set no pass or fail thresholds, and each entry names where its convention comes from. Institutions replace this file with their own policy.",
   "thresholds": {
     "pd.jeffreys": {
@@ -104,6 +104,30 @@
       "amber": 0.05,
       "red": 0.01,
       "source": "convention: 5% and 1% significance levels; the ECB (2019) instructions and BCBS WP14 set no thresholds"
+    },
+    "rating.time_homogeneity": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
+    },
+    "rating.markov_order": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
+    },
+    "rating.matrix_reference": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
+    },
+    "rating.momentum": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
     }
   },
   "descriptive_without_thresholds": [

@@ -4,6 +4,48 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.04.000] - 2026-10-06
+
+### Added
+
+- `riskvalidation.transitions`: rating transitions.
+  - `estimators`: the cohort matrix (Anderson and Goodman's (2.9), pooled (2.8)) with withdrawals removed, the industry
+    treatment, or kept as an absorbing state, as EBA/GL/2017/16 paragraph 76 keeps them in the default rate; the
+    duration generator $K_{ij}/S_i$; the Aalen-Johansen product integral.
+  - `embedding`: Israel, Rosenthal and Wei's log series with its convergence condition, the three non-existence
+    conditions of their Theorem 3, the diagonal, weighted and JLT generators with the L1 distance of $\exp(Q)$ to $P$,
+    and stochastic monotonicity.
+  - `em`: the maximum likelihood generator of snapshot counts by EM, with Smith and dos Reis's closed-form E-step
+    (Van Loan block exponentials).
+  - `intervals`: Wald (2.2), Agresti-Coull (3.3) with the dependence correction (3.4) of Schuermann and Hanson, the
+    Jeffreys interval, and the duration PD's bootstrap by resampling histories or parametric (Christensen, Hansen and
+    Lando).
+  - `mobility`: Jafry and Schuermann's $M_{SVD}$ and the trace index.
+  - `ttc`: Engelmann's through-the-cycle portfolio (the fixed point of his (10) under Theorem 1, primitivity checked)
+    and the projection (9) for one matrix or a stressed path.
+- Four registered tests (family `transitions`, policy 2026.10.1): `rating.time_homogeneity`, `rating.markov_order`,
+  `rating.matrix_reference` (Anderson and Goodman 1957) and `rating.momentum` (dos Reis, Pfeuffer and Smith 2020), each
+  in its size study.
+- `generators.paths.RatingPaths`: exact continuous-time rating paths from a generator, with dos Reis et al.'s
+  self-exciting downgrade momentum (Ogata thinning), regimes, informative withdrawals and snapshots in ESMA CEREP's
+  stock model; truth and verifier.
+- Published results reproduced: Israel, Rosenthal and Wei (2001) section 4 and Engelmann (2024) section 4, read from
+  the papers in the device data root (`RISKVALIDATION_DATA`, the tests skip without them: the matrices are agency data
+  reprinted there); Schuermann and Hanson (2004) Table 5.
+- Docs: the rating-transitions section (five pages), the rating-paths generator page, seven figures (six computed,
+  theme-aware), `examples/rating_transitions.py` (run by the suite), and `tests/test_docs.py`, which checks every
+  relative link, every figure and that every registered test is documented on a user-facing page.
+
+### Changed
+
+- The size study gives every test a fixed seed (`tests/test_size.py`, `SEEDS`): the seed used to depend on the
+  number of tests sorted before it, so adding a test moved other tests' measured sizes, which their pages quote. The
+  existing tests keep their seeds and measurements; `scripts/make_doc_figures.py` reads the same seeds and can draw
+  named figures only.
+- Each default form of the transition tests was chosen by its measured size on sparse rating tables (the
+  time-homogeneity chi-square (3.8), the order chi-square on states grouped by direction, the reference likelihood
+  ratio); the size study requires the test's page to state its measured size at 5% and at 1%.
+
 ## [0.03.002] - 2026-10-06
 
 ### Fixed
