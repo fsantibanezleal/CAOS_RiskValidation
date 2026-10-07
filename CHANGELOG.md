@@ -4,6 +4,18 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.04.002] - 2026-10-07
+
+### Added
+
+- `harness.estimator_performance` reports the mean squared error with its Monte Carlo SE (Morris, White and Crowther
+  2019, Table 6) and its root, whose Monte Carlo SE is the MSE's carried by the delta method (the package's step:
+  Table 6 gives none for the root). Contraste's case C04 computed both itself.
+- `transitions.intervals.exact_coverage(method, n, pd)`: the exact coverage and expected length of the Wald,
+  Agresti-Coull or Jeffreys interval for a binomial count, by enumeration, for one or many true PDs; and
+  `overlap_probability(method, n, pd_a, pd_b)`: the probability that two grades' intervals overlap, summed over every
+  pair of counts. The engine's own tests enumerated the coverage by hand, and C04 re-implemented both.
+
 ## [0.04.001] - 2026-10-07
 
 ### Fixed
