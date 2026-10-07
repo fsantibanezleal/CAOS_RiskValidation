@@ -1,4 +1,5 @@
-"""U4: the transition estimators and the embedding problem (RV-401 to RV-403)."""
+"""U4: the transition estimators, the embedding problem, the EM generator, the registered tests, intervals for
+PDs by grade, mobility and the TTC portfolio (RV-401 to RV-411)."""
 
 from __future__ import annotations
 
@@ -223,3 +224,121 @@ def test_momentum_hazard():
     assert up.extras["coefficient"] < down.extras["coefficient"]
     with pytest.raises(ValueError):
         rating_momentum(d["segments"], direction="sideways")
+
+
+
+def test_pd_intervals():
+    """RV-409: Wald (2.2), Agresti-Coull (3.3) with the dependence correction (3.4), Jeffreys, and the two bootstraps;
+    each refuses an empty grade. Exact coverage by enumeration: with one expected default the Wald interval covers
+    63%, the other two 98%; with twenty all three are near 95%."""
+    from scipy import stats
+
+    from riskvalidation.transitions import intervals as iv
+
+    w = iv.pd_wald(10, 100)
+    assert w["estimate"] == 0.1 and w["upper"] - 0.1 == pytest.approx(0.1 - w["lower"])
+    assert w["rule_of_thumb"] is True and iv.pd_wald(3, 100)["rule_of_thumb"] is False
+    assert iv.pd_wald(3, 100)["lower"] == 0.0  # 0.03 - 1.96 sqrt(0.03 x 0.97 / 100) < 0: bounded at 0, as printed
+    zero = iv.pd_wald(0, 100)
+    assert zero["lower"] == zero["upper"] == 0.0  # the Wald interval collapses at no default
+    j = iv.pd_jeffreys([0, 3, 10], [100, 100, 10])
+    assert j["lower"][0] == 0.0 and j["upper"][2] == 1.0
+    assert j["upper"][0] == pytest.approx(stats.beta.ppf(0.975, 0.5, 100.5))
+    ac = iv.pd_agresti_coull(0, 100)
+    assert ac["lower"] == 0.0 and ac["upper"] > 0.0 and ac["estimate"] > 0.0
+    # (3.4): N-dagger with unequal trials, and N / (1 + (N - 1) rho) with one trial each
+    trials = [1.0, 2.0, 3.0]
+    pairs = math.sqrt(2) + math.sqrt(3) + math.sqrt(6)
+    assert iv.effective_n(6, 0.1, trials) == pytest.approx(1.0 / (1.0 / 6 + 2.0 * pairs * 0.1 / 36))
+    assert iv.effective_n(531, 0.01) == pytest.approx(531 / (1 + 530 * 0.01))
+    assert iv.pd_wald(3, 6, rho=0.1, trials=trials)["n_effective"] == pytest.approx(iv.effective_n(6, 0.1, trials))
+    for f in (iv.pd_wald, iv.pd_agresti_coull, iv.pd_jeffreys):
+        with pytest.raises(ValueError):
+            f(0, 0)
+        with pytest.raises(ValueError):
+            f(5, 3)
+    with pytest.raises(ValueError):
+        iv.pd_wald([1, 2], [10, 10], rho=0.1, trials=[5, 5])
+    expected = {(200, 0.005): (0.6325, 0.9813, 0.9813), (1000, 0.02): (0.9497, 0.9467, 0.9589)}
+    for (n, p), covs in expected.items():
+        d = np.arange(n + 1)
+        weight = stats.binom.pmf(d, n, p)
+        for f, c in zip((iv.pd_wald, iv.pd_agresti_coull, iv.pd_jeffreys), covs, strict=True):
+            r = f(d, np.full(n + 1, n))
+            assert float(np.sum(weight * ((r["lower"] <= p) & (p <= r["upper"])))) == pytest.approx(c, abs=5e-5)
+    # the bootstraps of the duration PD: both cover the truth in every grade of this draw, with similar errors
+    d = RatingPaths(Q6, (2000,) * 5, horizon=3.0).draw(np.random.default_rng(41))
+    truth = expm(Q6)[:5, -1]
+    res = iv.pd_bootstrap(d["segments"], 6, method="resample", n_boot=200, seed=7)
+    par = iv.pd_bootstrap(d["segments"], 6, method="parametric", n_boot=200, seed=7, keep=True)
+    for r in (res, par):
+        assert np.all(r["lower"] < truth) and np.all(truth < r["upper"])
+    np.testing.assert_allclose(res["estimate"], par["estimate"])
+    assert np.all(np.abs(res["se"] / par["se"] - 1.0) < 0.3) and par["replicates"].shape == (200, 5)
+    again = iv.pd_bootstrap(d["segments"], 6, method="resample", n_boot=200, seed=7)
+    np.testing.assert_array_equal(again["lower"], res["lower"])  # the seed makes it reproducible
+    empty = {k: v[d["segments"]["state"] != 0] for k, v in d["segments"].items()}
+    with pytest.raises(ValueError):
+        iv.pd_bootstrap(empty, 6)
+
+
+def test_mobility():
+    """RV-410: M_SVD and the trace index are zero on the identity; on two states both have a closed form; the trace
+    index cannot tell mass moved one notch from mass spread over every grade, M_SVD can."""
+    from riskvalidation.transitions.mobility import svd_mobility, trace_mobility
+
+    assert svd_mobility(np.eye(8)) == 0.0 and trace_mobility(np.eye(8)) == 0.0
+    a, b = 0.1, 0.2
+    two = [[1 - a, a], [b, 1 - b]]  # P - I has rank one, singular value sqrt(2 (a^2 + b^2))
+    assert svd_mobility(two) == pytest.approx(math.sqrt(2.0 * (a * a + b * b)) / 2.0)
+    assert trace_mobility(two) == pytest.approx(a + b)
+    n = 7
+    notch = np.eye(n) * 0.9
+    for i in range(n - 1):
+        notch[i, i + 1] = 0.1
+    notch[n - 1, n - 2] = 0.1
+    spread = np.full((n, n), 0.1 / (n - 1))
+    np.fill_diagonal(spread, 0.9)
+    assert trace_mobility(notch) == pytest.approx(trace_mobility(spread)) == pytest.approx(0.7 / 6)
+    assert svd_mobility(notch) == pytest.approx(0.1206046, abs=1e-7)
+    assert svd_mobility(spread) == pytest.approx(0.1)
+    with pytest.raises(ValueError):
+        svd_mobility([[1.0, 0.0]])
+
+
+def test_ttc_portfolio():
+    """RV-411: Engelmann's TTC portfolio is the fixed point of (10), reached from any start, in closed form on two
+    grades; a non-primitive performing block or an origination into default is refused (Theorem 1)."""
+    from riskvalidation.transitions import ttc
+
+    a, b, p1, p2, o1 = 0.1, 0.2, 0.01, 0.05, 0.7
+    t = [[1 - a - p1, a, p1], [b, 1 - b - p2, p2], [0.0, 0.0, 1.0]]
+    r = ttc.ttc_portfolio(t, [o1, 1 - o1, 0.0])
+    w1 = (b + p2 * o1) / (a + p1 * (1 - o1) + b + p2 * o1)  # the balance of flows between the two grades
+    np.testing.assert_allclose(r["portfolio"], [w1, 1 - w1, 0.0], atol=1e-12)
+    assert r["converged"] and r["eigenvector_distance"] < 1e-10
+    assert r["default_rate"] == pytest.approx(w1 * p1 + (1 - w1) * p2)
+    m = ttc.propagation_matrix(t, [o1, 1 - o1])
+    np.testing.assert_allclose(r["portfolio"] @ m, r["portfolio"], atol=1e-13)
+    np.testing.assert_allclose(m.sum(axis=1), 1.0)
+    # a migration matrix built from Q6, any start: the projection reaches the TTC portfolio
+    p = expm(Q6)
+    o = [0.0, 0.3, 0.4, 0.3, 0.0]
+    for start in ([1.0, 0, 0, 0, 0], [0, 0, 0, 0, 1.0]):
+        pr = ttc.project(p, start, o, 300)
+        assert pr["portfolio"].shape == (301, 6) and np.allclose(pr["portfolio"].sum(axis=1), 1.0)
+        assert pr["distance_to_ttc"][-1] < 1e-9 and pr["distance_to_ttc"][0] > 0.5
+        assert pr["default_rate"][0] == pytest.approx(float(np.asarray(start) @ p[:5, -1]))
+    stressed = ttc.project([p, expm(2 * Q6), p], [0.2] * 5, o)
+    assert stressed["portfolio"].shape == (4, 6) and "ttc" not in stressed
+    assert stressed["default_rate"][1] > stressed["default_rate"][0]
+    # Theorem 1's conditions and Engelmann's counterexample
+    with pytest.raises(ValueError):
+        ttc.ttc_portfolio([[0, 1, 0], [1, 0, 0], [0, 0, 1]], [0.5, 0.5, 0.0])
+    assert not ttc.is_primitive([[0, 1], [1, 0]]) and ttc.is_primitive([[0.5, 0.5], [1, 0]])
+    with pytest.raises(ValueError):
+        ttc.ttc_portfolio(t, [0.5, 0.4, 0.1])
+    with pytest.raises(ValueError):
+        ttc.ttc_portfolio([[0.9, 0.1, 0.0], [0.1, 0.8, 0.1], [0.5, 0.0, 0.5]], [0.5, 0.5])
+    with pytest.raises(ValueError):
+        ttc.ttc_portfolio([[0.9, 0.2, 0.0], [0.1, 0.8, 0.1], [0, 0, 1]], [0.5, 0.5])
