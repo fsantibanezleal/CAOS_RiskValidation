@@ -78,6 +78,17 @@ def test_generators_refuse_bad_parameters():
     ):
         with pytest.raises(ValueError):
             bad()
+    # a rating-path generator with a NaN or an infinite rate (one balancing an infinite diagonal passes the row sums)
+    from riskvalidation.generators.paths import RatingPaths
+
+    q = [[-0.1, 0.1, 0.0], [0.05, -0.1, 0.05], [0.0, 0.0, 0.0]]
+    nan = [row[:] for row in q]
+    nan[0][1], nan[0][0] = float("nan"), float("nan")
+    inf = [row[:] for row in q]
+    inf[1][2], inf[1][1] = float("inf"), float("-inf")
+    for bad_q in (nan, inf):
+        with pytest.raises(ValueError, match="finite"):
+            RatingPaths(bad_q, (100, 100))
 
 
 def test_default_counts_follow_wp14_model():

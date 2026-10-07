@@ -45,6 +45,10 @@ DOS_REIS_2020 = (
 def _check_generator(q: np.ndarray) -> None:
     if q.ndim != 2 or q.shape[0] != q.shape[1]:
         raise ValueError(f"a generator must be square, got shape {q.shape}")
+    # every comparison below is False on NaN, and an infinite rate can balance an infinite diagonal: a NaN rate made a
+    # draw run without end (found by Contraste's C04 review)
+    if not np.all(np.isfinite(q)):
+        raise ValueError("a generator's rates must be finite")
     off = ~np.eye(q.shape[0], dtype=bool)
     if np.any(q[off] < 0) or np.any(np.abs(q.sum(axis=1)) > 1e-9):
         raise ValueError("a generator has non-negative off-diagonal entries and rows summing to 0")
