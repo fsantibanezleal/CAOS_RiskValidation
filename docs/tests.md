@@ -33,6 +33,10 @@ analysis "should involve a range of tests because any individual test will have 
 | `stability.chi2` | Chi-square test of homogeneity | p-value | [Stability](tests/04_stability.md) |
 | `stability.ks` | Two-sample Kolmogorov-Smirnov | p-value | [Stability](tests/04_stability.md) |
 | `stability.wasserstein` | Wasserstein-1 distance | descriptive | [Stability](tests/04_stability.md) |
+| `rating.time_homogeneity` | Time homogeneity of a migration matrix (Anderson-Goodman chi-square) | p-value | [Markov tests](transitions/03_markov-tests.md) |
+| `rating.markov_order` | First-order Markov chain against second order (Anderson-Goodman, states grouped by direction) | p-value | [Markov tests](transitions/03_markov-tests.md) |
+| `rating.matrix_reference` | A migration matrix against a reference matrix (Anderson-Goodman, likelihood ratio) | p-value | [Markov tests](transitions/03_markov-tests.md) |
+| `rating.momentum` | Rating momentum (stratified hazard with a downgraded-into covariate, likelihood ratio) | p-value | [Markov tests](transitions/03_markov-tests.md) |
 
 "Descriptive" measures have no thresholds in the default policy: they are shown with their value and no colour
 unless an institution's policy sets bands for them.
