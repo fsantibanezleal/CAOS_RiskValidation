@@ -99,7 +99,12 @@ direction gives every cell data, and both forms hold. For time homogeneity the l
 For the reference matrix it is the chi-square, for an arithmetic reason: a cell the reference gives $p^0$ = 0.00001
 expects 0.01 moves among 1,000 obligors, and one observed move adds $(1 - 0.01)^2/0.01 \approx 98$ to the statistic.
 Which form holds is a property of the data's sparsity, measured here for one design; on another design the harness
-measures it again. Cells a source never fills leave the degrees of freedom: each row counts only the columns with a
+measures it again. Two seven-grade chains show how much: on the chain of Contraste's case C04 (the EM generator of
+S&P's CEREP counts, cohorts of 75 to 1,814 ratings by grade), the grouped order test's chi-square rejects 6.95% at 5%
+and 2.70% at 1% over 2,000 repetitions while its likelihood ratio holds (4.80%, 0.95%); on a hand-made seven-grade
+chain whose migration rates fall tenfold a notch (the same cohort sizes, seed 6202), the chi-square holds (5.20%,
+1.35%) and the likelihood ratio rejects 6.75% at 5%. A validator who reads this test on agency-like cohorts measures
+both forms on a generator shaped like them first. Cells a source never fills leave the degrees of freedom: each row counts only the columns with a
 positive pooled (or reference) probability and only the periods in which it was observed.
 
 The size study is a gate: `tests/test_size.py::test_size_of_every_p_value_test` fails if a default form leaves the
