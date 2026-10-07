@@ -19,6 +19,7 @@ from riskvalidation.generators import (
     feed_grades,
     feed_series,
 )
+from riskvalidation.generators.paths import RatingPaths
 from riskvalidation.harness import simulate, size_bound, within_size
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,6 +29,25 @@ GRADES_N = (2500, 2000, 1500, 1500, 800, 400, 150)
 GRADES_PD = (0.002, 0.005, 0.01, 0.02, 0.04, 0.08, 0.16)
 # the same scale with a thin best grade: 0.6 expected defaults (WP14: slow convergence for small PDs)
 THIN_N = (300, 800, 1500, 1500, 800, 400, 150)
+
+# a Markov chain with five grades and default (U4): five annual snapshots in CEREP's stock model, the paths kept
+Q6 = (
+    (-0.12, 0.10, 0.015, 0.004, 0.00099, 0.00001),
+    (0.02, -0.15, 0.11, 0.015, 0.004, 0.001),
+    (0.002, 0.04, -0.17, 0.11, 0.015, 0.003),
+    (0.0, 0.004, 0.06, -0.22, 0.14, 0.016),
+    (0.0, 0.0, 0.005, 0.08, -0.30, 0.215),
+    (0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+)
+CHAIN = RatingPaths(Q6, (1000,) * 5, horizon=5.0, snapshots=(0.0, 1.0, 2.0, 3.0, 4.0, 5.0))
+
+
+def _expm_q6():
+    import numpy as np
+    from scipy.linalg import expm
+
+    return expm(np.asarray(Q6))
+
 
 # test id -> (generator under the null, feed, keyword arguments)
 NULL_SCENARIOS = {
@@ -48,6 +68,10 @@ NULL_SCENARIOS = {
     "stability.ks": (TwoSample(2000, 2000), None, {}),
     "rating.migration_ztests": (Migrations([500] * 7, break_monotonicity(decaying_matrix(7), 3, 1, 1.0)), None, {}),
     "rating.hhi": (GradeFrequencies(5000, (0.02, 0.05, 0.10, 0.15, 0.20, 0.18, 0.13, 0.09, 0.05, 0.03)), None, {}),
+    "rating.time_homogeneity": (CHAIN, lambda d: {"counts_by_period": [s["counts"] for s in d["steps"]]}, {}),
+    "rating.markov_order": (CHAIN, lambda d: {"triplets": d["triplets"]}, {}),
+    "rating.matrix_reference": (CHAIN, lambda d: {"counts": d["steps"][0]["counts"], "reference": _expm_q6()}, {}),
+    "rating.momentum": (CHAIN, lambda d: {"paths": d["segments"]}, {}),
 }
 # tests whose measured size exceeds the bound in their null scenario: the page states the measured size
 DOCUMENTED_EXCESS = {"pd.normal_multiperiod": ROOT / "docs" / "tests" / "01_pd-calibration.md"}

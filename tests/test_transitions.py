@@ -143,3 +143,83 @@ def test_em_generator():
     assert np.all(np.abs(pd1[2:] - true1[2:]) / true1[2:] < 0.15)
     with pytest.raises(ValueError):
         em_generator([])
+
+
+
+def _snapshots(**kw):
+    return RatingPaths(Q6, (1000,) * 5, horizon=5.0, snapshots=(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), **kw)
+
+
+def test_time_homogeneity():
+    """RV-405: Anderson and Goodman's chi-square (3.8) and likelihood ratio (3.5) across periods: both reject a
+    recession regime that triples every downgrade rate from the third year; the degrees of freedom leave out the empty
+    cells."""
+    from riskvalidation.validation.transitions import rating_time_homogeneity
+
+    q2 = Q6.copy()
+    q2[np.triu_indices(6, k=1)] *= 3.0
+    q2[-1] = 0.0
+    np.fill_diagonal(q2, 0.0)
+    np.fill_diagonal(q2, -q2.sum(axis=1))
+    regime = _snapshots(regimes=((2.0, q2),)).draw(np.random.default_rng(31))
+    r = rating_time_homogeneity([s["counts"] for s in regime["steps"]])
+    assert r.p_value < 1e-6 and r.extras["form"] == "chi2" and r.p_value == r.extras["chi2_p_value"]
+    lr = rating_time_homogeneity([s["counts"] for s in regime["steps"]], form="lr")
+    assert lr.statistic == pytest.approx(r.extras["lr"]) and lr.p_value == pytest.approx(r.extras["lr_p_value"])
+    assert lr.p_value < 1e-6
+    # the default row carries no information and empty cells leave the degrees of freedom
+    same = [[[50, 10, 0], [5, 40, 5], [0, 0, 7]], [[45, 15, 0], [6, 38, 6], [0, 0, 9]]]
+    r2 = rating_time_homogeneity(same)
+    assert r2.extras["dof"] == (2 - 1) * (2 - 1) + (2 - 1) * (3 - 1)
+    with pytest.raises(ValueError):
+        rating_time_homogeneity([[1, 2], [3, 4]])
+    with pytest.raises(ValueError):
+        rating_time_homogeneity(same, form="g2")
+
+
+def test_markov_order():
+    """RV-406: the order test on the states grouped by direction sees downgrade momentum; the full table is in
+    extras."""
+    from riskvalidation.validation.transitions import rating_markov_order
+
+    d = _snapshots(momentum=((0.5, 2.0), (0.5, 2.0)), investment_grades=3).draw(np.random.default_rng(32))
+    r = rating_markov_order(d["triplets"])
+    assert r.p_value < 1e-6 and r.extras["grouping"] == "direction"
+    assert {"lr", "chi2", "dof"} <= set(r.extras["full"])
+    lr = rating_markov_order(d["triplets"], form="lr", grouping="none")
+    assert lr.extras["form"] == "lr" and lr.extras["dof"] == lr.extras["full"]["dof"]
+    with pytest.raises(ValueError):
+        rating_markov_order(d["triplets"], grouping="pairs")
+
+
+def test_matrix_against_reference():
+    """RV-407: a count matrix against a reference: the true matrix is not rejected in this draw, a matrix of
+    half the mobility is, and a move the reference forbids rejects outright."""
+    from riskvalidation.validation.transitions import rating_matrix_reference
+
+    d = _snapshots().draw(np.random.default_rng(33))
+    counts = d["steps"][0]["counts"]
+    p = expm(Q6)
+    assert rating_matrix_reference(counts, p).p_value > 0.01
+    assert rating_matrix_reference(counts, expm(0.5 * Q6)).p_value < 1e-6
+    forbid = p.copy()
+    forbid[0, 1] += forbid[0, 3]
+    forbid[0, 3] = 0.0
+    r = rating_matrix_reference(counts, forbid)
+    if counts[0, 3] > 0:
+        assert r.p_value == 0.0 and (0, 3) in r.extras["impossible_moves"]
+    chi2 = rating_matrix_reference(counts, p, form="chi2")
+    assert chi2.extras["form"] == "chi2" and chi2.p_value == pytest.approx(chi2.extras["chi2_p_value"])
+
+
+def test_momentum_hazard():
+    """RV-408: the hazard test finds the planted downward momentum (a positive coefficient), and no upward effect."""
+    from riskvalidation.validation.transitions import rating_momentum
+
+    d = _snapshots(momentum=((1.0, 1.0), (1.0, 1.0)), investment_grades=3).draw(np.random.default_rng(34))
+    down = rating_momentum(d["segments"])
+    assert down.p_value < 1e-6 and down.extras["coefficient"] > 0.2
+    up = rating_momentum(d["segments"], direction="up")
+    assert up.extras["coefficient"] < down.extras["coefficient"]
+    with pytest.raises(ValueError):
+        rating_momentum(d["segments"], direction="sideways")
