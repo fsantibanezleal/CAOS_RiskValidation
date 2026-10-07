@@ -1,6 +1,6 @@
 """Validation tests, grouped by family. Importing this package registers every test in the catalogue."""
 
-from riskvalidation.validation import calibration, discrimination, rating_system, stability
+from riskvalidation.validation import calibration, discrimination, rating_system, stability, transitions
 from riskvalidation.validation.calibration import (
     critical_default_count,
     pd_binomial,
@@ -34,6 +34,12 @@ from riskvalidation.validation.stability import (
     stability_ks,
     stability_psi,
     stability_wasserstein,
+)
+from riskvalidation.validation.transitions import (
+    rating_markov_order,
+    rating_matrix_reference,
+    rating_momentum,
+    rating_time_homogeneity,
 )
 
 __all__ = [
@@ -71,4 +77,9 @@ __all__ = [
     "stability_ks",
     "stability_psi",
     "stability_wasserstein",
+    "rating_markov_order",
+    "rating_matrix_reference",
+    "rating_momentum",
+    "rating_time_homogeneity",
+    "transitions",
 ]
