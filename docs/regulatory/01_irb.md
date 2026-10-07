@@ -84,7 +84,9 @@ revolver=False, defaulted=False, el_best_estimate=None, regime="basel3")` return
 weight $12.5\,K$ times the regime's scaling, the RWA when an EAD is given, and every parameter it used:
 
 - the PD floored at the regime's floor (sovereigns exempt under `basel3` and `crr3`), with the QRRE revolver floor for
-  `revolver=True` and the retail floor for a transactor;
+  `revolver=True` and the retail floor for a transactor; a PD of 0, the long-run average of a grade with no default in
+  any cohort, takes the floor (CRE32.4: "the greater of the one-year PD associated with the internal borrower grade ...
+  or 0.05%"), and is refused for an exempt class, where the formula has no value at 0;
 - the correlation of the asset class, with the firm-size adjustment and the 1.25 multiplier where they apply;
 - the maturity clamped to 1 to 5 years for non-retail classes (CRE32.46 to CRE32.47), and none for retail;
 - for a defaulted exposure, $K = \max(0, \mathrm{LGD} - \mathrm{EL}_{BE})$;
