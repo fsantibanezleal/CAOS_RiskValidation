@@ -234,7 +234,10 @@ def capital_requirement(
     """K, the risk weight 12.5 K (times the regime's scaling factor) and, given an EAD, the RWA of one exposure.
 
     ``pd`` is floored at the regime's floor (sovereigns exempt where the regime says so; a QRRE revolver, ``revolver``,
-    takes the higher QRRE floor of CRE32.58, a transactor the retail one); ``maturity`` is clamped to 1 to
+    takes the higher QRRE floor of CRE32.58, a transactor the retail one). A PD of 0, the estimate of a grade that never
+    defaulted (a long-run average over cohorts without a default), is the case the floor exists for: it takes the floor,
+    and is refused only where no floor applies (an exempt class), the formula having no value at 0. ``maturity`` is
+    clamped to 1 to
     5 years for non-retail classes, and retail classes have no maturity adjustment. A defaulted exposure gets
     K = max(0, LGD - EL best estimate) (CRE31.3). Where a regime fixes the LGD of a class (RAN 21-6 consumer, 61.3%) a
     different ``lgd`` is refused rather than silently replaced.
@@ -259,10 +262,11 @@ def capital_requirement(
         return IRBResult(asset_class, reg.id, pd, 1.0, lgd, None, None, None, k, rw, None if ead is None else rw * ead,
                          True, {"defaulted": reg.references.get("defaulted", ""), "scaling": reg.references["scaling"]},
                          tuple(notes))
-    if not 0.0 < pd < 1.0:
-        raise ValueError("pd must lie in (0, 1) for a non-defaulted exposure")
     floor = reg.pd_floor_qrre if asset_class == "qrre" and revolver else reg.pd_floor
-    pd_applied = pd if asset_class in reg.floor_exempt else max(pd, floor)
+    exempt = asset_class in reg.floor_exempt
+    if not 0.0 <= pd < 1.0 or (pd == 0.0 and (exempt or floor <= 0.0)):
+        raise ValueError("pd must lie in (0, 1) for a non-defaulted exposure (0 only where the regime floors it)")
+    pd_applied = pd if exempt else max(pd, floor)
     if pd_applied != pd:
         notes.append(f"PD floored at {floor:.2%}")
     r = correlation(asset_class, pd_applied, sales_eur_m=sales_eur_m, large_fi=large_fi, regime=regime)
