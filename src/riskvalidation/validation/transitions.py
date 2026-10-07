@@ -13,19 +13,19 @@ Anderson and Goodman (1957), Statistical inference about Markov chains, Annals o
 
 Their asymptotics assume every p_ij > 0 (section 3.1), and rating tables are sparse. Which form is the default was
 decided by measurement, on the rating-path generator under the null (a Markov chain, 1,000 obligors in each of five
-grades, five annual snapshots; 4,000 repetitions at the seeds of ``tests/test_size.py``, where the bound is 6.06% at 5%
-and 1.49% at 1%), rejection rates at 5% and at 1%:
+grades, five annual snapshots; 4,000 repetitions at each test's seed in ``tests/test_size.py``, where the bound is
+6.06% at 5% and 1.49% at 1%), rejection rates at 5% and at 1%:
 
-- time homogeneity: the chi-square (3.8) 4.32% and 0.68%, the likelihood ratio (3.5) 7.12% and 1.68%; the chi-square
+- time homogeneity: the chi-square (3.8) 4.85% and 0.83%, the likelihood ratio (3.5) 7.85% and 1.60%; the chi-square
   is the default;
-- order: on the full m x m x m table the chi-square (3.14) 13.08% and 8.88%, the likelihood ratio (3.12) 0.30% and
+- order: on the full m x m x m table the chi-square (3.14) 13.78% and 9.35%, the likelihood ratio (3.12) 0.60% and
   0.03% (one far above its level, the other almost never rejecting); on the previous and next states grouped by
   direction (from a better grade, the same, a worse one; to a better, the same, a worse one), a 3 x 3 table per
-  middle grade where every cell has data and the grouping momentum acts on, the chi-square 4.20% and 0.95% and the
-  likelihood ratio 5.17% and 1.05%; the grouped chi-square is the default;
-- a matrix against a reference: (3.1) as printed 7.12% and 2.90%, its likelihood-ratio analogue 3.23% and 0.38%;
+  middle grade where every cell has data and the grouping momentum acts on, the chi-square 4.80% and 1.25% and the
+  likelihood ratio 5.33% and 1.00%; the grouped chi-square is the default;
+- a matrix against a reference: (3.1) as printed 6.73% and 3.02%, its likelihood-ratio analogue 4.05% and 0.50%;
   the likelihood ratio is the default;
-- momentum: 4.95% and 1.18% downward, 4.40% and 1.10% upward.
+- momentum: 4.80% and 0.85% downward, 4.95% and 0.78% upward.
 
 Every form stays available and both are in ``extras``. Cells a source never fills carry no information: each row's
 degrees of freedom count only the columns with a positive pooled (or reference) probability and only the periods (or
@@ -172,9 +172,9 @@ def _order_stat(tables: list[np.ndarray]) -> tuple[float, float, int]:
 @register(
     "rating.markov_order",
     family="transitions",
-    name="First-order Markov chain against second order (Anderson-Goodman likelihood ratio)",
+    name="First-order Markov chain against second order (Anderson-Goodman, states grouped by direction)",
     h0="the next state depends on the current state only",
-    reference=f"{ANDERSON_GOODMAN_1957}, section 3.3, equation (3.12)",
+    reference=f"{ANDERSON_GOODMAN_1957}, section 3.3, equations (3.12) and (3.14)",
     decision="p_value",
 )
 def rating_markov_order(
@@ -223,9 +223,9 @@ def rating_markov_order(
 @register(
     "rating.matrix_reference",
     family="transitions",
-    name="A migration matrix against a reference matrix (Anderson-Goodman chi-square)",
+    name="A migration matrix against a reference matrix (Anderson-Goodman, likelihood ratio)",
     h0="the transition probabilities equal the reference matrix",
-    reference=f"{ANDERSON_GOODMAN_1957}, section 3.1, equation (3.1)",
+    reference=f"{ANDERSON_GOODMAN_1957}, section 3.1, equation (3.1) and its likelihood-ratio analogue",
     decision="p_value",
 )
 def rating_matrix_reference(

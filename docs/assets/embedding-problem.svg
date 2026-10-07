@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" width="1000" height="500" role="img" aria-labelledby="t d">
+  <title id="t">From a published migration matrix to a generator</title>
+  <desc id="d">The embedding problem: a one-year matrix P is checked against Israel, Rosenthal and Wei's Theorem 3; the log series gives a candidate generator whose negative off-diagonal entries are removed by the diagonal or weighted adjustment, or the JLT approximation is used; exp(Q) then differs from P by a reported L1 distance. From snapshot counts, the EM algorithm gives the maximum likelihood generator directly.</desc>
+  <style>
+    .bg { fill: #f8fafc; stroke: #cbd5e1; }
+    .pn { fill: #ffffff; stroke: #94a3b8; }
+    .hl { fill: #eef2ff; stroke: #4338ca; }
+    .ok { fill: #ecfdf5; stroke: #0f766e; }
+    .warn { fill: #fff7ed; stroke: #c2410c; }
+    .t { font: 600 14px system-ui, sans-serif; fill: #0f172a; }
+    .h { font: 600 12.5px system-ui, sans-serif; fill: #0f172a; }
+    .s { font: 12px system-ui, sans-serif; fill: #334155; }
+    .k { font: 11px system-ui, sans-serif; fill: #475569; }
+    .m { font: italic 12px Georgia, 'Times New Roman', serif; fill: #0f172a; }
+    .ar { stroke: #334155; stroke-width: 1.4; fill: none; }
+    .head { fill: #334155; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #0d1117; stroke: #30363d; }
+      .pn { fill: #161b22; stroke: #30363d; }
+      .hl { fill: #111a33; stroke: #58a6ff; }
+      .ok { fill: #0f2418; stroke: #3fb950; }
+      .warn { fill: #2a1f0b; stroke: #d29922; }
+      .t, .h, .m { fill: #e6edf3; }
+      .s { fill: #c9d1d9; }
+      .k { fill: #8b949e; }
+      .ar { stroke: #8b949e; }
+      .head { fill: #8b949e; }
+    }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path class="head" d="M 0 0 L 10 5 L 0 10 z"/>
+    </marker>
+  </defs>
+  <rect class="bg" x="1" y="1" width="998" height="498" rx="10"/>
+  <text class="t" x="24" y="30">From a published migration matrix to a generator (Israel, Rosenthal and Wei 2001; Smith and dos Reis 2018)</text>
+
+  <!-- the input -->
+  <rect class="hl" x="24" y="56" width="200" height="104" rx="8"/>
+  <text class="h" x="36" y="78">A one-year matrix P</text>
+  <text class="s" x="36" y="98">cohort counts / row sizes,</text>
+  <text class="s" x="36" y="114">as CEREP publishes them</text>
+  <text class="k" x="36" y="136">wanted: Q with exp(Q) = P,</text>
+  <text class="k" x="36" y="151">q_ij &gt;= 0 off the diagonal</text>
+
+  <!-- Theorem 3 -->
+  <rect class="warn" x="270" y="56" width="300" height="104" rx="8"/>
+  <text class="h" x="282" y="78">Theorem 3: no exact generator if</text>
+  <text class="s" x="282" y="98">(a) det P &lt;= 0, or</text>
+  <text class="s" x="282" y="114">(b) det P &gt; p_11 p_22 ... p_NN, or</text>
+  <text class="s" x="282" y="130">(c) j reachable from i but p_ij = 0</text>
+  <text class="k" x="282" y="150">all three published matrices fail (c)</text>
+  <line class="ar" x1="224" y1="108" x2="268" y2="108" marker-end="url(#arrow)"/>
+
+  <!-- the series -->
+  <rect class="pn" x="616" y="56" width="360" height="104" rx="8"/>
+  <text class="h" x="628" y="78">Theorem 1: the log series</text>
+  <text class="m" x="628" y="100">Q~ = (P - I) - (P - I)^2/2 + (P - I)^3/3 - ...</text>
+  <text class="s" x="628" y="122">converges when S = max |lambda - 1|^2 &lt; 1</text>
+  <text class="s" x="628" y="138">(every p_ii &gt; 1/2 suffices, Theorem 2); rows sum</text>
+  <text class="s" x="628" y="154">to 0, exp(Q~) = P, entries may be negative</text>
+  <line class="ar" x1="570" y1="108" x2="614" y2="108" marker-end="url(#arrow)"/>
+
+  <!-- the three repairs -->
+  <rect class="pn" x="24" y="206" width="300" height="118" rx="8"/>
+  <text class="h" x="36" y="228">Diagonal adjustment (2)</text>
+  <text class="s" x="36" y="248">negative q~_ij set to 0, their sum added</text>
+  <text class="s" x="36" y="264">to the diagonal q~_ii</text>
+  <text class="k" x="36" y="290">L1 to P, published: 0.002736 (S&amp;P 1981-91),</text>
+  <text class="k" x="36" y="306">0.001401 (Moody's), 0.001096 (S&amp;P 1999)</text>
+
+  <rect class="pn" x="350" y="206" width="300" height="118" rx="8"/>
+  <text class="h" x="362" y="228">Weighted adjustment (2')</text>
+  <text class="s" x="362" y="248">negative q~_ij set to 0, their mass taken</text>
+  <text class="s" x="362" y="264">from the row's other entries by size</text>
+  <text class="k" x="362" y="290">L1 to P, published: 0.002686, 0.001371,</text>
+  <text class="k" x="362" y="306">0.001088</text>
+
+  <rect class="pn" x="676" y="206" width="300" height="118" rx="8"/>
+  <text class="h" x="688" y="228">JLT approximation (3)</text>
+  <text class="m" x="688" y="250">q_ii = log p_ii,  q_ij = p_ij log p_ii / (p_ii - 1)</text>
+  <text class="s" x="688" y="270">at most one move a year (no series)</text>
+  <text class="k" x="688" y="290">L1 to P, published: 0.116900, 0.100047,</text>
+  <text class="k" x="688" y="306">0.103516: forty to a hundred times worse</text>
+  <path class="ar" d="M 796 160 L 796 184 L 174 184 L 174 204" marker-end="url(#arrow)"/>
+  <line class="ar" x1="500" y1="184" x2="500" y2="204" marker-end="url(#arrow)"/>
+  <path class="ar" d="M 124 160 L 124 172 L 900 172 L 900 204" marker-end="url(#arrow)"/>
+  <text class="k" x="908" y="190">from P itself</text>
+  <text class="k" x="182" y="198">from the series</text>
+
+  <!-- the outcome -->
+  <rect class="warn" x="24" y="356" width="626" height="62" rx="8"/>
+  <text class="h" x="36" y="378">Every repair gives a valid generator whose exp(Q) is not P</text>
+  <text class="s" x="36" y="398">the engine reports the L1 distance sum |P - exp(Q)|, the Theorem 3 condition that failed,</text>
+  <text class="s" x="36" y="413">and whether P is stochastically monotone (Lemma 1 ties that, for a valid generator, to Q)</text>
+  <line class="ar" x1="174" y1="324" x2="174" y2="354" marker-end="url(#arrow)"/>
+  <line class="ar" x1="500" y1="324" x2="500" y2="354" marker-end="url(#arrow)"/>
+  <path class="ar" d="M 826 324 L 826 340 L 640 340 L 640 354" marker-end="url(#arrow)"/>
+
+  <rect class="ok" x="676" y="356" width="300" height="126" rx="8"/>
+  <text class="h" x="688" y="378">From the counts: EM (maximum likelihood)</text>
+  <text class="s" x="688" y="398">snapshot count matrices, any step length;</text>
+  <text class="m" x="688" y="418">q'_ij = E[K_ij | y] / E[S_i | y]</text>
+  <text class="s" x="688" y="438">closed-form E-step (Van Loan blocks), a</text>
+  <text class="s" x="688" y="454">valid generator, no repair; its likelihood</text>
+  <text class="s" x="688" y="470">never decreases from one iteration to the next</text>
+  <text class="k" x="24" y="446">The distances are Israel et al.'s section 4, reproduced by the engine from the paper</text>
+  <text class="k" x="24" y="462">(eight from the printed matrices; the first JLT one only from the printed four-digit generator).</text>
+</svg>

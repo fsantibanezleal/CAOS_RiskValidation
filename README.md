@@ -13,13 +13,15 @@ same wheel runs in a Python pipeline and in the browser under Pyodide.
 
 ## Status
 
-Version 0.03.000: the core contracts (result record, policy, registry, suite runner); 23 validation tests for
-PD calibration, discrimination, rating-system stability and population stability; the IRB risk-weight functions
-under four regimes; three reference engines (the one-factor model with its large homogeneous portfolio, most
-prudent estimation for low-default portfolios, PD curve calibration after Tasche 2013); and known-truth generators
-with a size and power harness that measures how often each test rejects a right model and catches a wrong one, with
-the Monte Carlo error of every rate. Each reproduces its primary source's own tables, worked examples or published
-simulations. Further calculators and engines arrive unit by unit; the
+Version 0.04.000: the core contracts (result record, policy, registry, suite runner); 27 validation tests for
+PD calibration, discrimination, rating-system stability, population stability and rating transitions; the IRB
+risk-weight functions under four regimes; three reference engines (the one-factor model with its large homogeneous
+portfolio, most prudent estimation for low-default portfolios, PD curve calibration after Tasche 2013); rating
+transitions (cohort, duration, Aalen-Johansen and EM estimators, the embedding problem, intervals for PDs by grade,
+mobility, the through-the-cycle portfolio a migration matrix implies); and known-truth generators, among them rating
+paths with planted momentum, regimes and withdrawals, with a size and power harness that measures how often each test
+rejects a right model and catches a wrong one, with the Monte Carlo error of every rate. Each reproduces its primary
+source's own tables, worked examples or published simulations. Further calculators and engines arrive unit by unit; the
 [CHANGELOG](CHANGELOG.md) lists exactly what each release contains. Not yet published on PyPI.
 
 ## Install (from source, until the first PyPI release)
@@ -79,12 +81,13 @@ print("lights:", run.counts(), "worst:", run.worst().value)
 
 The [`docs/`](docs/README.md) wiki: the software design document, the architecture (result contract, policies
 and lights, suites and reproducibility), one page per test family with its formula, null hypothesis, decision rule
-and primary source, the [regulatory calculators](docs/regulatory.md), the [reference engines](docs/engines.md) and
-the [generators and the size and power harness](docs/generators.md). [`examples/size_power.py`](examples/size_power.py)
+and primary source, the [regulatory calculators](docs/regulatory.md), the [reference engines](docs/engines.md),
+[rating transitions](docs/transitions.md) and the [generators and the size and power harness](docs/generators.md). [`examples/size_power.py`](examples/size_power.py)
 measures the size and power of a few tests in seconds.
 [`examples/credit_math.py`](examples/credit_math.py) runs the credit mathematics end to end: IRB capital under two
 regimes, the large homogeneous portfolio behind it, most prudent PDs, and a PD curve calibrated to a new year and
-tested for fit.
+tested for fit. [`examples/rating_transitions.py`](examples/rating_transitions.py) estimates, embeds, tests, bounds
+and projects a migration matrix on a known generator, then plants rating momentum and shows which tests see it.
 
 ## What this is not
 

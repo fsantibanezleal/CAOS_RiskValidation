@@ -146,7 +146,6 @@ def test_em_generator():
         em_generator([])
 
 
-
 def _snapshots(**kw):
     return RatingPaths(Q6, (1000,) * 5, horizon=5.0, snapshots=(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), **kw)
 
