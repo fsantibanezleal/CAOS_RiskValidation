@@ -111,3 +111,35 @@ def test_embedding_conditions_and_adjustments():
         emb.generator([[0.5, 0.6], [0.5, 0.5]])
     with pytest.raises(ValueError):
         emb.generator(p0, method="cubic")
+
+
+def test_em_generator():
+    """RV-404: the EM generator of snapshot counts: a non-decreasing log-likelihood, closed-form expectations that
+    agree with the simulated paths, and a known generator recovered from ten annual snapshots."""
+    from riskvalidation.transitions.em import _blocks, em_generator
+
+    gen = RatingPaths(Q6, (1000,) * 5, horizon=10.0, snapshots=tuple(float(x) for x in range(11)))
+    # the E-step under the true generator against the jumps the paths made in the first year, over ten draws
+    p, jb, _ = _blocks(Q6, 1.0)
+    expected = np.zeros((6, 6))
+    observed = np.zeros((6, 6))
+    rng = np.random.default_rng(12)
+    for _ in range(10):
+        d = gen.draw(rng)
+        c = d["steps"][0]["counts"]
+        expected += Q6 * np.einsum("ijab,ab->ij", jb, np.divide(c, p, out=np.zeros_like(c), where=c > 0))
+        seg = d["segments"]
+        first = (seg["to"] >= 0) & (seg["stop"] <= 1.0)
+        np.add.at(observed, (seg["state"][first], seg["to"][first]), 1.0)
+    for i in range(5):
+        for j in range(6):
+            if i != j and expected[i, j] >= 50:
+                assert abs(observed[i, j] - expected[i, j]) <= 4 * math.sqrt(expected[i, j]), (i, j)
+    d = gen.draw(np.random.default_rng(11))
+    fit = em_generator([{"counts": s["counts"], "dt": 1.0} for s in d["steps"]])
+    assert fit["converged"] and np.all(np.diff(fit["loglik"]) >= -1e-8)
+    assert emb.is_generator(fit["generator"])
+    pd1, true1 = expm(fit["generator"])[:5, 5], expm(Q6)[:5, 5]
+    assert np.all(np.abs(pd1[2:] - true1[2:]) / true1[2:] < 0.15)
+    with pytest.raises(ValueError):
+        em_generator([])
