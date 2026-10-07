@@ -4,6 +4,17 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.04.001] - 2026-10-07
+
+### Fixed
+
+- `regulatory.capital_requirement` refused a PD of exactly 0 although it floors the PD at the regime's floor: the
+  long-run average of a grade that never defaulted (an agency's AAA over CEREP's cohorts, in Contraste's case C04) is
+  the case the floor exists for (CRE32.4), and every caller had to apply the floor itself, a second copy of the regime's
+  value. A PD of 0 now takes the floor wherever one applies (the QRRE revolver floor for a revolver), with the usual
+  note, and is still refused for a class the regime exempts from the floor (sovereigns under Basel III final, CRR3 and
+  Basel II), where the formula has no value at 0. A negative PD, a PD of 1 and NaN are refused as before.
+
 ## [0.04.000] - 2026-10-06
 
 ### Added
