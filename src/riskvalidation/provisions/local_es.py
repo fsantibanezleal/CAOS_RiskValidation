@@ -15,6 +15,7 @@ Circular 1/2025. The functions compute; they state no compliance claim. Percenta
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 # Point 144 (riesgo normal; riesgo normal en vigilancia especial), decimals of the uncovered amount. Dossier 03 K.3.
@@ -80,11 +81,11 @@ def _check_segment(segment: str, point: str) -> None:
 
 def annex9_uncovered_amount(ead: float, adjusted_guarantee_values: Sequence[float]) -> float:
     """``max(0, EAD - sum(adjusted guarantees))``: the amount not covered by effective guarantees (Annex 9)."""
-    if ead != ead or ead < 0:
+    if not math.isfinite(ead) or ead < 0:
         raise ValueError(f"ead must be a non-negative amount, got {ead!r}")
     total = 0.0
     for g in adjusted_guarantee_values:
-        if g != g or g < 0:
+        if not math.isfinite(g) or g < 0:
             raise ValueError(f"an adjusted guarantee value must be a non-negative amount, got {g!r}")
         total += g
     return max(0.0, float(ead) - total)
@@ -111,7 +112,7 @@ def annex9_doubtful_coverage(segment: str, days_past_due: int) -> float:
     inclusive; the seven columns >90d-6m to >21m). Raises ``ValueError`` for 90 days or fewer.
     """
     _check_segment(segment, "point 140")
-    if days_past_due != days_past_due or days_past_due <= _MIN_DOUBTFUL_DAYS:
+    if not math.isfinite(days_past_due) or days_past_due <= _MIN_DOUBTFUL_DAYS:
         raise ValueError(
             f"days past due {days_past_due!r} must exceed {_MIN_DOUBTFUL_DAYS}: Annex 9 point 140 covers doubtful "
             "risk by arrears above 90 days"

@@ -20,6 +20,7 @@ only (:func:`b1_minimum_normal_check`).
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 # --------------------------------------------------------------------------------------------------------------
@@ -124,7 +125,7 @@ _ROUND = 9  # decimals kept before a bucket comparison, so a float at a boundary
 
 def _bucket(value: float, uppers: tuple[float | None, ...], name: str, rule: str) -> int:
     """Index of the first bucket whose inclusive upper bound is at least ``value`` (``None`` is unbounded)."""
-    if value != value or value < 0:
+    if not math.isfinite(value) or value < 0:
         raise ValueError(f"{name} must be a non-negative number, got {value!r} ({rule})")
     v = round(float(value), _ROUND)
     for i, upper in enumerate(uppers):
@@ -140,13 +141,13 @@ def _dpd_index(dpd_bucket: str, allowed: tuple[str, ...], rule: str) -> int:
 
 
 def _money(value: float, name: str) -> float:
-    if value != value or value < 0:
+    if not math.isfinite(value) or value < 0:
         raise ValueError(f"{name} must be a non-negative amount, got {value!r}")
     return float(value)
 
 
 def _rate(value: float, name: str) -> float:
-    if value != value or not 0.0 <= value <= 1.0:
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
         raise ValueError(f"{name} must be a decimal in [0, 1], got {value!r}")
     return float(value)
 
@@ -194,9 +195,9 @@ def b1_default_provision(exposure: float, recoverable: float) -> tuple[float, st
     $TPE = (E - R)/E$, rounded to 1e-9 before the bucket comparison; the provision is $E \\cdot PP$ with the category's
     PP. Upper bounds are inclusive: C1 to 3%, C2 to 20%, C3 to 30%, C4 to 50%, C5 to 80%, C6 above.
     """
-    if exposure != exposure or exposure <= 0:
+    if not math.isfinite(exposure) or exposure <= 0:
         raise ValueError(f"exposure must be positive, got {exposure!r} (B-1 N 2.2: TPE = (E - R) / E)")
-    if recoverable != recoverable or not 0.0 <= recoverable <= exposure:
+    if not math.isfinite(recoverable) or not 0.0 <= recoverable <= exposure:
         raise ValueError(f"recoverable amount {recoverable!r} must lie in [0, exposure={exposure!r}] (B-1 N 2.2)")
     tpe = round((exposure - recoverable) / exposure, _ROUND)
     uppers = tuple(upper for _, upper, _ in _DEFAULT_BUCKETS)
@@ -277,7 +278,7 @@ def b1_consumer_pe(max_dpd_in_bank: int, has_mortgage_in_system: bool, arrears_3
     rule = "B-1 N 3.1.3 consumer loans"
     if product not in _CONSUMER_PRODUCTS:
         raise ValueError(f"product {product!r} is outside {list(_CONSUMER_PRODUCTS)} ({rule})")
-    if max_dpd_in_bank != max_dpd_in_bank or max_dpd_in_bank < 0 or int(max_dpd_in_bank) != max_dpd_in_bank:
+    if not math.isfinite(max_dpd_in_bank) or max_dpd_in_bank < 0 or int(max_dpd_in_bank) != max_dpd_in_bank:
         raise ValueError(f"max_dpd_in_bank must be a non-negative integer, got {max_dpd_in_bank!r} ({rule})")
     pdis = _CONSUMER_PDI_MORTGAGE if has_mortgage_in_system else _CONSUMER_PDI_NO_MORTGAGE
     pdi = pdis[_CONSUMER_PRODUCTS.index(product)]
@@ -352,7 +353,7 @@ def b1_additional_provisions(amount: float, policy_min: float, policy_max: float
     """
     if policy_min > policy_max:
         raise ValueError(f"policy limits are inverted: min {policy_min!r} > max {policy_max!r} (B-1 N 9)")
-    if amount != amount or not policy_min <= amount <= policy_max:
+    if not math.isfinite(amount) or not policy_min <= amount <= policy_max:
         raise ValueError(
             f"additional provisions {amount!r} are outside the board policy [{policy_min!r}, {policy_max!r}] (B-1 N 9)"
         )
