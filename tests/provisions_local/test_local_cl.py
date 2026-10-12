@@ -123,7 +123,7 @@ def test_mortgage_table_every_cell():
             _check(cell, row["PI"][j], row["PDI"][j], pe_tol=1e-12, pe_pct=row["PE"][j])
             n += 1
         pis = row["PI"]
-        assert all(a < b for a, b in zip(pis, pis[1:]))
+        assert all(a < b for a, b in zip(pis, pis[1:], strict=False))
         assert pis[-1] == 100
     assert n == 20
     # boundaries inclusive: 40, 80, 90 per cent
@@ -279,7 +279,8 @@ def test_group_provision():
 
 def test_minimum_applies_only_to_individual_normal_portfolio():
     c = cl.b1_minimum_normal_check(25e9, 100e6)
-    assert (c.minimum_rate, c.minimum_amount, c.binding, c.top_up) == (0.005, pytest.approx(125e6), True, pytest.approx(25e6))
+    assert (c.minimum_rate, c.binding) == (0.005, True)
+    assert (c.minimum_amount, c.top_up) == (pytest.approx(125e6), pytest.approx(25e6))
     c = cl.b1_minimum_normal_check(25e9, 150e6)
     assert (c.binding, c.top_up) == (False, 0.0)
     c = cl.b1_minimum_normal_check(25e9, 125e6)  # exactly at the minimum: not binding
