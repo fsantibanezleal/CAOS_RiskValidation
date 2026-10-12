@@ -137,7 +137,8 @@ def test_low_credit_risk_exemption():
     r31 = st.allocate_stages(policy=p, **{**a, "dpd": arr(31, dtype=np.int64)})
     assert (r31.stage[0], r31.trigger[0], bool(r31.lcr_exempt[0])) == (2, "dpd-backstop", False)
     # forbearance, watch-list and collective still apply under the exemption (5.5.11, B5.5.37)
-    for kw, trig in (({"forborne": arr(True, dtype=bool)}, "forbearance"), ({"watch_list": arr(True, dtype=bool)}, "watch-list")):
+    yes = arr(True, dtype=bool)
+    for kw, trig in (({"forborne": yes}, "forbearance"), ({"watch_list": yes}, "watch-list")):
         rr = st.allocate_stages(policy=p, **{**a, **kw})
         assert (rr.stage[0], rr.trigger[0], bool(rr.lcr_exempt[0])) == (2, trig, False)
     rc = st.allocate_stages(policy=p, collective=arr(True, dtype=bool), **a)

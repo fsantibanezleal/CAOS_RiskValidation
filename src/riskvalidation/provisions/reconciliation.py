@@ -90,7 +90,7 @@ def carried_by_stage(overlays: Sequence[Overlay]) -> dict[str, float]:
 
 
 def carried_from_lines(waterfall_lines: Sequence[Mapping]) -> dict[str, float]:
-    """The same carried amounts read from the overlay lines of a waterfall (`kind = overlay`, `stage` null is stage1)."""
+    """The same amounts read from the overlay lines of a waterfall (`kind = overlay`, a null `stage` is stage1)."""
     out = {s: 0.0 for s in STAGES}
     for line in waterfall_lines:
         if line.get("kind") == "overlay":
@@ -100,7 +100,8 @@ def carried_from_lines(waterfall_lines: Sequence[Mapping]) -> dict[str, float]:
 
 def identity_residuals(allowance: Sequence[RollForwardRow], gca: Sequence[RollForwardRow],
                        waterfall_lines: Sequence[Mapping], stage_ecl: Mapping[str, float],
-                       overlays: Sequence[Overlay] = (), carried: Mapping[str, float] | None = None) -> dict[str, float]:
+                       overlays: Sequence[Overlay] = (),
+                       carried: Mapping[str, float] | None = None) -> dict[str, float]:
     """The absolute residual of every identity, by name; an identity that cannot be evaluated (a line missing, a stage
     without a stage ECL) is `inf`. The names are those of `check_identities`. `carried` (the overlay money by stage,
     for a caller that holds the waterfall lines but not the overlays) replaces `overlays` when given."""
@@ -143,8 +144,8 @@ def gross_total(gca: Sequence[RollForwardRow]) -> float:
     return math.fsum(abs(r.closing) for r in gca)
 
 
-def check_identities(allowance: Sequence[RollForwardRow], gca: Sequence[RollForwardRow], waterfall_lines: Sequence[dict],
-                     stage_ecl: Mapping[str, float], overlays: Sequence[Overlay] = (),
+def check_identities(allowance: Sequence[RollForwardRow], gca: Sequence[RollForwardRow],
+                     waterfall_lines: Sequence[dict], stage_ecl: Mapping[str, float], overlays: Sequence[Overlay] = (),
                      tolerance: float = 1e-6) -> list[str]:
     """The names of the identities that fail, empty when all close, within `tolerance * max(1, G)`. Never raises on a
     mismatch.

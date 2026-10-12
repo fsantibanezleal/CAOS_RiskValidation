@@ -1,5 +1,6 @@
-"""Measurement: ECL as a sum of discounted marginal losses, probability weighting, Stage 3, POCI, the simplified approach
-and the portfolio allowance (dossier 02 B.3, B.4, B.5, B.7, A.5, A.6; IFRS 9 5.5.17 to 5.5.20, B5.5.28 to B5.5.55).
+"""Measurement: ECL as a sum of discounted marginal losses, probability weighting, Stage 3, POCI, the simplified
+approach and the portfolio allowance (dossier 02 B.3, B.4, B.5, B.7, A.5, A.6; IFRS 9 5.5.17 to 5.5.20,
+B5.5.28 to B5.5.55).
 
     ECL_{i,s}(T) = sum_{t <= T} q_D(t) LGD(t) EAD(t) DF(t),   DF(t) = (1 + EIR)^(-delta(t) / 12)
 
@@ -65,8 +66,8 @@ def ecl_scenario(marginal_pd: np.ndarray, lgd: np.ndarray, ead: np.ndarray, eir:
                  horizon_months: int, convention: str = "mid-period") -> np.ndarray:
     """The ECL (A,) of one scenario: the sum over the periods with `months <= horizon_months` of q_D LGD EAD DF.
 
-    `horizon_months` is 12 for the 12-month ECL and the expected life (5.5.19, 5.5.20) for the lifetime ECL; it must be a
-    member of `months` or at least `months[-1]` (no proration of a straddling period).
+    `horizon_months` is 12 for the 12-month ECL and the expected life (5.5.19, 5.5.20) for the lifetime ECL; it must
+    be a member of `months` or at least `months[-1]` (no proration of a straddling period).
     """
     m = months_array(months)
     q = np.array(marginal_pd, dtype=float)
@@ -135,7 +136,7 @@ def stage3_ecl(gross_carrying_amount: np.ndarray, expected_recoveries: np.ndarra
 
 
 def poci_allowance(ecl_lifetime_now: np.ndarray, ecl_lifetime_initial: np.ndarray) -> np.ndarray:
-    """now - initial, both lifetime ECLs at the credit-adjusted EIR (5.5.13); may be negative (5.5.14), never clipped."""
+    """now - initial, both lifetime ECLs at the credit-adjusted EIR (5.5.13); may be negative (5.5.14), not clipped."""
     now = float_array(ecl_lifetime_now, "ecl_lifetime_now", ndim=1)
     initial = float_array(ecl_lifetime_initial, "ecl_lifetime_initial", ndim=1)
     same_length({"ecl_lifetime_now": now, "ecl_lifetime_initial": initial})
@@ -148,10 +149,14 @@ def simplified_matrix_ecl(gross_carrying_amount_by_bucket: np.ndarray, loss_rate
     g = non_negative(gross_carrying_amount_by_bucket, "gross_carrying_amount_by_bucket")
     rate = closed_unit(loss_rate_by_bucket, "loss_rate_by_bucket")
     if g.ndim != 1 or rate.shape != g.shape:
-        raise ValueError("gross_carrying_amount_by_bucket and loss_rate_by_bucket must be one-dimensional and equal in shape")
+        raise ValueError(
+            "gross_carrying_amount_by_bucket and loss_rate_by_bucket must be one-dimensional and equal in shape"
+        )
     m = float(forward_looking_multiplier)
     if not math.isfinite(m) or m < 0.0:
-        raise ValueError(f"forward_looking_multiplier must be finite and non-negative, got {forward_looking_multiplier!r}")
+        raise ValueError(
+            f"forward_looking_multiplier must be finite and non-negative, got {forward_looking_multiplier!r}"
+        )
     return float(min(float(np.sum(g)), m * float(np.sum(g * rate))))
 
 

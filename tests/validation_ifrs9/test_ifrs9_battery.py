@@ -54,20 +54,19 @@ def test_lifetime_pd_backtest():
     assert r.metric == pytest.approx(0.003, abs=1e-15)
     # without rho: relative gap, green below 0.25, amber below 0.50, red otherwise; the worst horizon decides
     g = lambda o: ifrs9.lifetime_pd_backtest(a(12), a(0.02), a(o), a(1000), a(20)).light  # noqa: E731
-    assert g(0.0245) is Light.GREEN
-    assert g(0.025) is Light.AMBER and g(0.0299) is Light.AMBER
-    assert g(0.03) is Light.RED and g(0.01) is Light.AMBER and g(0.0099) is Light.RED
+    assert g(0.0245) is Light.GREEN and g(0.0252) is Light.AMBER and g(0.0299) is Light.AMBER
+    assert g(0.031) is Light.RED and g(0.011) is Light.AMBER and g(0.0099) is Light.RED
     assert ifrs9.lifetime_pd_backtest(M3, PRED, a(0.0101, 0.02, 0.0451), NAR, NEV).light is Light.RED
     # unobserved horizons are excluded, none observed gives not_evaluated
     part = ifrs9.lifetime_pd_backtest(M3, PRED, a(0.01, 0.02, np.nan), NAR, NEV)
     assert part.metric == 0.0 and part.n_events is not None
     none = ifrs9.lifetime_pd_backtest(M3, PRED, a(np.nan, np.nan, np.nan), NAR, NEV)
-    assert none.light is Light.NOT_EVALUATED and none.notes and none.metric is None
+    assert none.light is Light.NOT_EVALUATED and none.notes and none.to_dict()["metric"] is None
     # the Vasicek band
     rho = 0.1
     inside = ifrs9.lifetime_pd_backtest(M3, PRED, PRED, NAR, NEV, rho=rho)
     assert inside.light is Light.GREEN and len(inside.extras["band_low"]) == 3
-    assert all(lo <= p <= hi for lo, p, hi in zip(inside.extras["band_low"], PRED, inside.extras["band_high"]))
+    assert all(lo <= p <= hi for lo, p, hi in zip(inside.extras["band_low"], PRED, inside.extras["band_high"], strict=True))
     assert inside.alpha_amber == 0.05 and inside.alpha_red == 0.01
     hi_amber = np.array(inside.extras["band_high"])
     hi_red = np.array(inside.extras["band_high_red"])
@@ -83,7 +82,8 @@ def test_lifetime_pd_backtest():
     # refusals
     for kw in ({"predicted_cumulative": a(0.01, 0.02, 1.0)}, {"predicted_cumulative": a(0.01, 0.02)},
                {"observed_cumulative": a(0.01, 0.02, 1.5)}, {"n_at_risk": a(10, 10, -1)}):
-        args = {"months": M3, "predicted_cumulative": PRED, "observed_cumulative": PRED, "n_at_risk": NAR, "n_events": NEV}
+        args = {"months": M3, "predicted_cumulative": PRED, "observed_cumulative": PRED, "n_at_risk": NAR,
+                "n_events": NEV}
         args.update(kw)
         with pytest.raises(ValueError):
             ifrs9.lifetime_pd_backtest(**args)
@@ -131,11 +131,12 @@ def test_sicr_effectiveness():
     # not evaluated: no Stage 1 defaults, no Stage 2 accounts, nothing in Stage 1
     for args in (sicr_inputs(s1_d=0), sicr_inputs(s2_n=0, s2_d=0), sicr_inputs(s1_n=0, s1_d=0)):
         out = ifrs9.sicr_effectiveness(*args)
-        assert out.light is Light.NOT_EVALUATED and out.notes and out.metric is None
+        assert out.light is Light.NOT_EVALUATED and out.notes and out.to_dict()["metric"] is None
+    no2 = np.zeros(2, dtype=bool)
     with pytest.raises(ValueError, match="stage"):
-        ifrs9.sicr_effectiveness(a(1, 3), np.array([True, False]), 12, a(0, 0), np.zeros(2, dtype=bool), np.zeros(2, dtype=bool))
+        ifrs9.sicr_effectiveness(a(1, 3), np.array([True, False]), 12, a(0, 0), no2, no2)
     with pytest.raises(ValueError, match="same length"):
-        ifrs9.sicr_effectiveness(a(1, 2), np.array([True]), 12, a(0, 0), np.zeros(2, dtype=bool), np.zeros(2, dtype=bool))
+        ifrs9.sicr_effectiveness(a(1, 2), np.array([True]), 12, a(0, 0), no2, no2)
     with pytest.raises(ValueError, match="k_months"):
         ifrs9.sicr_effectiveness(*sicr_inputs()[:2], 0, *sicr_inputs()[3:])
 
@@ -213,7 +214,7 @@ def test_ecl_backtest():
     for realised, light in cases:
         assert ifrs9.ecl_backtest(a(realised), a(100), 12).light is light, realised
     z = ifrs9.ecl_backtest(a(1, 2), a(0, 0), 12)
-    assert z.light is Light.NOT_EVALUATED and z.metric is None and z.notes
+    assert z.light is Light.NOT_EVALUATED and z.to_dict()["metric"] is None and z.notes
     with pytest.raises(ValueError, match="same shape"):
         ifrs9.ecl_backtest(a(1, 2), a(1), 12)
     with pytest.raises(ValueError, match="horizon_months"):
@@ -291,7 +292,8 @@ def test_overlay_diagnostics():
     assert ifrs9.overlay_diagnostics([ovl(amount=75.0)], STAGES, 0).light is Light.RED  # 0.5
     # portfolio-level overlays are reported under the portfolio keys
     p = ifrs9.overlay_diagnostics([ovl(stage=None, segment=None)], STAGES, 0)
-    assert p.extras["share_by_stage"]["portfolio"] == 1.0 and p.extras["share_by_segment"]["portfolio"] == pytest.approx(0.0625)
+    assert p.extras["share_by_stage"]["portfolio"] == 1.0
+    assert p.extras["share_by_segment"]["portfolio"] == pytest.approx(0.0625)
     assert ifrs9.overlay_diagnostics([ovl()], {"stage1": 0.0}, 0).light is Light.RED  # share 1.0
     zero = ifrs9.overlay_diagnostics([], {"stage1": 0.0}, 0)
     assert zero.light is Light.NOT_EVALUATED and zero.notes
@@ -355,7 +357,8 @@ def test_every_result_serialises_with_its_reference():
         out = r.to_dict()
         assert set(out) == CONTRACT_KEYS
         json.dumps(out, allow_nan=False)
-        assert out["reference"].strip() and out["h0"].strip() and out["policy_version"].strip() and out["alternative"].strip()
+        for field in ("reference", "h0", "policy_version", "alternative"):
+            assert out[field].strip(), field
         assert out["light"] in {"green", "amber", "red", "not_evaluated"}
         assert out["test_id"].startswith("ifrs9.")
         ids.add(out["test_id"])

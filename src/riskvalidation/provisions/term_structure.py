@@ -2,7 +2,8 @@
 
 Identities (Botha and Verster 2025, arXiv:2507.15441, eqs. 7 to 10), with S(0) = 1:
 
-    S(t) = prod_{u <= t} (1 - h(u)),  q(t) = S(t - 1) h(t),  F(t) = sum_{u <= t} q(u) = 1 - S(t),  h(t) = q(t) / S(t - 1).
+    S(t) = prod_{u <= t} (1 - h(u)),  q(t) = S(t - 1) h(t),  F(t) = sum_{u <= t} q(u) = 1 - S(t),
+    h(t) = q(t) / S(t - 1).
 
 Forward PD over (a, b]: PD(a, b) = (S(a) - S(b)) / S(a) (dossier 02 B.2). With a competing exit the default incidence is
 q_D(t) = S_all(t - 1) h_D(t) and F_D = cumsum(q_D), which is not 1 - S_all. The one-factor conditional PD
