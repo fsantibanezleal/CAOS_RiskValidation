@@ -328,7 +328,8 @@ def b1_minimum_normal_check(normal_exposure: float, normal_provision: float) -> 
     return MinimumCheck(minimum_rate=_MINIMUM_RATE, minimum_amount=minimum, binding=top_up > 0.0, top_up=top_up)
 
 
-def b1_group_max_rule(standard: float, internal: float | None, internal_not_objected: bool = False) -> tuple[float, str]:
+def b1_group_max_rule(standard: float, internal: float | None,
+                      internal_not_objected: bool = False) -> tuple[float, str]:
     """(applied, method) of the group-assessment max rule (B-1 N 3).
 
     The larger of the standard and the internal method (method ``max``), unless the internal method has the CMF
@@ -352,5 +353,7 @@ def b1_additional_provisions(amount: float, policy_min: float, policy_max: float
     if policy_min > policy_max:
         raise ValueError(f"policy limits are inverted: min {policy_min!r} > max {policy_max!r} (B-1 N 9)")
     if amount != amount or not policy_min <= amount <= policy_max:
-        raise ValueError(f"additional provisions {amount!r} are outside the board policy [{policy_min!r}, {policy_max!r}] (B-1 N 9)")
+        raise ValueError(
+            f"additional provisions {amount!r} are outside the board policy [{policy_min!r}, {policy_max!r}] (B-1 N 9)"
+        )
     return float(amount)
