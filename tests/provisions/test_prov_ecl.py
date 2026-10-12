@@ -56,8 +56,8 @@ def test_ecl_scenario_golden_and_properties():
     rng = np.random.default_rng(2)
     ts_ = ts.from_hazard(rng.uniform(0.005, 0.03, size=(4, 8)), np.arange(1, 9) * 3)
     eir = np.array([0.02, 0.05, 0.0, 0.1])
-    base = {"marginal_pd": ts_.marginal, "lgd": np.array([0.3, 0.4, 0.5, 0.6]), "ead": np.array([10.0, 20.0, 30.0, 40.0]),
-            "eir": eir, "months": ts_.months}
+    base = {"marginal_pd": ts_.marginal, "lgd": np.array([0.3, 0.4, 0.5, 0.6]),
+            "ead": np.array([10.0, 20.0, 30.0, 40.0]), "eir": eir, "months": ts_.months}
     prev = np.zeros(4)
     for h in (3, 6, 12, 24):
         cur = ecl.ecl_scenario(horizon_months=h, **base)
@@ -75,7 +75,8 @@ def test_ecl_scenario_golden_and_properties():
     # per-period LGD and EAD arrays (A, T)
     lgd_t = np.tile(base["lgd"][:, None], (1, 8))
     ead_t = np.tile(base["ead"][:, None], (1, 8))
-    np.testing.assert_allclose(ecl.ecl_scenario(horizon_months=24, **{**base, "lgd": lgd_t, "ead": ead_t}), full, rtol=1e-12)
+    per_period = ecl.ecl_scenario(horizon_months=24, **{**base, "lgd": lgd_t, "ead": ead_t})
+    np.testing.assert_allclose(per_period, full, rtol=1e-12)
     # at a zero EIR the discounting is a no-op; a positive EIR lowers the ECL
     zero = ecl.ecl_scenario(horizon_months=24, **{**base, "eir": np.zeros(4)})
     assert np.all(zero >= full - 1e-15)
@@ -115,7 +116,8 @@ def test_probability_weighted_ecl_golden_and_properties():
     np.testing.assert_allclose(ecl.probability_weighted_ecl(m, w), [2.75, 27.5], atol=1e-12)
     # permuting scenarios with their weights leaves it unchanged
     perm = np.array([2, 0, 1])
-    np.testing.assert_allclose(ecl.probability_weighted_ecl(m[perm], w[perm]), ecl.probability_weighted_ecl(m, w), atol=1e-12)
+    np.testing.assert_allclose(ecl.probability_weighted_ecl(m[perm], w[perm]), ecl.probability_weighted_ecl(m, w),
+                               atol=1e-12)
     # zero and maximal weights
     assert ecl.probability_weighted_ecl(np.array([10.0, 99.0]), np.array([1.0, 0.0])) == 10.0
     # the convex regime: weighted >= ECL at the mean path
@@ -173,7 +175,8 @@ def test_stage3_ecl_golden_and_properties():
 
 def test_poci_matrix_and_commitment_goldens():
     np.testing.assert_allclose(ecl.poci_allowance(np.array([120.0, 80.0]), np.array([100.0, 100.0])), [20.0, -20.0])
-    assert ecl.simplified_matrix_ecl(np.array([1000.0, 500.0, 200.0]), np.array([0.01, 0.05, 0.20])) == pytest.approx(75.0)
+    golden = ecl.simplified_matrix_ecl(np.array([1000.0, 500.0, 200.0]), np.array([0.01, 0.05, 0.20]))
+    assert golden == pytest.approx(75.0)
     # multiplier, cap and linearity below the cap
     g, r = np.array([1000.0, 500.0, 200.0]), np.array([0.01, 0.05, 0.20])
     assert ecl.simplified_matrix_ecl(g, r, 2.0) == pytest.approx(150.0)

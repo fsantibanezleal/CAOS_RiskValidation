@@ -1,5 +1,6 @@
 """RV-513: the IFRS 7 35H and 35I roll-forwards and the identity check, on the contract's C06 reporting-date fixture
-(copied from the Contraste fixture `variant-reporting-date-fixture.json`, outputs.waterfall, overlays, reconciliation)."""
+(copied from the Contraste fixture `variant-reporting-date-fixture.json`: outputs.waterfall, overlays,
+reconciliation)."""
 
 from __future__ import annotations
 
@@ -27,8 +28,9 @@ def rows(d, key):
 
 
 def overlays_of(d):
-    return [Overlay(id=o["id"], rationale_en=o["rationale"]["en"], rationale_es=o["rationale"]["es"], method=o["method"],
-                    target=o["target"], segment_id=o["segment_id"], stage=o["stage"], amount=o["amount"],
+    return [Overlay(id=o["id"], rationale_en=o["rationale"]["en"], rationale_es=o["rationale"]["es"],
+                    method=o["method"], target=o["target"], segment_id=o["segment_id"], stage=o["stage"],
+                    amount=o["amount"],
                     staging_effect=o["staging_effect"], review_date=o["review_date"], currency=o["currency"])
             for o in d["overlays"]]
 
@@ -88,7 +90,8 @@ def test_check_identities_on_the_c06_fixture():
 
 def test_check_identities_names_each_failure():
     d = load()
-    a, g, w, e, o = rows(d, "allowance"), rows(d, "gross_carrying_amount"), d["waterfall"]["lines"], stage_ecl(d), overlays_of(d)
+    a, g, w = rows(d, "allowance"), rows(d, "gross_carrying_amount"), d["waterfall"]["lines"]
+    e, o = stage_ecl(d), overlays_of(d)
     # allowance roll-forward residual
     broken = copy.deepcopy(d)
     broken["reconciliation"]["allowance"][0]["closing"] += 5.0
