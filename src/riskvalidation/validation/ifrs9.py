@@ -151,6 +151,8 @@ def lifetime_pd_backtest(months: np.ndarray, predicted_cumulative: np.ndarray, o
                               extras={"estimator": estimator})
     if np.any(nar[seen] < 1.0):
         raise ValueError("n_at_risk must be at least 1 at every observed horizon")
+    if np.any(nev[seen] > nar[seen]):
+        raise ValueError("n_events must not exceed n_at_risk at an observed horizon")
     p, o, n_h = pred[seen], obs[seen], np.rint(nar[seen]).astype(np.int64)
     gap = np.abs(o - p)
     brier = o * (1.0 - p) ** 2 + (1.0 - o) * p**2
@@ -570,7 +572,8 @@ def reconciliation_identities(allowance: Sequence[RollForwardRow], gca: Sequence
     stage ECL (the overlays carried in a stage read from the waterfall's overlay lines) is a rounding comparison of
     two stated amounts; its largest gap is `stage_ecl_gap_max` and it is judged on the same tolerance. extras: the
     failing identity names, the absolute tolerance and G. Light: green when every identity closes, red otherwise;
-    `not_evaluated` with no rows. Contraste internal gate, not a regulatory threshold.
+    `not_evaluated` with no rows, with no opening or closing waterfall line or with a stage lacking its stage ECL (never
+    an infinite metric). Contraste internal gate, not a regulatory threshold.
     """
     reference = "IFRS 7 35H and 35I; dossier 02 I.1 items 9 and 10 and I.2"
     version = _version(tolerance=tolerance, basis="tolerance * max(1, G)")
@@ -583,6 +586,13 @@ def reconciliation_identities(allowance: Sequence[RollForwardRow], gca: Sequence
     limit = float(tolerance) * max(1.0, g_total)
     residuals = _rc.identity_residuals(allowance, gca, waterfall_lines, stage_ecl,
                                        carried=_rc.carried_from_lines(waterfall_lines))
+    unevaluable = sorted(k for k, v in residuals.items() if not math.isfinite(v))
+    if unevaluable:
+        reason = ("the waterfall has no opening or closing line" if "waterfall-closes" in unevaluable else
+                  "a stage has no stage ECL to compare with its allowance closing")
+        return _not_evaluated("ifrs9.reconciliation_identities", h0, alt, reference, version,
+                              f"{reason}; identities that cannot be evaluated: {', '.join(unevaluable)}",
+                              model_id=model_id, extras={"unevaluable_identities": unevaluable})
     failing = [name for name, v in residuals.items() if not v <= limit]
     exact = [v for k, v in residuals.items() if not k.startswith("stage-closing-equals-ecl")]
     gaps = [v for k, v in residuals.items() if k.startswith("stage-closing-equals-ecl")]

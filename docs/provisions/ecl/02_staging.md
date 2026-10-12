@@ -78,9 +78,9 @@ Return from Stage 2 to Stage 1 is symmetric (5.5.7), but a configurable probatio
 following B5.5.27 ("consistently good payment behaviour over a period of time"). `apply_cure_probation` keeps in Stage 2, with
 trigger `cure-probation`, an account that is Stage 1 now, was Stage 2 before and cured fewer than `probation_months` months
 ago; every other account is unchanged, and with zero probation the output equals the current stage. The length is a policy
-parameter, not a number fixed by IFRS 9. The optional argument `now` carries the triggers of the current allocation so that
-the unchanged Stage 2 and 3 accounts keep theirs; without it their trigger is `unspecified` (an open question to the owner of
-the contract, which gives the function no trigger input). Golden values with a 6-month probation: 3 months since cure gives
+parameter, not a number fixed by IFRS 9. The required argument `now` (the `StageResult` of `allocate_stages` for the current
+stages) carries the triggers of the current allocation so that the unchanged Stage 2 and 3 accounts keep theirs, always inside
+`TRIGGERS`. Golden values with a 6-month probation: 3 months since cure gives
 Stage 2 `cure-probation`; 6 months gives Stage 1.
 
 ## Collective transfer

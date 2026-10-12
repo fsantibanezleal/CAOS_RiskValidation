@@ -110,7 +110,8 @@ def test_probability_weighted_ecl_golden_and_properties():
     pits = np.array([0.005255059, 0.014287387, 0.073424082])
     w = np.array([0.25, 0.5, 0.25])
     assert ecl.probability_weighted_ecl(0.4 * pits, w) == pytest.approx(0.010725392, abs=1e-8)
-    assert 0.4 * 0.017997448 == pytest.approx(0.007198979, abs=1e-8)
+    at_mean = ts.ttc_to_pit(0.02, 0.12, float(w @ np.array([1.0, 0.0, -2.0])))
+    assert 0.4 * at_mean == pytest.approx(0.007198979, abs=1e-8)
     # (S, A) input
     m = np.array([[1.0, 10.0], [2.0, 20.0], [6.0, 60.0]])
     np.testing.assert_allclose(ecl.probability_weighted_ecl(m, w), [2.75, 27.5], atol=1e-12)
@@ -134,7 +135,9 @@ def test_probability_weighted_ecl_golden_and_properties():
 
 def test_non_linearity_index_and_weight_sensitivity():
     assert ecl.non_linearity_index(0.026813479, 0.017997448) == pytest.approx(0.4898489, abs=1e-6)
-    assert 0.026813479 / 0.017997448 == pytest.approx(1.49, abs=1e-2)
+    z, w = np.array([1.0, 0.0, -2.0]), np.array([0.25, 0.5, 0.25])
+    ratio = ts.weighted_pit_pd(0.02, 0.12, z, w) / ts.ttc_to_pit(0.02, 0.12, float(w @ z))
+    assert ratio == pytest.approx(1.49, abs=1e-2)
     assert ecl.non_linearity_index(5.0, 5.0) == 0.0
     for den in (0.0, -1.0):
         with pytest.raises(ValueError, match="ecl_at_mean_path"):
