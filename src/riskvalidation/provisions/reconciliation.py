@@ -102,8 +102,9 @@ def identity_residuals(allowance: Sequence[RollForwardRow], gca: Sequence[RollFo
                        waterfall_lines: Sequence[Mapping], stage_ecl: Mapping[str, float],
                        overlays: Sequence[Overlay] = (),
                        carried: Mapping[str, float] | None = None) -> dict[str, float]:
-    """The absolute residual of every identity, by name; an identity that cannot be evaluated (a line missing, a stage
-    without a stage ECL) is `inf`. The names are those of `check_identities`. `carried` (the overlay money by stage,
+    """The absolute residual of every identity, by name; an identity that cannot be evaluated (no opening or closing
+    waterfall line, a stage without a stage ECL) is `inf`; a movement with no waterfall line counts as a line of 0.
+    The names are those of `check_identities`. `carried` (the overlay money by stage,
     for a caller that holds the waterfall lines but not the overlays) replaces `overlays` when given."""
     carry = carried_by_stage(overlays) if carried is None else dict(carried)
     out: dict[str, float] = {}
@@ -125,10 +126,7 @@ def identity_residuals(allowance: Sequence[RollForwardRow], gca: Sequence[RollFo
             stage_moves.setdefault(line_id, []).append(amount)
     worst = 0.0
     for line_id in set(stage_moves) | set(line_moves):
-        if line_id not in line_moves:
-            worst = math.inf
-        else:
-            worst = max(worst, abs(line_moves[line_id] - math.fsum(stage_moves.get(line_id, []))))
+        worst = max(worst, abs(line_moves.get(line_id, 0.0) - math.fsum(stage_moves.get(line_id, []))))
     out["waterfall-lines-equal-movements"] = worst
     for r in allowance:
         key = f"stage-closing-equals-ecl:{r.stage}"

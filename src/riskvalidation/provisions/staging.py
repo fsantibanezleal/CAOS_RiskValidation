@@ -159,14 +159,12 @@ def allocate_stages(pd_origination_annualised: np.ndarray, pd_current_annualised
 
 
 def apply_cure_probation(stage_now: np.ndarray, stage_previous: np.ndarray, months_since_cure: np.ndarray,
-                         policy: StagingPolicy, now: StageResult | None = None) -> StageResult:
+                         policy: StagingPolicy, now: StageResult) -> StageResult:
     """Hold in Stage 2 (trigger `cure-probation`) an account that is Stage 1 now, was Stage 2 before and cured fewer
     than `policy.probation_months` months ago; every other account is unchanged.
 
-    The contract signature carries no trigger for the unchanged accounts. The optional `now` (the `StageResult` of
-    `allocate_stages` for `stage_now`) supplies the trigger and the exemption flag of the unchanged accounts; without
-    it a Stage 1 account has trigger `none` and a Stage 2 or 3 account has trigger `unspecified`. This is an additive
-    argument, raised as an open question to the contract owner.
+    `now` is required: the `StageResult` of `allocate_stages` for `stage_now`. It supplies the trigger and the
+    exemption flag of the unchanged accounts, so that every Stage 2 or 3 account keeps a trigger of `TRIGGERS`.
     """
     s_now = np.asarray(stage_now)
     s_prev = np.asarray(stage_previous)
@@ -176,15 +174,13 @@ def apply_cure_probation(stage_now: np.ndarray, stage_previous: np.ndarray, mont
     for name, v in (("stage_now", s_now), ("stage_previous", s_prev)):
         if v.ndim != 1 or np.any(~np.isin(v, (1, 2, 3))):
             raise ValueError(f"{name} must be a one-dimensional array in {{1, 2, 3}}")
-    n = same_length({"stage_now": s_now, "stage_previous": s_prev, "months_since_cure": months})
-    if now is not None:
-        if now.stage.shape != s_now.shape or np.any(now.stage != s_now):
-            raise ValueError("now must be the StageResult of stage_now (its stage differs from stage_now)")
-        trigger = now.trigger.astype(_TRIGGER_DTYPE).copy()
-        lcr = now.lcr_exempt.copy()
-    else:
-        trigger = np.where(s_now == 1, "none", "unspecified").astype(_TRIGGER_DTYPE)
-        lcr = np.zeros(n, dtype=bool)
+    same_length({"stage_now": s_now, "stage_previous": s_prev, "months_since_cure": months})
+    if now.stage.shape != s_now.shape or np.any(now.stage != s_now):
+        raise ValueError("now must be the StageResult of stage_now (its stage differs from stage_now)")
+    if np.any(~np.isin(now.trigger, TRIGGERS)):
+        raise ValueError(f"now.trigger must lie in {TRIGGERS}")
+    trigger = now.trigger.astype(_TRIGGER_DTYPE).copy()
+    lcr = now.lcr_exempt.copy()
     held = (s_now == 1) & (s_prev == 2) & (months < policy.probation_months)
     stage = np.where(held, 2, s_now).astype(np.int8)
     trigger[held] = "cure-probation"

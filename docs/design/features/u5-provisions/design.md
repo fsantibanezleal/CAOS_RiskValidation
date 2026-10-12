@@ -31,9 +31,9 @@ Requirements: [`requirements.md`](requirements.md). Research: Contraste dossier 
 
 1. `competing_risks` accepts a prepayment hazard in [0, 1): the contract's invariant needs the zero limit (equal to the
    single-risk structure) although it types the field as open.
-2. `apply_cure_probation` has no input for the triggers of the accounts it leaves unchanged. An optional `now` argument
-   (the `StageResult` of `allocate_stages`) carries them; without it the trigger of an unchanged Stage 2 or 3 account is
-   `unspecified`.
+2. `apply_cure_probation` has no input for the triggers of the accounts it leaves unchanged. A required `now` argument
+   (the `StageResult` of `allocate_stages`) carries them (decision C2 of the engine review), so that every unchanged
+   Stage 2 or 3 account keeps a trigger inside the enumeration.
 3. `reconciliation_identities` has no `overlays` argument, yet the stage closing of stage 1 includes the overlays. They are
    read from the `kind = overlay` lines of the waterfall (a null stage is stage 1). Its metric is the largest residual of the
    roll-forward identities; the stage closing against the stage ECL (a rounding comparison of two stated amounts, 0.0025 on the

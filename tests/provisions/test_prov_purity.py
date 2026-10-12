@@ -59,7 +59,7 @@ def test_inputs_are_not_mutated():
     dpd = frozen(0, 40).astype(np.int64)
     dpd.setflags(write=False)
     res = staging.allocate_stages(po, pc, dpd, no, no, no, pol, collective=no)
-    staging.apply_cure_probation(res.stage, frozen(2, 2).astype(np.int8), frozen(0, 0).astype(np.int64), pol)
+    staging.apply_cure_probation(res.stage, frozen(2, 2).astype(np.int8), frozen(0, 0).astype(np.int64), pol, res)
     staging.collective_transfer(frozen(1.0, 2.0), frozen("a", "b"), {"a": 0.1, "b": 0.2})
     e = ecl.ecl_scenario(frozen(0.01, 0.01).reshape(1, 2), frozen(0.4), frozen(100.0), frozen(0.05), frozen(6, 12), 12)
     ecl.probability_weighted_ecl(frozen(1.0, 2.0), frozen(0.5, 0.5))

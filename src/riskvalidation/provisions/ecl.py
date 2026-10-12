@@ -96,6 +96,8 @@ def probability_weighted_ecl(ecl_by_scenario: np.ndarray, weights: np.ndarray) -
     e = float_array(ecl_by_scenario, "ecl_by_scenario")
     if e.ndim not in (1, 2):
         raise ValueError(f"ecl_by_scenario must be (S, A) or (S,), got shape {e.shape}")
+    if np.any(e < 0.0):
+        raise ValueError("ecl_by_scenario must not hold a negative ECL (an expected credit loss is not negative)")
     w = weights_array(weights, e.shape[0])
     return np.tensordot(w, e, axes=(0, 0))
 
@@ -184,7 +186,8 @@ def portfolio_allowance(stage: np.ndarray, ecl_12m: np.ndarray, ecl_lifetime: np
     """LA = sum_S1 ECL_12m + sum_S2 ECL_life + sum_S3 ECL_D + sum_POCI delta + sum_k OVL_k (dossier 02 B.5).
 
     A POCI account is excluded from stages 1 to 3 whatever its `stage` value and counts once, in `poci`. Overlays are
-    added to the total only and never enter `by_stage`.
+    added to the total only and never enter `by_stage`. The model ECL of an account of stages 1 to 3 is not negative
+    (`ValueError`); only the POCI delta may be.
     """
     st = np.asarray(stage)
     if st.ndim != 1:
@@ -216,6 +219,10 @@ def portfolio_allowance(stage: np.ndarray, ecl_12m: np.ndarray, ecl_lifetime: np
         chosen = values[(st == stage_no) & ~is_poci]
         if not np.all(np.isfinite(chosen)):
             raise ValueError(f"ECL of stage {stage_no} accounts must be finite")
+        if np.any(chosen < 0.0):
+            raise ValueError(
+                f"ECL of stage {stage_no} accounts must not be negative (only a POCI allowance may be negative)"
+            )
         return math.fsum(chosen.tolist())
 
     by_stage = {"stage1": pick(e12, 1), "stage2": pick(life, 2), "stage3": pick(s3, 3), "poci": delta_total}

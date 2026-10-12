@@ -190,24 +190,25 @@ def test_cure_probation():
     now = np.array([1, 1, 1, 2, 3], dtype=np.int8)
     before = np.array([2, 2, 1, 2, 2], dtype=np.int8)
     months = np.array([3, 6, 0, 0, 0], dtype=np.int64)
-    r = st.apply_cure_probation(now, before, months, p)
+    cur = st.StageResult(stage=now, trigger=np.array(["none", "none", "none", "watch-list", "default"], dtype="U20"),
+                         lcr_exempt=np.zeros(5, dtype=bool))
+    r = st.apply_cure_probation(now, before, months, p, cur)
     assert r.stage.tolist() == [2, 1, 1, 2, 3]
     assert r.trigger[0] == "cure-probation" and r.trigger[1] == "none" and r.trigger[2] == "none"
     assert r.stage.dtype == np.int8
+    # the triggers of the current allocation are carried for the accounts left unchanged
+    assert r.trigger.tolist() == ["cure-probation", "none", "none", "watch-list", "default"]
     # months_since_cure = 5 is still probation, 6 is not
+    one = st.StageResult(stage=np.array([1], dtype=np.int8), trigger=np.array(["none"], dtype="U20"),
+                         lcr_exempt=np.zeros(1, dtype=bool))
     assert st.apply_cure_probation(np.array([1], dtype=np.int8), np.array([2], dtype=np.int8),
-                                   np.array([5], dtype=np.int64), p).stage[0] == 2
+                                   np.array([5], dtype=np.int64), p, one).stage[0] == 2
     # zero probation: the output equals the current stage
-    z = st.apply_cure_probation(now, before, months, policy(probation_months=0))
+    z = st.apply_cure_probation(now, before, months, policy(probation_months=0), cur)
     assert z.stage.tolist() == now.tolist()
-    # carrying the triggers of the current allocation for the accounts left unchanged
-    cur = st.StageResult(stage=now, trigger=np.array(["none", "none", "none", "watch-list", "default"], dtype="U20"),
-                         lcr_exempt=np.zeros(5, dtype=bool))
-    c = st.apply_cure_probation(now, before, months, p, now=cur)
-    assert c.trigger.tolist() == ["cure-probation", "none", "none", "watch-list", "default"]
     with pytest.raises(ValueError, match="now"):
-        st.apply_cure_probation(now, before, months, p, now=st.StageResult(stage=before, trigger=cur.trigger,
-                                                                            lcr_exempt=cur.lcr_exempt))
+        st.apply_cure_probation(now, before, months, p, st.StageResult(stage=before, trigger=cur.trigger,
+                                                                       lcr_exempt=cur.lcr_exempt))
 
 
 def test_collective_transfer():
