@@ -4,6 +4,51 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.05.000] - 2026-10-12
+
+Provisions (Contraste unit U5): the IFRS 9 expected credit loss engine and its validation battery, and the Chilean
+(CMF CNCB B-1) and Spanish (BdE Circular 4/2017 Annex 9) statutory provisions, implementing the provisions API
+contract of CAOS_Contraste. Reviewed by Opus: every golden value and transcribed cell reproduces.
+
+### Added
+
+- Added `riskvalidation.provisions.term_structure`: `TermStructure` and the constructors `from_hazard`, `from_marginal` and
+  `from_cumulative` (survival, marginal and cumulative PD identities to 1e-12), `competing_risks` (default incidence next to
+  prepayment, never 1 minus the survival of both exits), `forward_pd`, `annualise_pd`, the one-factor `ttc_to_pit` and
+  `implied_z`, `weighted_pit_pd` and the Gauss-Hermite cross check `gauss_hermite_pit_pd`.
+- Added `riskvalidation.provisions.staging`: `StagingPolicy` (the threefold ratio, the 30 and 90 days past due thresholds and
+  the probation are parameters, not constants), `sicr_quantitative`, `allocate_stages` with the low credit risk exemption
+  suppressing only the two quantitative triggers, `apply_cure_probation` and the report-only `collective_transfer`.
+- Added `riskvalidation.provisions.ecl`: `discount_factors`, `ecl_scenario`, `probability_weighted_ecl`,
+  `non_linearity_index`, `weight_sensitivity`, `stage3_ecl`, `poci_allowance`, `simplified_matrix_ecl`, `commitment_ead` and
+  `portfolio_allowance` (model ECL by the four stage keys; overlays added to the total only).
+- Added `riskvalidation.provisions.overlays` (overlays as separate lines with a stage) and
+  `riskvalidation.provisions.reconciliation` (the IFRS 7 35H and 35I roll-forwards, `check_identities` and
+  `identity_residuals` on one tolerance basis, 1e-6 times max(1, G)).
+- Added `riskvalidation.validation.ifrs9`: nine tests of dossier 02 I.2 (lifetime PD backtest with the Vasicek band, SICR
+  effectiveness and threshold stability, stage migration and ECL backtests, scenario sensitivity, non-linearity, overlay
+  diagnostics, reconciliation identities), each a `TestResult` with its reference, null hypothesis and policy parameters.
+- Added documentation pages `docs/provisions/ecl/` and requirements RV-501 to RV-519 with golden values from the provisions API
+  contract; the new modules are imported by path and are not re-exported from the package root.
+- Engine review fixes: `portfolio_allowance` and `probability_weighted_ecl` refuse a negative model ECL for stages 1 to 3 (POCI may
+  be negative); `lifetime_pd_backtest` refuses `n_events` above `n_at_risk` at an observed horizon; `reconciliation_identities`
+  returns `not_evaluated` with its reason (never an infinite metric) when the waterfall has no opening or closing line or a stage
+  lacks its stage ECL, and a movement without a waterfall line counts as a line of zero; the Vasicek band has a value assertion.
+- Contract change (decision C2): `apply_cure_probation(stage_now, stage_previous, months_since_cure, policy, now)` takes the
+  current `StageResult` as a required argument `now`; the trigger `unspecified` no longer exists, so every unchanged Stage 2 or 3
+  account keeps a trigger of `TRIGGERS`. `riskvalidation.provisions.__init__` carries one docstring naming both halves, identical
+  on both U5 branches.
+- Added `riskvalidation.provisions.local_cl`: CMF CNCB Chapter B-1 (the individual categories A1 to B4, the default portfolio C1 to C6,
+  the Circular 2.346 standard-method tables for mortgages, commercial leasing, student loans, generic commercial and consumer loans
+  with every cell transcribed, the group provision with guarantor substitution, the 0.50% minimum on the individually assessed
+  normal portfolio, the max rule and additional provisions as their own line). B-1 is kept apart from IFRS 9.
+- Added `riskvalidation.provisions.local_es`: Banco de Espana Circular 4/2017 Annex 9 coverage tables (point 144 and point 140 as
+  replaced by Circular 6/2021), the uncovered amount and the category-to-stage map.
+- Added documentation pages `docs/provisions/local/` and requirements RV-550 to RV-567 with the transcribed tables as fixtures.
+- Fix (engine review F1): `local_cl` and `local_es` refuse non-finite money, rates, buckets, days and amounts (`inf` as well as
+  NaN) with `ValueError`; `b1_group_provision(inf, 0.02, ...)` no longer returns NaN.
+- `riskvalidation.provisions.__init__` carries one docstring naming both halves, identical on both U5 branches (F6).
+
 ## [0.04.003] - 2026-10-07
 
 ### Fixed
