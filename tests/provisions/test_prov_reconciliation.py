@@ -8,6 +8,7 @@ import copy
 import json
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from riskvalidation.provisions import reconciliation as rc
@@ -132,3 +133,47 @@ def test_identity_residuals_are_the_largest_absolute_differences():
                                 stage_ecl(d), overlays_of(d))
     assert max(v for k, v in res.items() if not k.startswith("stage-closing-equals-ecl")) <= 1e-9
     assert res["stage-closing-equals-ecl:stage2"] == pytest.approx(0.0025, abs=1e-9)
+
+
+def synthetic_document(rng):
+    """A random consistent document with a POCI row and a portfolio-level overlay, unlike the C06 fixture:
+    every identity closes by construction."""
+    line_ids = ["originations", "transfer-1-2", "transfer-2-3", "remeasurement", "write-off", "unwinding"]
+    stages = ["stage1", "stage2", "stage3", "poci"]
+    overlay = Overlay(id="PORT", rationale_en="r", rationale_es="r", method="scenario", target="staging-share",
+                      segment_id=None, stage=None, amount=float(rng.uniform(5, 50)), staging_effect="none",
+                      review_date="2024-06-30", currency="CLP")
+    rows, ecl_by_stage = [], {}
+    for stage in stages:
+        opening = float(rng.uniform(100, 5000))
+        moves = {lid: float(rng.uniform(-50, 200)) for lid in line_ids}
+        if stage == "stage1":
+            moves["overlay-PORT"] = overlay.amount  # a portfolio-level overlay is carried in the stage1 closing
+        closing = opening + sum(moves.values())
+        ecl_by_stage[stage] = closing - (overlay.amount if stage == "stage1" else 0.0)
+        rows.append(rc.allowance_rollforward(stage, opening, moves, closing))
+    waterfall = [{"id": "opening", "kind": "opening", "amount": sum(r.opening for r in rows), "stage": None}]
+    for lid in line_ids:
+        waterfall.append({"id": lid, "kind": lid, "amount": sum(dict(r.movements)[lid] for r in rows), "stage": None})
+    waterfall.append({"id": "overlay-PORT", "kind": "overlay", "amount": overlay.amount, "stage": None})
+    waterfall.append({"id": "closing", "kind": "closing", "amount": sum(r.closing for r in rows), "stage": None})
+    gca = [rc.gca_rollforward(s, 1e6, {"repayments": -1e5, "originations": 3e5}, 1.2e6) for s in stages]
+    return rows, gca, waterfall, ecl_by_stage, overlay
+
+
+def test_identities_close_on_random_documents_and_open_on_any_perturbation():
+    rng = np.random.default_rng(11)
+    for _ in range(20):
+        rows, gca, waterfall, e, overlay = synthetic_document(rng)
+        assert rc.check_identities(rows, gca, waterfall, e, [overlay]) == []
+        # without the overlay the stage1 closing no longer equals its ECL
+        assert "stage-closing-equals-ecl:stage1" in rc.check_identities(rows, gca, waterfall, e, [])
+        tol = 1e-6 * max(1.0, rc.gross_total(gca))
+        for k, r in enumerate(rows):
+            bad = list(rows)
+            bad[k] = rc.RollForwardRow(r.stage, r.opening, r.movements, r.closing + 10 * tol, r.residual)
+            assert f"allowance-rollforward:{r.stage}" in rc.check_identities(bad, gca, waterfall, e, [overlay])
+        # a gap inside the tolerance does not fail an identity
+        r = rows[0]
+        near = [rc.RollForwardRow(r.stage, r.opening, r.movements, r.closing + 0.1 * tol, r.residual), *rows[1:]]
+        assert "allowance-rollforward:stage1" not in rc.check_identities(near, gca, waterfall, e, [overlay])

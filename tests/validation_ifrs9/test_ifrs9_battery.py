@@ -66,7 +66,8 @@ def test_lifetime_pd_backtest():
     rho = 0.1
     inside = ifrs9.lifetime_pd_backtest(M3, PRED, PRED, NAR, NEV, rho=rho)
     assert inside.light is Light.GREEN and len(inside.extras["band_low"]) == 3
-    assert all(lo <= p <= hi for lo, p, hi in zip(inside.extras["band_low"], PRED, inside.extras["band_high"], strict=True))
+    lows, highs = inside.extras["band_low"], inside.extras["band_high"]
+    assert all(lo <= p <= hi for lo, p, hi in zip(lows, PRED, highs, strict=True))
     assert inside.alpha_amber == 0.05 and inside.alpha_red == 0.01
     hi_amber = np.array(inside.extras["band_high"])
     hi_red = np.array(inside.extras["band_high_red"])
@@ -89,6 +90,8 @@ def test_lifetime_pd_backtest():
             ifrs9.lifetime_pd_backtest(**args)
     with pytest.raises(ValueError, match="rho"):
         ifrs9.lifetime_pd_backtest(M3, PRED, PRED, NAR, NEV, rho=1.0)
+    with pytest.raises(ValueError, match="months"):
+        ifrs9.lifetime_pd_backtest(a(24, 12, 36, dtype=np.int64), PRED, PRED, NAR, NEV)
 
 
 # ---------------------------------------------------------------- SICR effectiveness

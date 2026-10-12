@@ -22,6 +22,7 @@ from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.harness.rates import wilson_interval
 from riskvalidation.provisions import reconciliation as _rc
+from riskvalidation.provisions._checks import months_array
 from riskvalidation.provisions.ecl import non_linearity_index, probability_weighted_ecl, weight_sensitivity
 from riskvalidation.provisions.overlays import TARGETS, Overlay, check_unique
 from riskvalidation.provisions.reconciliation import RollForwardRow
@@ -128,7 +129,7 @@ def lifetime_pd_backtest(months: np.ndarray, predicted_cumulative: np.ndarray, o
     )
     version = _version(gap_amber=gap_amber, gap_red=gap_red, alpha_amber=alpha_amber, alpha_red=alpha_red,
                        rho=rho, estimator="aalen-johansen" if competing_prepayment else "kaplan-meier")
-    m = np.asarray(months)
+    m = months_array(months)
     pred = _floats(predicted_cumulative, "predicted_cumulative")
     obs = _floats(observed_cumulative, "observed_cumulative", allow_nan=True)
     nar = _floats(n_at_risk, "n_at_risk")

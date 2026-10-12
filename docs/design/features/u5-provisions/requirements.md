@@ -1,5 +1,3 @@
-Status: planned
-
 # U5 provisions: the IFRS 9 expected credit loss engine and its validation battery (U5-E1)
 
 Sources: research dossier 02 of the Contraste initiative (IFRS 9 expected credit loss and provisioning, read on
