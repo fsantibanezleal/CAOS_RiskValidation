@@ -204,7 +204,7 @@ def test_commercial_table_every_cell():
         _check(cl.b1_commercial_pe(bucket, 1.2), t["PI_guarantee_ptvg_gt_100"][j], t["PDI_with_guarantee"][3])
         _check(cl.b1_commercial_pe(bucket, 1.0), t["PI_guarantee_ptvg_le_100"][j], t["PDI_with_guarantee"][3])
         n += 4
-    assert n == 52
+    assert n == 60
     assert cl.b1_commercial_pe("0", None) == pytest.approx((0.0491, 0.569, 0.0279379), abs=1e-12)
     assert cl.b1_commercial_pe("0", 0.5) == pytest.approx((0.0186, 0.05, 0.00093), abs=1e-12)
     assert cl.b1_commercial_pe("default", 0.5)[0] == 1.0
