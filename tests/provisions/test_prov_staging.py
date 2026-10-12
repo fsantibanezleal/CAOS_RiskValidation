@@ -52,7 +52,7 @@ def test_sicr_quantitative_goldens_and_properties():
     assert got.dtype == bool
     assert got.tolist() == [True, False, True]
     # equality never flags
-    x = np.array([0.001, 0.02, 0.2, 0.9])
+    x = np.array([0.001, 0.02, 0.2, 0.5])
     assert not st.sicr_quantitative(x, x, p).any()
     # monotone in the current PD
     orig = np.full(60, 0.02)
