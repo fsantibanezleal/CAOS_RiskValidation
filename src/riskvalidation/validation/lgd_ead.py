@@ -330,8 +330,8 @@ def ead_backtest_by_band(predicted_ead: np.ndarray, realised_ead: np.ndarray, ut
     edges = vec(band_edges, "band_edges")
     if edges.size < 2 or np.any(np.diff(edges) <= 0.0):
         raise ValueError("band_edges must hold at least 2 strictly increasing values")
-    if np.any(pred < 0.0) or np.any(real < 0.0):
-        raise ValueError("predicted_ead and realised_ead must be non-negative")
+    if np.any(real < 0.0):
+        raise ValueError("realised_ead must be non-negative")   # a predicted EAD may be negative (utilisation change)
     if util.size and (util.min() < edges[0] or util.max() > edges[-1]):
         raise ValueError(f"utilisation must lie within the band edges [{edges[0]}, {edges[-1]}]")
     version = _version(gap_amber=gap_amber, gap_red=gap_red)

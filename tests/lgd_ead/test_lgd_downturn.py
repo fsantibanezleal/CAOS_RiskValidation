@@ -52,6 +52,11 @@ def test_downturn_add_on():
         p = list(perm)
         q = d.downturn_add_on(lgd[p], w[p], mask[p])
         assert (q.long_run, q.downturn) == pytest.approx((0.40, 0.60), abs=1e-12)
+    # review F4: two downturn cohorts with unequal weights, so an unweighted downturn mean is caught
+    two = d.downturn_add_on(a(0.3, 0.6, 0.4), a(100, 50, 150), np.array([False, True, True]))
+    assert two.downturn == pytest.approx((0.6 * 50 + 0.4 * 150) / 200, abs=1e-12)
+    assert two.downturn == pytest.approx(0.45)
+    assert two.long_run == pytest.approx((30 + 30 + 60) / 300, abs=1e-12)
     # the add-on may be negative and is reported as is
     neg = d.downturn_add_on(a(0.5, 0.3), a(10, 10), np.array([False, True]))
     assert neg.add_on == pytest.approx(-0.1, abs=1e-12)

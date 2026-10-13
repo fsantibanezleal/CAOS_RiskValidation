@@ -213,6 +213,8 @@ def predict_ead(fit: EadFit, X: np.ndarray, drawn_ref: np.ndarray, limit_ref: np
         raise ValueError(f"X must have {len(fit.names)} columns (those of the fit), got {x.shape[1]}")
     d0, lim = vec(drawn_ref, "drawn_ref"), vec(limit_ref, "limit_ref")
     same_length(X=x, drawn_ref=d0, limit_ref=lim)
+    if np.any(lim <= 0.0):
+        raise ValueError("limit_ref must be strictly positive")
     z = x @ fit.coefficients
     if fit.kind == "direct-ead":
         return lim * special.expit(z)

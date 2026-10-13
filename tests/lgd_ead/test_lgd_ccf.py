@@ -229,3 +229,8 @@ def test_fit_utilisation_change_and_predict_ead():
         c.fit_utilisation_change(X, a(400, 500, 600), a(700, 800, 900), a(1000, 0, 1000))
     with pytest.raises(ValueError, match="columns"):
         c.predict_ead(d, np.array([[1.0]]), a(1), a(1))
+    # review F8: the direct prediction lies in [0, limit_ref], so a non-positive limit is refused
+    with pytest.raises(ValueError, match="limit_ref"):
+        c.predict_ead(d, np.array([[1.0, 1.0]]), a(600), a(-1000))
+    with pytest.raises(ValueError, match="limit_ref"):
+        c.predict_ead(d, np.array([[1.0, 1.0]]), a(600), a(0))

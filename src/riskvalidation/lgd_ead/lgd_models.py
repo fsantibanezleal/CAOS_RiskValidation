@@ -17,7 +17,7 @@ from scipy import optimize, special, stats
 from riskvalidation.lgd_ead._checks import closed_unit, mat, same_length, vec
 
 KINDS = ("ols", "fractional-logit", "beta", "hurdle", "tobit")
-_MAX_ABS_COEF = 40.0     # beyond this the logit likelihood has no finite maximiser (perfect separation)
+_MAX_ABS_LINEAR = 40.0   # a linear predictor beyond this has saturated the logistic: no finite maximiser (separation)
 _SCORE_TOL = 1e-11
 
 
@@ -97,9 +97,11 @@ def logit_quasi_mle(x: np.ndarray, y: np.ndarray) -> np.ndarray:
                 break
             scale *= 0.5
         b, cur = cand, new
-        if np.max(np.abs(b)) > _MAX_ABS_COEF:
-            raise ValueError("the fractional logit did not converge (a coefficient diverges: perfect separation or "
-                             "a group at the endpoints)")
+        if np.max(np.abs(x @ b)) > _MAX_ABS_LINEAR:
+            # judged on the linear predictor x'b, not on the coefficients, so that the unit of a covariate (a rate in
+            # decimals or in percent) does not decide whether a legitimate fit is refused (review F2)
+            raise ValueError("the fractional logit did not converge (the linear predictor diverges: perfect "
+                             "separation or a group at the endpoints)")
     raise ValueError("the fractional logit did not converge within 200 iterations")
 
 
@@ -111,6 +113,7 @@ def endpoint_transform(y: np.ndarray, epsilon: float) -> np.ndarray:
     results are very sensitive (Qi and Zhao 2011, dossier 04 F.3). The epsilon used is recorded by the caller."""
     _check_epsilon(epsilon)
     v = vec(y, "y")
+    closed_unit(v, "y")
     return np.minimum(np.maximum(v, epsilon), 1.0 - epsilon)
 
 
@@ -286,7 +289,7 @@ def predict_lgd(fit: LgdFit, X: np.ndarray) -> np.ndarray:
         a, b = (0.0 - m) / s, (1.0 - m) / s
         out = m * (stats.norm.cdf(b) - stats.norm.cdf(a)) + s * (stats.norm.pdf(a) - stats.norm.pdf(b)) \
             + stats.norm.sf(b)
-        return np.clip(out, 0.0, 1.0)
+        return np.clip(out, 0.0, 1.0)   # only removes float noise: out is in [0, 1] by construction
     raise ValueError(f"unknown kind {fit.kind!r}")
 
 

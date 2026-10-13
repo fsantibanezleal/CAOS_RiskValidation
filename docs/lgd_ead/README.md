@@ -19,6 +19,6 @@ by default, `convention.name = "eu-undrawn"`; the LEQ in US terms): every page t
 
 Modules are imported by path, for example `from riskvalidation.lgd_ead import workout` and
 `from riskvalidation.validation import lgd_ead`; nothing is re-exported from the package root. Requirements `RV-601` to
-`RV-623` are in `docs/design/features/u6-lgd-ead/requirements.md`, each naming its test. Sources: dossier 04 of the Contraste
+`RV-625` are in `docs/design/features/u6-lgd-ead/requirements.md`, each naming its test. Sources: dossier 04 of the Contraste
 initiative (sections F.1 to F.4 and G.1 to G.3) and dossier 01 (section A.5), cited with their DOIs on each page. An item the
 dossiers mark UNVERIFIED is marked UNVERIFIED here and is not silently decided.
