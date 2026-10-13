@@ -4,6 +4,17 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.06.000] - 2026-10-13
+
+Loss given default and exposure at default (Contraste unit U6): `riskvalidation.lgd_ead` (workout LGD, the LGD model rungs, downturn LGD, CCF and EAD by reference-date design, the IRB floors) and `riskvalidation.validation.lgd_ead` (LGD calibration and discrimination, downturn coverage, EAD back-testing by utilisation band, CCF estimator bias), each function reproducing the golden values of Contraste's `engine-lgd-ead-api` contract (reviewed: 74 of 74 recomputed independently).
+
+- engine U6-E: new package `riskvalidation.lgd_ead` (workout LGD with the EU discount rate convention, range flags,
+  incomplete workout treatment and the LGD distribution; the LGD rungs OLS, fractional logit, beta, hurdle and Tobit with
+  `predict_lgd`; the cohort downturn add-on; the EU-convention CCF with three reference-date designs and four treatments,
+  the direct EAD and utilisation change models; the IRB LGD and EAD floors, the partly secured floor formula documented for the caller and the
+  supervisory CCFs) and the six tests of `riskvalidation.validation.lgd_ead`, reproducing every golden value of the contract
+  `engine-lgd-ead-api` 1.0.0 (requirements RV-601 to RV-625, pages under `docs/lgd_ead/`).
+
 ## [0.05.000] - 2026-10-12
 
 Provisions (Contraste unit U5): the IFRS 9 expected credit loss engine and its validation battery, and the Chilean
