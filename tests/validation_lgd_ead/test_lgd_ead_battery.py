@@ -207,6 +207,12 @@ def test_ead_backtest_by_band():
     assert z.extras["bands"][0]["gap"] == pytest.approx(50.0) and z.extras["bands"][0]["relative_gap"] is None
     assert z.metric == pytest.approx(0.10) and z.light is Light.GREEN
     assert z.statistic == pytest.approx((160 - 100) / 100)
+    # review F1: a utilisation-change prediction may be negative (the contract does not clip it): it must not crash
+    neg = v.ead_backtest_by_band(a(-200, 300), a(50, 400), a(0.1, 0.6), a(0, 0.5, 1.0))
+    assert neg.extras["bands"][0]["predicted_ead"] == -200.0 and neg.extras["bands"][0]["relative_gap"] == -5.0
+    assert neg.metric == pytest.approx(5.0) and neg.light is Light.RED
+    with pytest.raises(ValueError, match="realised_ead"):
+        v.ead_backtest_by_band(a(1), a(-1), a(0.2), a(0, 1.0))
     with pytest.raises(ValueError, match="utilisation"):
         v.ead_backtest_by_band(a(1), a(1), a(1.2), a(0, 0.5, 1.0))
     with pytest.raises(ValueError, match="band_edges"):
@@ -232,6 +238,10 @@ def test_ccf_estimator_bias():
     assert v.ccf_estimator_bias(a(0.69, 0.70, 0.71), 0.60, 0.05).light is Light.AMBER  # 0.10 <= 2 * tolerance
     assert v.ccf_estimator_bias(a(0.79, 0.80, 0.81), 0.60, 0.05).light is Light.RED
     assert v.ccf_estimator_bias(a(0.79, 0.80, 0.81), 0.60, 0.05).extras["within_tolerance"] is False
+    # review F5: the amber/red boundary is 2 x the tolerance: 2.4 x is red, 1.9 x is amber, exactly 2 x is amber
+    assert v.ccf_estimator_bias(a(0.71, 0.72, 0.73), 0.60, 0.05).light is Light.RED
+    assert v.ccf_estimator_bias(a(0.694, 0.695, 0.696), 0.60, 0.05).light is Light.AMBER
+    assert v.ccf_estimator_bias(a(0.69, 0.70, 0.71), 0.60, 0.05).light is Light.AMBER
     # R < 2 or no spread: the light is kept (it depends on the bias only), the statistic and p_value are null
     one = v.ccf_estimator_bias(a(0.64), 0.60, 0.05)
     assert one.light is Light.GREEN and one.metric == pytest.approx(0.04) and one.n == 1

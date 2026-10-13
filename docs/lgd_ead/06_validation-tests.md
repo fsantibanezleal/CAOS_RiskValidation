@@ -52,6 +52,8 @@ that rounding noise in identical gaps is not read as a spread; a zero mean is ju
   the periods not tested are listed in `extras["excluded"]` with their reason, and their gaps enter the metric).
 - The CCF bias test keeps its light for one replication or no spread (it depends on the bias against the tolerance only); its
   statistic and p-value are then null.
+- The back-test accepts a negative predicted EAD (a utilisation-change prediction is not clipped) and refuses a negative
+  realised EAD.
 - A band of the back-test without observation has null values; a band whose realised EAD is 0 lists its gap and has a null
   relative gap; neither enters the metric.
 

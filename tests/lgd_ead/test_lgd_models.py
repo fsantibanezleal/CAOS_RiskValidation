@@ -28,8 +28,10 @@ def test_endpoint_transform():
     np.testing.assert_allclose(m.endpoint_transform(a(0.0, 0.5, 1.0), 0.001), [0.001, 0.5, 0.999], atol=1e-15)
     y = a(0.002, 0.3, 0.998)
     np.testing.assert_array_equal(m.endpoint_transform(y, 0.001), y)  # inside values unchanged
-    out = m.endpoint_transform(a(-0.2, 1.4), 0.01)  # the transform bounds a realised value outside [0, 1] too
-    np.testing.assert_allclose(out, [0.01, 0.99])
+    with pytest.raises(ValueError, match="y"):  # review F7: a value outside [0, 1] is refused, never mapped silently
+        m.endpoint_transform(a(-0.2, 0.5), 0.01)
+    with pytest.raises(ValueError, match="y"):
+        m.endpoint_transform(a(0.5, 1.4), 0.01)
     for bad in (0.0, 0.5, -0.1, 0.7, float("nan")):
         with pytest.raises(ValueError, match="epsilon"):
             m.endpoint_transform(a(0.1), bad)
@@ -100,6 +102,29 @@ def test_fractional_logit_golden_and_score():
     # perfect separation has no finite maximiser: refused, not silently returned
     with pytest.raises(ValueError, match="converge|separation"):
         m.fit_fractional_logit(A([[1, 0], [1, 1], [1, 2], [1, 3]]), a(0, 0, 1, 1))
+
+
+def test_fractional_logit_is_scale_invariant_in_the_covariate_unit():
+    """Review F2: a legitimate fit with a coefficient above 40 (a rate in decimals) is not refused, and the same data in
+    percent gives the same predictions."""
+    rate = np.linspace(0.02, 0.10, 17)
+    y = 1 / (1 + np.exp(-(-3.0 + 50.0 * rate)))
+    dec = m.fit_fractional_logit(np.column_stack([np.ones(17), rate]), y)
+    pct = m.fit_fractional_logit(np.column_stack([np.ones(17), rate * 100]), y)
+    np.testing.assert_allclose(dec.coefficients, [-3.0, 50.0], atol=1e-5)
+    np.testing.assert_allclose(pct.coefficients, [-3.0, 0.5], atol=1e-7)
+    np.testing.assert_allclose(m.predict_lgd(dec, np.column_stack([np.ones(17), rate])),
+                               m.predict_lgd(pct, np.column_stack([np.ones(17), rate * 100])), atol=1e-8)
+    # the direct EAD model and the hurdle stage 2 use the same solver
+    from riskvalidation.lgd_ead import ccf
+    ead = ccf.fit_direct_ead(np.column_stack([np.ones(17), rate]), 1000 * y, np.full(17, 1000.0))
+    np.testing.assert_allclose(ead.coefficients, [-3.0, 50.0], atol=1e-5)
+    mixed = np.where(np.arange(17) % 4 == 0, 0.0, y)
+    h = m.fit_hurdle(np.column_stack([np.ones(17), rate]), mixed, min_positive=5)
+    assert np.all(np.isfinite(h.coefficients)) and abs(h.coefficients[1]) > 40
+    # genuine separation is still refused
+    with pytest.raises(ValueError, match="converge"):
+        m.fit_fractional_logit(np.column_stack([np.ones(4), [0.0, 0.01, 0.02, 0.03]]), a(0, 0, 1, 1))
 
 
 # ---------------------------------------------------------------- RV-607
