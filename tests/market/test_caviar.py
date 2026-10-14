@@ -12,6 +12,11 @@ from riskvalidation.market import caviar as cv
 from riskvalidation.market.conventions import var_es_from_sample
 
 
+def order_stat(y, alpha):
+    """The empirical quantile the recursion starts from: the k-th smallest return, k = ceil(alpha N)."""
+    return float(np.sort(y)[int(np.ceil(alpha * y.size - 1e-9)) - 1])
+
+
 def tick(y, f, alpha):
     return float(np.sum((alpha - (y < f)) * (y - f)))
 
@@ -48,14 +53,14 @@ def test_fit_caviar_beats_the_constant_benchmark(series):
         assert f.tick_loss <= bench + 1e-12
         assert f.tick_loss < bench  # a GARCH series has quantile dynamics the recursion captures
         # the reported tick loss is the loss of the reported parameters on the stated path
-        path = (sav_path if spec == "sav" else as_path)(f.params, series, np.quantile(series, alpha))
+        path = (sav_path if spec == "sav" else as_path)(f.params, series, order_stat(series, alpha))
         assert tick(series, path, alpha) == pytest.approx(f.tick_loss, rel=1e-9)
         assert f.converged
 
 
 def test_caviar_recursions_and_forecast(series):
     alpha = 0.05
-    f1 = np.quantile(series, alpha)
+    f1 = order_stat(series, alpha)
     fit = cv.CaviarFit(spec="sav", alpha=alpha, params=np.array([-0.002, 0.8, -0.3]), tick_loss=0.0, n_starts=2,
                        converged=True)
     path = sav_path(fit.params, series, f1)

@@ -1,5 +1,6 @@
 """RV-807: GARCH, GJR and EGARCH by quasi-maximum likelihood through `arch`, and the VaR and ES forecast (contract
-`engine-market-api`, module market.garch). The tests that call `arch` skip when the optional extra `market` is absent."""
+`engine-market-api`, module market.garch). The tests that call `arch` skip when the optional extra `market` is
+absent."""
 
 from __future__ import annotations
 
@@ -8,9 +9,9 @@ import sys
 
 import numpy as np
 import pytest
+from market_sim import simulate_garch
 from scipy import stats
 
-from market_sim import simulate_garch
 from riskvalidation.market import garch as g
 from riskvalidation.market import parametric as p
 
@@ -36,15 +37,15 @@ def test_garch_forecast_student_t_closed_form():
     v, e = g.garch_var_es_forecast(fit, y, 0.025)
     # the one-step variance from arch's own filter, with the fixed parameters in percent units
     am = arch.arch_model(y * 100, mean="Constant", vol="GARCH", p=1, q=1, dist="t", rescale=False)
-    names = am.parameter_names()
+    names = am.parameter_names() + am.volatility.parameter_names() + am.distribution.parameter_names()
     scale = {"mu": 100.0, "omega": 1e4}
     vec = [params[n] * scale.get(n, 1.0) for n in names]
     s2 = float(am.fix(vec).forecast(horizon=1, reindex=False).variance.values[-1, 0]) / 1e4
     sigma = s2**0.5
     nu = 6.0
     q = stats.t.ppf(0.025, nu) * np.sqrt((nu - 2) / nu)
-    es_q = -(stats.t.pdf(stats.t.ppf(0.025, nu), nu) / 0.025) * ((nu + stats.t.ppf(0.025, nu) ** 2) / (nu - 1)) * np.sqrt(
-        (nu - 2) / nu)
+    t_a = stats.t.ppf(0.025, nu)
+    es_q = -(stats.t.pdf(t_a, nu) / 0.025) * ((nu + t_a**2) / (nu - 1)) * np.sqrt((nu - 2) / nu)
     assert v == pytest.approx(0.0003 + sigma * q, rel=1e-9)
     assert e == pytest.approx(0.0003 + sigma * es_q, rel=1e-9)
     assert e <= v
@@ -78,7 +79,7 @@ def test_fit_garch_recovers_known_parameters():
 
 def test_fit_garch_kinds_deterministic_and_refusals():
     pytest.importorskip("arch")
-    y = simulate_garch(1200, nu=7, seed=31, gamma=0.08)
+    y = simulate_garch(1200, nu=7, seed=31, alpha=0.04, gamma=0.08)
     for kind in ("garch", "gjr", "egarch"):
         f1 = g.fit_garch(y, kind, "student-t")
         f2 = g.fit_garch(y, kind, "student-t")

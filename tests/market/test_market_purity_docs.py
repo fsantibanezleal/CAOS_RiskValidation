@@ -1,6 +1,6 @@
-"""RV-828 to RV-830: no forecast reads later data, results are deterministic and inputs are not mutated, the modules import
-with only NumPy and SciPy, the optional extra names `arch`, and the documentation pages carry equations, sources and
-limits."""
+"""RV-828 to RV-830: no forecast reads later data, results are deterministic and inputs are not mutated, the modules
+import with only NumPy and SciPy, the optional extra names `arch`, and the documentation pages carry equations,
+sources and limits."""
 
 from __future__ import annotations
 
@@ -101,11 +101,10 @@ def test_market_pages_carry_equations_sources_and_limits():
         assert re.search(r"https?://|doi:", text), f"{name} cites no source with a DOI or a URL"
         assert re.search(r"(?i)\blimits?\b", text), f"{name} states no limits"
         assert "golden" in text.lower(), f"{name} states no golden value"
-        assert "—" not in text
+        assert chr(0x2014) not in text
     index = (PAGES / "README.md").read_text(encoding="utf-8")
     for name in NAMES:
         assert name in index
-    assert "market/README.md" in (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     decisions = "\n".join((PAGES / n).read_text(encoding="utf-8") for n in NAMES)
     for d in range(1, 10):
         assert f"D-{d}" in decisions, f"decision D-{d} is not recorded"

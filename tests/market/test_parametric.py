@@ -34,7 +34,8 @@ def test_delta_normal_var_es():
 
 def test_cornish_fisher_var():
     r = p.cornish_fisher_var(0.0, 1.0, -0.5, 1.0, 0.01)
-    assert r.z_cf == pytest.approx(-2.833709, abs=5e-7) and r.var == pytest.approx(-2.833709, abs=5e-7) and r.valid is True
+    assert r.z_cf == pytest.approx(-2.833709, abs=5e-7) and r.var == pytest.approx(-2.833709, abs=5e-7)
+    assert r.valid is True
     r = p.cornish_fisher_var(0.0, 1.0, -3.0, 20.0, 0.01)
     assert r.z_cf == pytest.approx(-5.821010, abs=5e-7) and r.valid is False
     n = p.cornish_fisher_var(0.002, 0.01, 0.0, 0.0, 0.025)

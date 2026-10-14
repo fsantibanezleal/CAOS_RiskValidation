@@ -1,5 +1,5 @@
-"""RV-826: every market back-test returns a serialisable `common/test-result` row, never a number when it cannot run, and
-raises on a NaN return (contract `engine-market-api`, module validation.market)."""
+"""RV-826: every market back-test returns a serialisable `common/test-result` row, never a number when it cannot run,
+and raises on a NaN return (contract `engine-market-api`, module validation.market)."""
 
 from __future__ import annotations
 
