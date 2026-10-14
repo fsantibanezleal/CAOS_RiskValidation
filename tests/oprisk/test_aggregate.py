@@ -264,7 +264,8 @@ def test_mc_quantile_goldens():
     assert a.mc_quantile(shuffled, 0.5) == (500.0, 16.0)
     assert shuffled.tolist() != x.tolist()  # the input is not sorted in place
     assert a.mc_quantile(arr(3.0, 1.0, 2.0), 0.7)[0] == 3.0  # ceil(2.1) = 3, never moved by 3 * 0.7 float fuzz
-    assert a.mc_quantile(np.arange(1.0, 11.0), 0.7)[0] == 7.0  # 10 * 0.7 = 7.000000000000001 in floats
+    assert a.mc_quantile(np.arange(1.0, 101.0), 0.07)[0] == 7.0   # 100 * 0.07 = 7.000000000000001 in floats
+    assert a.mc_quantile(np.arange(1.0, 101.0), 0.55)[0] == 55.0  # 100 * 0.55 = 55.00000000000001 in floats
     for bad in (0.0, 1.0, -0.1, 1.2):
         with pytest.raises(ValueError):
             a.mc_quantile(x, bad)
