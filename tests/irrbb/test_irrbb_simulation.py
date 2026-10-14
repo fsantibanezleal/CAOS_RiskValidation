@@ -243,3 +243,68 @@ def test_ear_evar_golden_and_invariants():
     for lv in (0.0, 1.0, 1.5):
         with pytest.raises(ValueError):
             sim.ear_evar(paths, paths, 0.0, 0.0, level=lv)
+
+
+# ---------------------------------------------------------------------------------------------------- RV-1032
+
+
+def test_ear_evar_mc_error_golden_and_invariants():
+    # golden on a closed form: i.i.d. standard normal paths, the standard error of the q-quantile is
+    # sqrt(q (1 - q) / P) / phi(z_q), z_q the normal quantile (the asymptotic variance of a sample quantile)
+    from scipy import stats
+
+    p_paths, n_b = 100_000, 100
+    for level in (0.95, 0.99):
+        q = 1 - level
+        exact = math.sqrt(q * (1 - q) / p_paths) / stats.norm.pdf(stats.norm.ppf(q))
+        errs = []
+        for seed in range(12):
+            r = np.random.default_rng(seed)
+            nii, eve = r.standard_normal(p_paths), 3.0 * r.standard_normal(p_paths)
+            out = sim.ear_evar_mc_error(nii, eve, 0.0, 0.0, level=level, n_batches=n_b)
+            errs.append((out.ear, out.evar))
+        errs = np.array(errs)
+        # batch means have a relative noise of about 1 / sqrt(2 (B - 1)) = 7 percent each; the mean over seeds is closer
+        assert errs[:, 0].mean() == pytest.approx(exact, rel=0.06), level
+        assert errs[:, 1].mean() == pytest.approx(3.0 * exact, rel=0.06), level
+        assert np.all(np.abs(errs[:, 0] / exact - 1) < 0.35)
+    # an asymmetric case pins the tail: Exp(1) has density 1 - q at its q-quantile, so the error is
+    # sqrt(q (1 - q) / P) / (1 - q), and the 1 % and 99 % tails differ by a factor 99
+    for level in (0.95, 0.99):
+        q = 1 - level
+        exact = math.sqrt(q * (1 - q) / p_paths) / (1 - q)
+        got = [sim.ear_evar_mc_error(np.random.default_rng(s).exponential(size=p_paths), np.zeros(p_paths), 0.0, 0.0,
+                                     level, n_b).ear for s in range(12)]
+        assert np.mean(got) == pytest.approx(exact, rel=0.08), level
+    # a quantile with a closed form checked against the actual Monte Carlo spread of the quantile over many replications
+    reps = [float(np.quantile(np.random.default_rng(100 + s).standard_normal(20_000), 0.01)) for s in range(300)]
+    one = sim.ear_evar_mc_error(np.random.default_rng(7).standard_normal(20_000), np.zeros(20_000), 0.0, 0.0, 0.99, 50)
+    assert one.ear == pytest.approx(float(np.std(reps, ddof=1)), rel=0.3)
+    # the base values do not move the error; deterministic; inputs not mutated; zero spread gives zero error
+    x = np.random.default_rng(1).standard_normal(4000)
+    x0 = x.copy()
+    a = sim.ear_evar_mc_error(x, x, 5.0, -3.0, 0.99, 20)
+    assert a == sim.ear_evar_mc_error(x, x, 0.0, 0.0, 0.99, 20) and np.array_equal(x, x0)
+    assert a.ear >= 0 and a.evar >= 0 and dataclasses.is_dataclass(a)
+    flat = np.full(400, 7.0)
+    assert sim.ear_evar_mc_error(flat, flat, 1.0, 2.0, 0.95, 10) == sim.EarEvar(0.0, 0.0)
+    # interleaved batches keep an antithetic pair (i, i + P/2) in the same batch: the error of a symmetric, mirrored
+    # sample is finite and nonnegative, and more paths give a smaller error
+    half = np.random.default_rng(2).standard_normal(5000)
+    mirrored = np.r_[half, -half]
+    small = sim.ear_evar_mc_error(mirrored[::10], mirrored[::10], 0.0, 0.0, 0.99, 10)
+    big = sim.ear_evar_mc_error(mirrored, mirrored, 0.0, 0.0, 0.99, 10)
+    assert 0 < big.ear < small.ear
+    # interleaved batches: a mirrored skewed sample [h, -h] (the antithetic layout) gives each batch both halves, where
+    # contiguous batches would put the halves in different batches and inflate the error by an order of magnitude
+    h = np.random.default_rng(4).exponential(size=5000)
+    mir = np.r_[h, -h]
+    contiguous = np.std([np.quantile(mir[k * 1000:(k + 1) * 1000], 0.01) for k in range(10)], ddof=1) / math.sqrt(10)
+    assert sim.ear_evar_mc_error(mir, mir, 0.0, 0.0, 0.99, 10).ear < 0.2 * contiguous
+    for bad in (dict(level=0.0), dict(level=1.0), dict(n_batches=1), dict(n_batches=300)):
+        with pytest.raises(ValueError):
+            sim.ear_evar_mc_error(flat, flat, 0.0, 0.0, **{"level": 0.99, "n_batches": 10, **bad})
+    with pytest.raises(ValueError):
+        sim.ear_evar_mc_error(flat, flat[:10], 0.0, 0.0)
+    with pytest.raises(ValueError):
+        sim.ear_evar_mc_error(flat, flat, float("nan"), 0.0)

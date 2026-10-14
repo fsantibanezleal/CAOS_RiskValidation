@@ -54,6 +54,19 @@ Loss-positive, with $\ell$ the confidence level (default 0.99), $Q$ the linearly
 simulated NII and EVE paths, and $NII_0$, $EVE_0$ the base values. Monotone in the level; all-equal paths give base minus path; at
 least 2 paths. Golden: `nii_paths = 1..100`, base 60, level 0.99: the first percentile is `1.99`, so `ear = 58.01`.
 
+`ear_evar_mc_error(nii_paths, eve_paths, base_nii, base_eve, level, n_batches=20)` returns the Monte Carlo standard error of the
+EaR and of the EVaR at the same level (in money), so the case document carries an engine number, not a hand-rolled one. Batch
+means: path $i$ goes to batch $i \bmod B$ (an antithetic pair $i,\,i+P/2$ stays in one batch and the batches are independent), the
+$1-\ell$ quantile is taken in each batch, and
+
+$$SE=\frac{\operatorname{sd}(Q_1,\dots,Q_B)}{\sqrt B}$$
+
+with $Q_b$ the batch quantiles; the base values do not change it. The estimate itself has a relative noise of about
+$1/\sqrt{2(B-1)}$. Golden on a closed form: for i.i.d. standard normal paths the standard error of the $q$-quantile is
+$\sqrt{q(1-q)/P}\,/\,\varphi(z_q)$ (the asymptotic variance of a sample quantile; $z_q$ the normal quantile), checked at the 95 and 99
+percent levels for $P=10^5$, $B=100$, and for Exp(1) paths with density $1-q$ at the quantile; it needs $B\ge2$ and at least $2B$
+paths.
+
 ## Sources
 
 - Hull and White (1990), Rev. Financial Studies 3(4):573-592, doi:10.1093/rfs/3.4.573.
@@ -66,6 +79,8 @@ least 2 paths. Golden: `nii_paths = 1..100`, base 60, level 0.99: the first perc
 
 - The reset rule treats the whole balance of an item as repricing together; the new business is priced at the current reset rate.
 - The Hull-White parameters $a$ and $\sigma$ are inputs: the engine does not calibrate them to swaption volatilities.
+- The Monte Carlo error is a batch-means estimate (a seeded bootstrap would also do); a bake reports the number of paths, the seed
+  and the number of batches with it.
 - Antithetic pairs halve the Monte Carlo variance for a monotone payoff only; the bake reports the Monte Carlo error with the
   number of paths and the seed.
 - The Kalkbrener and Willing stochastic NMD SDEs are not implemented (dossier 05 D.3, UNVERIFIED detail).

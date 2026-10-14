@@ -142,18 +142,26 @@ def test_delta_eve_six_shocks():
 
 
 def test_eve_risk_measure_and_addon():
-    m = np.array([[3.0, -1.0], [2.0, 4.0], [-5.0, -2.0]])
+    # the contract golden: the three rows [[3, -1], [2, 4], [-5, -2]] completed to the six shocks with rows of zeros
+    m = np.vstack([np.array([[3.0, -1.0], [2.0, 4.0], [-5.0, -2.0]]), np.zeros((3, 2))])
     assert e.eve_risk_measure(m) == 6.0
     # a gain in one currency never offsets a loss in another: the all-gain matrix gives zero
     assert e.eve_risk_measure(-np.abs(m)) == 0.0
-    assert e.eve_risk_measure(np.array([[1.0], [7.0], [-3.0]])) == 7.0
-    assert e.eve_risk_measure(np.array([[-1.0], [-7.0]])) == 0.0
+    assert e.eve_risk_measure(np.array([[1.0], [7.0], [-3.0], [0.0], [0.0], [0.0]])) == 7.0
+    assert e.eve_risk_measure(np.full((6, 1), -7.0)) == 0.0
     rng = np.random.default_rng(8)
     big = rng.normal(0, 10, (6, 3))
     assert e.eve_risk_measure(big) == pytest.approx(max(0.0, *[sum(x for x in row if x > 0) for row in big]), abs=1e-12)
     assert e.eve_risk_measure(big) >= 0
     with pytest.raises(ValueError):
         e.eve_risk_measure(np.array([1.0, 2.0]))
+    # a transposed (C, S) matrix is refused instead of giving another number silently; so is any row count other than 6
+    assert e.eve_risk_measure(big) != e.eve_risk_measure(big.T) if big.T.shape[0] == 6 else True
+    with pytest.raises(ValueError, match="six|6"):
+        e.eve_risk_measure(big.T)
+    for rows in (1, 3, 5, 7):
+        with pytest.raises(ValueError):
+            e.eve_risk_measure(np.ones((rows, 2)))
     assert e.automatic_option_addon(arr(3, 2), arr(1)) == 4.0
     assert e.automatic_option_addon(arr(), arr()) == 0.0
     assert e.automatic_option_addon(arr(1), arr(3, 2)) == -e.automatic_option_addon(arr(3, 2), arr(1))
@@ -205,6 +213,8 @@ def test_cmf_pair_eight_cases_both_signs():
     assert e.cmf_pair(10, -40, offset=False) == 10.0
     # a different share
     assert e.cmf_pair(30, -20, share=0.25) == 30 - 5
+    assert e.cmf_pair(-20, 30, share=0.25) == 30 - 5  # the share on the delta_clp <= 0 branch too
+    assert e.cmf_pair(-40, 30, share=0.25) == max(0.25 * -40 + 30, 0.0)
     with pytest.raises(ValueError):
         e.cmf_pair(1.0, 1.0, share=1.5)
     with pytest.raises(ValueError):

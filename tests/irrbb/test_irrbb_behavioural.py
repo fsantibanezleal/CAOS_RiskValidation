@@ -198,12 +198,27 @@ def test_fit_prepayment_logit_recovers_stated_design():
         assert ll(fit.coef) >= ll(fit.coef + d) and ll(fit.coef) >= ll(fit.coef - d)
 
 
-def test_fit_prepayment_logit_separation_is_not_converged():
+def test_fit_prepayment_logit_separation_is_not_converged(monkeypatch):
     inc = np.linspace(-0.1, 0.1, 200)
-    sea = np.full(200, 24.0)
+    sea = np.random.default_rng(3).uniform(0, 360, 200)  # a regressor with spread: the separation guard is reached
     sep = inc > 0  # complete separation by the incentive
     fit = b.fit_prepayment_logit(inc, sea, sep)
     assert fit.converged is False and fit.n == 200 and np.all(np.isnan(fit.coef)) and np.all(np.isnan(fit.std_err))
+    # quasi-separation: a single overlapping pair does not make the likelihood finite enough to be called converged
+    assert b.fit_prepayment_logit(inc, sea, inc > 0.0005).converged is False
+    # a constant regressor with a mixed outcome (the design is singular) is its own guard
+    const_sea = np.full(200, 24.0)
+    assert b.fit_prepayment_logit(inc, const_sea, np.random.default_rng(1).random(200) < 0.4).converged is False
+    assert b.fit_prepayment_logit(inc, const_sea, sep).converged is False
+    # the separation guard stops the iteration early (a handful of Newton steps), not after the whole budget of 100
+    calls = []
+    real_solve = np.linalg.solve
+    monkeypatch.setattr(np.linalg, "solve", lambda *a, **k: calls.append(1) or real_solve(*a, **k))
+    for outcome in (sep, inc > 0.0005):
+        calls.clear()
+        assert b.fit_prepayment_logit(inc, sea, outcome).converged is False
+        assert 0 < len(calls) < 30, len(calls)
+    monkeypatch.undo()
     # all one class: no information, not converged, no exception
     assert b.fit_prepayment_logit(inc, np.linspace(1, 100, 200), np.zeros(200, dtype=bool)).converged is False
     assert b.fit_prepayment_logit(inc, np.linspace(1, 100, 200), np.ones(200, dtype=bool)).converged is False

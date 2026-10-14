@@ -76,6 +76,28 @@ def test_cmf_annex1_goldens(monkeypatch):
         sh, "shock_table",
         lambda cal: {**real_table(cal), "CLP": (301, 400, 200)} if cal == "cmf-annex1" else real_table(cal))
     assert v.cmf_annex1_goldens().light is Light.RED
+    monkeypatch.undo()
+    # the two Hoja 10 values are pinned at their printed precision: 0.1 bp off, or 1e-3 off the scalar, is red
+    real_curve, real_scalars = sh.shock_curve, sh.shock_scalars
+    monkeypatch.setattr(sh, "shock_curve", lambda *a, **k: real_curve(*a, **k) + 0.1)
+    off_bp = v.cmf_annex1_goldens()
+    assert off_bp.light is Light.RED and off_bp.statistic >= 1.0
+    monkeypatch.undo()
+    monkeypatch.setattr(sh, "shock_scalars", lambda *a, **k: tuple(x + 1e-3 for x in real_scalars(*a, **k)))
+    assert v.cmf_annex1_goldens().light is Light.RED
+    monkeypatch.undo()
+    # a function that raises counts as a failed case instead of escaping (annex1_delta_eve included)
+    def boom(*a, **k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(e, "annex1_delta_eve", boom)
+    raised = v.cmf_annex1_goldens()
+    assert raised.light is Light.RED and raised.statistic == 3.0
+    monkeypatch.undo()
+    # the row states its own rule: the exact tolerance and the printed precision of the two Hoja 10 values
+    ok = v.cmf_annex1_goldens()
+    assert ok.extras["thresholds"] == {"tolerance": 1e-12, "tolerance_printed": {"alpha_short": 5e-4, "bp": 5e-2}}
+    assert "tolerance_printed" in ok.policy_version
 
 
 # ---------------------------------------------------------------------------------------------------- RV-1025

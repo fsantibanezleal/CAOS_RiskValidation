@@ -58,7 +58,7 @@ $$y_t(m)=L_t+S_t\,\frac{1-e^{-\lambda m}}{\lambda m}+C_t\left(\frac{1-e^{-\lambd
 `dns_loadings` returns the three loadings, `dns_yield` the yield, `fit_dns_factors` the factors by least squares at each date
 (rows independent), and `forecast_dns_factors` simulates the factors as independent AR(1) processes
 $f_t=c+\phi f_{t-1}+\varepsilon_t$ fitted by least squares, with Gaussian innovations of variance $\mathrm{SSE}/(T-3)$, starting
-from the last row of the history (no look-ahead); a history with no spread is forecast as constant. The cross-correlation of the
+from the last row of the history (no look-ahead); a history with no spread is forecast as constant, and a factor whose lagged series is flat (flat except its last value) gets $\phi=0$, the mean of the next values as the constant and their sample spread as the innovation spread. The cross-correlation of the
 factor innovations is not modelled.
 
 Diebold and Li fix $\lambda=0.0609$ (maturities in months). Dossier 05 D.5 says the value "maximises the curvature loading at

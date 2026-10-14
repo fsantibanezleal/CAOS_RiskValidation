@@ -142,3 +142,35 @@ def ear_evar(nii_paths: np.ndarray, eve_paths: np.ndarray, base_nii: float, base
     return EarEvar(scalar(base_nii, "base_nii") - float(np.quantile(nii, q)),
                    scalar(base_eve, "base_eve") - float(np.quantile(ev, q)))
 
+
+
+def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, base_nii: float, base_eve: float,
+                      level: float = 0.99, n_batches: int = 20) -> EarEvar:
+    """The Monte Carlo standard error of the EaR and of the EVaR reported by ``ear_evar`` at the same ``level``, in
+    money.
+
+    Batch means: path ``i`` goes to batch ``i % n_batches`` (so an antithetic pair ``i, i + P / 2`` stays in one batch
+    and the batches are independent), the ``1 - level`` quantile is taken in each batch, and the error is the standard
+    deviation of the batch quantiles divided by ``sqrt(n_batches)`` (the standard error of the mean of the batch
+    quantiles, which estimates the sampling error of the full-sample quantile). ``ear = base_nii - quantile``, so the
+    base value does not change the error; it is accepted so the call mirrors ``ear_evar``. Needs ``n_batches >= 2``
+    and at least ``2 n_batches`` paths. The relative noise of the estimate itself is about ``1 / sqrt(2 (n_batches -
+    1))``; a bake reports the number of paths, the seed and the number of batches with it."""
+    nii, ev = vec(nii_paths, "nii_paths", allow_empty=True), vec(eve_paths, "eve_paths", allow_empty=True)
+    same_length(nii_paths=nii, eve_paths=ev)
+    scalar(base_nii, "base_nii")
+    scalar(base_eve, "base_eve")
+    lv = scalar(level, "level")
+    if not 0.0 < lv < 1.0:
+        raise ValueError("level must lie in (0, 1)")
+    nb = int(n_batches)
+    if nb != n_batches or nb < 2:
+        raise ValueError("n_batches must be an integer of at least 2")
+    if nii.size < 2 * nb:
+        raise ValueError(f"at least {2 * nb} paths are needed for {nb} batches, got {nii.size}")
+
+    def error(paths: np.ndarray) -> float:
+        quantiles = np.array([np.quantile(paths[k::nb], 1.0 - lv) for k in range(nb)])
+        return float(np.std(quantiles, ddof=1) / np.sqrt(nb))
+
+    return EarEvar(error(nii), error(ev))

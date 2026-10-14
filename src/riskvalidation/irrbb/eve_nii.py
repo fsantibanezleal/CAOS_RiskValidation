@@ -90,12 +90,14 @@ def delta_eve(cf_base: np.ndarray, cf_shock: np.ndarray, rates_base: np.ndarray,
 
 
 def eve_risk_measure(delta_eve_by_shock_currency: np.ndarray) -> float:
-    """``max over shocks of max(0, sum over currencies with delta > 0 of delta)``: (S, C) loss-positive money in one
-    reporting currency, one row per shock (six in the order of ``SHOCKS``; any number of rows is accepted, the
-    contract's golden has three) and one column per currency with material exposure (SRP31.129). A gain in one
-    currency never offsets a
-    loss in another."""
+    """``max over shocks of max(0, sum over currencies with delta > 0 of delta)``: (6, C) loss-positive money in one
+    reporting currency, one row per shock in the order of ``SHOCKS`` and one column per currency with material exposure
+    (SRP31.129). A gain in one currency never offsets a loss in another. A matrix without exactly six rows is refused
+    (a transposed (C, S) matrix would give another number silently)."""
     m = mat(delta_eve_by_shock_currency, "delta_eve_by_shock_currency")
+    if m.shape[0] != len(SHOCKS):
+        raise ValueError(f"expected {len(SHOCKS)} rows (one per shock, in the order of SHOCKS), got {m.shape[0]}: "
+                         "is the matrix transposed?")
     return float(max(0.0, np.max(np.where(m > 0.0, m, 0.0).sum(axis=1))))
 
 
