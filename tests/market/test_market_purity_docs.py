@@ -40,6 +40,13 @@ def test_market_extra_names_arch():
     assert "arch" not in deps, "the engine core stays NumPy and SciPy"
 
 
+def test_ci_installs_the_market_extra():
+    """Review M2: with only `.[dev]` the arch tests skip in CI."""
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert re.search(r'pip install -e "\.\[dev,market\]"', ci), "ci.yml must install .[dev,market]"
+    assert 'pip install -e ".[dev]"' not in ci
+
+
 def _estimators(series):
     from riskvalidation.market import caviar, conventions, gas_fz, historical, parametric, scoring
 
@@ -106,6 +113,6 @@ def test_market_pages_carry_equations_sources_and_limits():
     for name in NAMES:
         assert name in index
     decisions = "\n".join((PAGES / n).read_text(encoding="utf-8") for n in NAMES)
-    for d in range(1, 10):
+    for d in range(1, 11):
         assert f"D-{d}" in decisions, f"decision D-{d} is not recorded"
     assert "return convention" in decisions and "loss numbers" in decisions

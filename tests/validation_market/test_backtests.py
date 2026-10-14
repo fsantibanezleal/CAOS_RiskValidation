@@ -94,7 +94,8 @@ def weibull_lr(exceed):
     idx = np.flatnonzero(exceed)
     t = exceed.size
     d_unc = np.diff(idx).astype(float)
-    cens = [float(idx[0] + 1)] + ([float(t - 1 - idx[-1])] if idx[-1] < t - 1 else [])
+    # the first spell is censored only when the sample does not start with a hit (review m2)
+    cens = ([float(idx[0] + 1)] if idx[0] > 0 else []) + ([float(t - 1 - idx[-1])] if idx[-1] < t - 1 else [])
     cens = [c for c in cens if c > 0]
 
     def nll(par, force_b1=False):
@@ -133,6 +134,20 @@ def test_duration_test():
         m.duration_test(iid, 0.05, n_mc=0)
 
 
+def test_duration_first_day_hit_and_the_bound_on_b():
+    # review m2: a hit on the first day leaves no first spell to censor
+    comp, cens = m._spells(ex(60, [0, 10, 25]))
+    assert comp.tolist() == [10.0, 15.0] and cens.tolist() == [34.0]
+    comp, cens = m._spells(ex(60, [3, 10, 59]))
+    assert comp.tolist() == [7.0, 49.0] and cens.tolist() == [4.0]
+    # review m3: perfectly regular spells have an unbounded MLE of b; the cap is reported, not hidden
+    regular = ex(200, range(9, 200, 10))
+    r = m.duration_test(regular, 0.1, n_mc=99, seed=1)
+    assert r.extras["weibull_b_at_bound"] is True and "bound" in r.notes
+    irregular = np.random.default_rng(4).random(300) < 0.05
+    assert m.duration_test(irregular, 0.05, n_mc=99, seed=1).extras["weibull_b_at_bound"] is False
+
+
 def test_basel_traffic_light():
     table = {4: (89.22, "green", 1.50), 5: (95.88, "amber", 1.70), 9: (99.97, "amber", 1.92),
              10: (99.99, "red", 2.00)}
@@ -161,10 +176,18 @@ def test_dynamic_quantile_test():
     t = 500
     var = -0.02 + 0.004 * rng.standard_normal(t)
     hits = rng.random(t) < 0.05
-    r = m.dynamic_quantile_test(hits, var, 0.05, lags=4, model_id="m1")
+    r = m.dynamic_quantile_test(hits, var, 0.05, lags=4, model_id="m1", n_mc=199, seed=3)
     stat, pv = dynamic_quantile_statistic(hits.astype(float), var, 0.05, lags=4)
     assert r.test_id == "market.dynamic_quantile_test" and r.segment == "alpha=0.05"
-    assert r.statistic == stat and r.p_value == pv and r.n == t and r.n_events == int(hits.sum())
+    # review M1: the light follows a Monte Carlo p-value (Dufour form, Bernoulli(alpha) hits with the same VaR column);
+    # the asymptotic chi-square p-value is kept in extras
+    assert r.statistic == stat and r.n == t and r.n_events == int(hits.sum())
+    assert r.extras["p_value_asymptotic"] == pv and r.extras["p_value_basis"] == "monte-carlo"
+    assert r.extras["n_mc"] == 199 and 1 / 200 <= r.p_value <= 1.0 and abs(r.p_value * 200 - round(r.p_value * 200)) < 1e-9
+    again = m.dynamic_quantile_test(hits, var, 0.05, lags=4, n_mc=199, seed=3)
+    assert again.p_value == r.p_value
+    with pytest.raises(ValueError):
+        m.dynamic_quantile_test(hits, var, 0.05, n_mc=0)
     assert r.light in (Light.GREEN, Light.AMBER, Light.RED)
     small = m.dynamic_quantile_test(hits[:6], var[:6], 0.05, lags=4)
     assert small.light is Light.NOT_EVALUATED and small.to_dict()["statistic"] is None

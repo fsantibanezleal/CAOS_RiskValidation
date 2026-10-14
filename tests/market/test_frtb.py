@@ -110,6 +110,30 @@ def test_pla_ks_is_an_exact_step_count():
         f.pla_ks(np.where(h == 3, np.nan, h), h)
 
 
+def test_pla_spearman_comparison_is_exact_arithmetic():
+    """Review m4: a zone is decided on integer ranks, never on a float quotient compared with 0.80 or 0.70."""
+    x = np.arange(1.0, 6.0)
+    y = np.array([2.0, 1.0, 4.0, 3.0, 5.0])         # sum d^2 = 4: rho = 1 - 6 * 4 / (5 * 24) = 0.8 exactly
+    assert f.compare_spearman(x, y, 0.80) == 0
+    assert f.compare_spearman(x, y, 0.79) == 1 and f.compare_spearman(x, y, 0.81) == -1
+    assert f.compare_spearman(x, y[::-1].copy(), -0.8) in (-1, 0, 1)
+    tied_a = np.array([1.0, 1.0, 2.0, 3.0, 3.0, 4.0])
+    tied_b = np.array([1.0, 2.0, 2.0, 3.0, 4.0, 4.0])
+    rho = stats.spearmanr(tied_a, tied_b).statistic
+    assert f.compare_spearman(tied_a, tied_b, rho - 1e-9) == 1 and f.compare_spearman(tied_a, tied_b, rho + 1e-9) == -1
+    assert f.compare_spearman(x, x, 1.0) == 0 and f.compare_spearman(x, x[::-1].copy(), -1.0) == 0
+    with pytest.raises(ValueError):
+        f.compare_spearman(np.ones(5), x, 0.8)
+    # the zone of two 250-day series agrees with pla_zone away from the boundaries, and decides the KS on the integer gap
+    h = np.arange(250, dtype=float)
+    for shift, zone in ((0.5, "green"), (22.5, "green"), (23.5, "amber"), (29.5, "amber"), (30.5, "red")):
+        assert f.pla_zone_exact(h, h + shift) == zone, shift
+    rng = np.random.default_rng(9)
+    for _ in range(20):
+        x1, y1 = rng.normal(size=250), rng.normal(size=250) * 0.7 + 0.9 * rng.normal(size=250)
+        assert f.pla_zone_exact(x1, y1) == f.pla_zone(f.pla_spearman(x1, y1), f.pla_ks(x1, y1))
+
+
 def test_pla_zone():
     cases = [((0.81, 0.08), "green"), ((0.80, 0.05), "amber"), ((0.85, 0.09), "amber"), ((0.69, 0.05), "red"),
              ((0.70, 0.05), "amber"), ((0.95, 0.121), "red"), ((0.95, 0.12), "amber"), ((0.95, 0.0), "green"),
