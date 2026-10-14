@@ -91,8 +91,8 @@ def test_caviar_es_forecast(series):
 
 
 def test_caviar_es_fit_declares_the_two_step_estimator(series):
-    """Decision D-10 (review M3): the ES parameters are estimated in a second step on the VaR path of the tick-loss fit, not
-    jointly as in Taylor (2019); the result, the docstrings and the page say so."""
+    """Decision D-10 (review M3): the ES parameters are estimated in a second step on the VaR path of the tick-loss
+    fit, not jointly as in Taylor (2019); the result, the docstrings and the page say so."""
     fit = cv.fit_caviar(series, 0.05, spec="sav", n_starts=3, seed=2)
     ef = cv.caviar_es_fit(fit, series)
     assert isinstance(ef, cv.CaviarEsFit) and ef.estimator == "two-step"

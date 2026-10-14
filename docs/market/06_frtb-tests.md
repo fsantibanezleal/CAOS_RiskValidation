@@ -40,5 +40,7 @@ Golden: `hpl = 0..249` and `rtpl = hpl + 0.5` give `0.004`; `rtpl = hpl + 29.5` 
 KS above 0.12; amber otherwise, the boundaries belonging to amber. Golden: `(0.81, 0.08)` green, `(0.80, 0.05)` amber, `(0.85,
 0.09)` amber, `(0.69, 0.05)` red, `(0.70, 0.05)` amber, `(0.95, 0.121)` red, `(0.95, 0.12)` amber.
 
+`frtb.compare_spearman(x, y, threshold)` decides `rho` against a boundary in exact rational arithmetic on the doubled average ranks (integers), and `frtb.pla_zone_exact(hpl, rtpl)` applies MAR32.42 on those comparisons and on the integer step gap (`gap / 250 < 0.09` is `gap <= 22`, `gap / 250 > 0.12` is `gap >= 31`), so a value on a boundary is never moved by a float quotient, with or without ties; `market.pla_test` uses it.
+
 Limits: red means the desk is ineligible for the internal models approach and amber triggers a capital surcharge (MAR32.43 and
 MAR32.44); the engine states the zone, not the consequence. A desk series of any other length is refused, not padded.

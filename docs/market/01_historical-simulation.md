@@ -43,18 +43,26 @@ sixty-five days ago, which the tests reproduce.
 
 `age_weighted_var_es(returns, alpha, lam, window)` follows section 3 of the paper (read in full text for this unit): order the
 returns ascending, cumulate the weights, and "linear interpolation is used between adjacent points". The paper fixes which
-points: "we assume that 1/2 of a given return's weight is to the right and 1/2 to the left of the actual observation", so the
-sorted return `j` sits at the level $p_j=C_j-w_j/2$ with $C_j$ the cumulated weight, and the VaR is the linear interpolation of the
-returns at those levels evaluated at `alpha` (the paper's example: the -2.70% return sits at the 4.78th percentile, and the 5%
-VaR is $2.70\%-(2.70\%-2.60\%)\cdot(0.05-0.0478)/(0.0511-0.0478)=2.63\%$). The smallest return is the VaR below the first level,
-the largest above the last.
+points: half of a return's weight lies on each side of it, up to the point halfway to the neighbouring return. With
+$C_j$ the cumulated weight of the sorted return $j$, the quantile function $Q$ has **two knots per return**:
+
+$$\big(C_j-w_j/2,\ r_j\big)\quad\text{and}\quad\Big(C_j,\ \tfrac{r_j+r_{j+1}}{2}\Big),$$
+
+linear between knots, constant at the smallest return below the first knot and at the largest above the last; the VaR is
+$Q(\alpha)$. The worked example of pages 6 and 7 uses exactly these knots: the -2.70% return sits at the 4.78th percentile, the
+point halfway between -2.70% and -2.50% (-2.60%) sits at the cumulated weight 5.11%, and the 5% VaR is
+$2.70\%-(2.70\%-2.60\%)\cdot(0.05-0.0478)/(0.0511-0.0478)=2.63\%$. A first version of this engine interpolated only between the return
+knots and gave 2.647%; the Opus review (B1) caught it. Golden (the table of page 6, `lam = 0.98`, `window = 100`, `alpha = 0.05`,
+the six returns -3.3, -2.9, -2.7, -2.5, -2.4 and -2.3% observed 3, 2, 65, 45, 5 and 30 days ago, every other return above
+-2.3%): `var = -0.026338` (the paper: 2.63%) and `es = -0.030471`; the same six returns observed 28, 27, 90, 70, 30 and 55 days
+ago give `var = -0.023419` (the paper: 2.34%) and `es = -0.028055`. The tests reproduce both.
 
 The paper gives no rule for the ES (the contract marked it UNVERIFIED). **Decision D-9 of this unit:** the ES is the tail
-integral $\frac1\alpha\int_0^\alpha Q(u)\,du$ of the same interpolated quantile function $Q$ (constant at the smallest return on
-$(0,p_1)$, linear between the levels), the definition of dossier 05 A.0 applied to the distribution the VaR is read from; the
-integral is exact (trapezoids of a piecewise linear function). It satisfies `es <= var` because $Q$ is nondecreasing. As `lam`
-tends to 1 the result tends to the historical one up to the half-step offset of the midpoint rule (one return spacing at most);
-the integrator may amend D-9 before the bakes depend on it.
+integral $\frac1\alpha\int_0^\alpha Q(u)\,du$ of the same piecewise linear $Q$ (constant at the smallest return on
+$(0,p_1)$), the definition of dossier 05 A.0 applied to the distribution the VaR is read from; the integral is exact (trapezoids).
+It satisfies `es <= var` because $Q$ is nondecreasing. As `lam` tends to 1 the result is the equal-weight interpolation of the
+paper (its historical simulation: 2.35% in the example, halfway between 2.40% and 2.30%), within one return spacing of
+`historical_var_es`, not equal to it (review m1).
 
 ## Filtered HS and volatility-updated HS, rung 6 inputs (decision D-4)
 
@@ -72,7 +80,7 @@ with a constant volatility equal to `sigma_next` it equals `historical_var_es` o
 ## Limits
 
 HS needs the window to contain the tail it estimates (250 days at 1% have 2.5 tail days); it reacts slowly to a volatility
-regime (the ghost effect); the age-weighted ES rule is this unit's decision, not the paper's; filtered HS passes the
+regime (the ghost effect); the age-weighted ES rule (D-9) is this unit's decision, not the paper's; filtered HS passes the
 misspecification of its filter through. Sources: Pritsker (2001), FEDS 2001-27 https://www.federalreserve.gov/Pubs/feds/2001/200127/200127pap.pdf;
 Boudoukh, Richardson and Whitelaw, Risk 11(5):64-67, 1998; Barone-Adesi et al., doi:10.1002/(SICI)1096-9934(199908)19:5<583::AID-FUT5>3.0.CO;2-S;
 Hull and White, doi:10.21314/JOR.1998.001; Acerbi and Tasche, doi:10.1016/S0378-4266(02)00283-2 (the tail-integral ES).

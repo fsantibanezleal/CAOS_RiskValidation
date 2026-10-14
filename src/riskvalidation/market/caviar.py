@@ -120,15 +120,39 @@ def caviar_var_forecast(fit: CaviarFit, y: np.ndarray) -> float:
     return float(_path(fit.params, y, fit.spec, f1)[-1])
 
 
+@dataclass(frozen=True)
+class CaviarEsFit:
+    """The result of the ES-CAViaR estimation, with the estimator that produced it (decision D-10)."""
+
+    var: float                 # next-day VaR of the tick-loss fit (return convention)
+    es: float                  # next-day ES (return convention), at most `var`
+    gamma: np.ndarray          # (g0, g1, g2) of the x recursion
+    log_likelihood: float      # the asymmetric Laplace log-likelihood at the estimate
+    estimator: str             # "two-step": see `caviar_es_fit`
+
+
 def caviar_es_forecast(fit: CaviarFit, y: np.ndarray) -> float:
-    """The next-day ES (return convention) by the ES-CAViaR of Taylor (2019, JBES 37(1):121-133), autoregressive form:
+    """The next-day ES (return convention) of `caviar_es_fit`, by the ES-CAViaR of Taylor (2019) in a **two-step**
+    estimation (decision D-10, review M3): the VaR path is that of the tick-loss fit and only the ES parameters are
+    estimated, where Taylor (2019) estimates VaR and ES jointly by the asymmetric Laplace pseudo-likelihood. See
+    `caviar_es_fit`."""
+    return caviar_es_fit(fit, y).es
+
+
+def caviar_es_fit(fit: CaviarFit, y: np.ndarray) -> CaviarEsFit:
+    """The ES-CAViaR of Taylor (2019, JBES 37(1):121-133), autoregressive form, estimated in **two steps** (decision
+    D-10).
 
         ES_t = VaR_t - x_t,   x_t = g0 + g1 (VaR_{t-1} - r_{t-1}) + g2 x_{t-1}   if r_{t-1} <= VaR_{t-1}, else x_{t-1},
 
-    with `g0, g1 >= 0` and `0 <= g2 < 1` (so `x_t >= 0` and `es <= var`) estimated by maximising the asymmetric Laplace
-    likelihood `f(r) = ((alpha - 1) / ES_t) exp((r - VaR_t)(alpha - 1{r <= VaR_t}) / (alpha ES_t))` on the VaR path of
-    the fit over `y`; `x_1` is the sample gap `VaR - ES` of `y`. The equations are those restated in Section 3.2 of
-    arXiv 2603.02357 (the primary text was not retrieved, see docs/market/04_caviar-and-gas-fz.md). Deterministic.
+    Step one is `fit_caviar` (the VaR path by tick-loss minimisation); step two, here, fixes that path and estimates
+    `g0, g1 >= 0` and `0 <= g2 < 1` (so `x_t >= 0` and `es <= var`) by maximising the asymmetric Laplace likelihood
+    `f(r) = ((alpha - 1) / ES_t) exp((r - VaR_t)(alpha - 1{r <= VaR_t}) / (alpha ES_t))`. Taylor (2019) maximises that
+    likelihood jointly over the VaR and the ES parameters (arXiv 2603.02357 section 3.2); the two-step estimator is the
+    declared deviation, kept so that the ES forecast is consistent with `caviar_var_forecast` (`es <= var`) and the
+    result says so in `estimator`. `x_1` is the sample gap `VaR - ES` of `y`. The equations are those restated in
+    Section 3.2 of arXiv 2603.02357 (the primary text was not retrieved, see docs/market/04_caviar-and-gas-fz.md).
+    Deterministic.
     """
     y = _inputs(y, fit.spec)
     alpha = fit.alpha
@@ -172,7 +196,8 @@ def caviar_es_forecast(fit: CaviarFit, y: np.ndarray) -> float:
                 best = res
     g = _gamma(best.x)
     x = x_path(g)
-    return float(f[-1] - x[-1])
+    return CaviarEsFit(var=float(f[-1]), es=float(f[-1] - x[-1]), gamma=g, log_likelihood=float(-best.fun),
+                       estimator="two-step")
 
 
 def _gamma(theta: np.ndarray) -> np.ndarray:
@@ -195,11 +220,20 @@ def dynamic_quantile_statistic(hits: np.ndarray, var: np.ndarray, alpha: float, 
         raise ValueError("hits must contain only 0 and 1")
     if lags < 0 or h.size - lags < 2:
         raise ValueError(f"need more than lags + 1 = {lags + 1} observations, got {h.size}")
-    t = np.arange(lags, h.size)
-    cols = [np.ones(t.size)] + [h[t - j] for j in range(1, lags + 1)] + [v[t]]
+    stat, rank = dq_statistic_unchecked(h, v, alpha, int(lags))
+    return stat, float(stats.chi2.sf(stat, max(rank, 1)))
+
+
+def dq_statistic_unchecked(h: np.ndarray, v: np.ndarray, alpha: float, lags: int) -> tuple[float, int]:
+    """The DQ quadratic form and the rank of `X` from validated float arrays (the inner loop of the Monte Carlo p-value).
+
+    `Hit'X (X'X)^+ X'Hit` through the eigendecomposition of the small matrix `X'X` (a direction is dropped when its
+    eigenvalue is below 1e-12 of the largest, which removes the exact collinearities: a constant VaR, no hit)."""
+    n = h.size
+    cols = [np.ones(n - lags)] + [h[lags - j:n - j] for j in range(1, lags + 1)] + [v[lags:]]
     x = np.column_stack(cols)
-    y = h[t] - alpha
-    beta, _, rank, _ = np.linalg.lstsq(x, y, rcond=None)
-    fitted = x @ beta
-    stat = float(fitted @ fitted) / (alpha * (1.0 - alpha))
-    return stat, float(stats.chi2.sf(stat, max(int(rank), 1)))
+    y = h[lags:] - alpha
+    w, vecs = np.linalg.eigh(x.T @ x)
+    keep = w > w.max() * 1e-12
+    proj = vecs[:, keep].T @ (x.T @ y)
+    return float(np.sum(proj**2 / w[keep])) / (alpha * (1.0 - alpha)), int(keep.sum())

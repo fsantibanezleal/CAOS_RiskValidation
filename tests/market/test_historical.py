@@ -49,9 +49,9 @@ def test_age_weighted_var_es_midpoint_rule():
     lam = 0.5
     w = h.age_weights(lam, 3)
     assert w == pytest.approx([4 / 7, 2 / 7, 1 / 7])
-    # ascending: -0.03 (1/7), -0.02 (2/7), -0.01 (4/7). BRW 1998 pages 6 and 7: half of a return's weight on each side, up
-    # to the point halfway to the neighbouring return, so the quantile function has the knots (C_j - w_j/2, r_j) and
-    # (C_j, (r_j + r_{j+1})/2): (1/14, -0.03), (1/7, -0.025), (2/7, -0.02), (3/7, -0.015), (5/7, -0.01)
+    # ascending: -0.03 (1/7), -0.02 (2/7), -0.01 (4/7). BRW 1998 pages 6 and 7: half of a return's weight on each
+    # side, up to the point halfway to the neighbouring return, so the quantile function has the knots (C_j - w_j/2,
+    # r_j) and (C_j, (r_j + r_{j+1})/2): (1/14, -0.03), (1/7, -0.025), (2/7, -0.02), (3/7, -0.015), (5/7, -0.01)
     alpha = 0.2
     expected_var = -0.025 + (alpha - 1 / 7) / (2 / 7 - 1 / 7) * 0.005
     v, e = h.age_weighted_var_es(r, alpha, lam, 3)
@@ -79,16 +79,20 @@ def brw_window(ages_and_returns):
 
 
 def test_age_weighted_var_es_reproduces_the_brw_worked_example():
-    """Boudoukh, Richardson and Whitelaw (1998) pages 6 and 7: lam 0.98, K 100; the 5% VaR is 2.63% at the initial date and
-    2.34% twenty-five days later (the six lowest returns -3.3, -2.9, -2.7, -2.5, -2.4 and -2.3% observed 3, 2, 65, 45, 5 and
-    30 days ago, then 28, 27, 90, 70, 30 and 55 days ago). The knots at the cumulated weights, valued halfway between
-    adjacent returns, are what the paper's own arithmetic uses (2.70 - 0.10 (0.05 - 0.0478) / (0.0511 - 0.0478))."""
+    """Boudoukh, Richardson and Whitelaw (1998) pages 6 and 7: lam 0.98, K 100; the 5% VaR is 2.63% at the initial
+    date and 2.34% twenty-five days later (the six lowest returns -3.3, -2.9, -2.7, -2.5, -2.4 and -2.3% observed 3,
+    2, 65, 45, 5 and 30 days ago, then 28, 27, 90, 70, 30 and 55 days ago). The knots at the cumulated weights,
+    valued halfway between adjacent returns, are what the paper's own arithmetic uses (2.70 - 0.10 (0.05 - 0.0478) /
+    (0.0511 - 0.0478))."""
     rets = (-0.033, -0.029, -0.027, -0.025, -0.024, -0.023)
     first = brw_window(dict(zip((3, 2, 65, 45, 5, 30), rets, strict=True)))
     later = brw_window(dict(zip((28, 27, 90, 70, 30, 55), rets, strict=True)))
     v1, e1 = h.age_weighted_var_es(first, 0.05, 0.98, 100)
     v2, e2 = h.age_weighted_var_es(later, 0.05, 0.98, 100)
     assert round(-100 * v1, 2) == 2.63 and round(-100 * v2, 2) == 2.34
+    # the goldens of the contract (engine-market-api, after the review): VaR and ES of both cases
+    assert v1 == pytest.approx(-0.026338, abs=5e-7) and e1 == pytest.approx(-0.030471, abs=5e-7)
+    assert v2 == pytest.approx(-0.023419, abs=5e-7) and e2 == pytest.approx(-0.028055, abs=5e-7)
     assert v1 == pytest.approx(-(0.027 - 0.001 * (0.05 - 0.0478) / (0.0511 - 0.0478)), abs=2e-5)
     assert e1 <= v1 and e2 <= v2 and e1 >= -0.033
     # the paper's table: the cumulated weights of the first block

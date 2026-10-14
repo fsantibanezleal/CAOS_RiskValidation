@@ -183,7 +183,8 @@ def test_dynamic_quantile_test():
     # the asymptotic chi-square p-value is kept in extras
     assert r.statistic == stat and r.n == t and r.n_events == int(hits.sum())
     assert r.extras["p_value_asymptotic"] == pv and r.extras["p_value_basis"] == "monte-carlo"
-    assert r.extras["n_mc"] == 199 and 1 / 200 <= r.p_value <= 1.0 and abs(r.p_value * 200 - round(r.p_value * 200)) < 1e-9
+    assert r.extras["n_mc"] == 199 and 1 / 200 <= r.p_value <= 1.0
+    assert abs(r.p_value * 200 - round(r.p_value * 200)) < 1e-9
     again = m.dynamic_quantile_test(hits, var, 0.05, lags=4, n_mc=199, seed=3)
     assert again.p_value == r.p_value
     with pytest.raises(ValueError):
