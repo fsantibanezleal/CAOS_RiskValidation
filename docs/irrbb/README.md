@@ -34,6 +34,6 @@ Conventions of every page:
 
 Modules are imported by path, for example `from riskvalidation.irrbb import eve_nii` and
 `from riskvalidation.validation import irrbb`; nothing is re-exported from the package root. Requirements `RV-1001` to
-`RV-1031` are in `docs/design/features/u10-irrbb/requirements.md`, each naming its test. Sources: dossier 01 of the Contraste
+`RV-1032` are in `docs/design/features/u10-irrbb/requirements.md`, each naming its test. Sources: dossier 01 of the Contraste
 initiative (section H), dossier 03 (sections F.1 and F.2), dossier 05 (sections C.4 and D), and dossier 08 (C.2); each page cites
 the primary sources with their DOIs or URLs. Contract: `engine-irrbb-api` 1.0.0.

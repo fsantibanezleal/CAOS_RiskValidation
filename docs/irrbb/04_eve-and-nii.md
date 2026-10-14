@@ -44,7 +44,7 @@ EVE, constant balance sheet for NII (DIS70.4 and DIS70.5).
 Golden (the three-bucket sheet): net flows $+100$ in bucket 4 (0.375 y), $-30$ in bucket 9 (2.5 y), $-70$ in bucket 16 (9.5 y) on a flat
 2 percent curve: $EVE=12.828783$ (zero at zero rates). Delta EVE under the USD 2024 sizes 200/300/225 bp, no floor, flows
 unchanged: parallel-up `-10.666989`, parallel-down `12.828783`, steepener `-8.944982`, flattener `6.076550`, short-up `-1.625807`,
-short-down `1.702071`. `eve_risk_measure` of the rows `[[3, -1], [2, 4], [-5, -2]]` is `6` (the per-shock positive sums are 3, 6, 0).
+short-down `1.702071`. `eve_risk_measure` of the rows `[[3, -1], [2, 4], [-5, -2]]` completed by three rows of zeros (six shocks) is `6` (the per-shock positive sums are 3, 6, 0, 0, 0, 0); a matrix without exactly six rows is refused, so a transposed (currencies, shocks) matrix cannot give another number silently.
 `automatic_option_addon([3, 2], [1]) = 4`.
 
 ## Delta NII under a rate shock

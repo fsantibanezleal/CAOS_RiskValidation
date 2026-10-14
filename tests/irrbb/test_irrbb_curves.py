@@ -271,6 +271,15 @@ def test_forecast_dns_factors_invariants():
         first = p1[:, 0, j]
         assert first.mean() == pytest.approx(c0 + ph * hist[-1, j], abs=4 * sd / math.sqrt(3000))
         assert first.std(ddof=1) == pytest.approx(sd, rel=0.06)
+    # a factor flat except for its last value is not degenerate: its lagged series is flat (phi = 0, const = mean of the
+    # next values) but the residuals are not zero, so the paths carry noise of the sample spread of the next values
+    spike = np.tile(arr(0.05, -0.02, 0.01), (12, 1))
+    spike[-1, 0] = 0.06
+    sp = c.forecast_dns_factors(spike, 3, 4000, seed=2)
+    nxt = spike[1:, 0]
+    assert sp[:, 0, 0].mean() == pytest.approx(nxt.mean(), abs=5 * nxt.std(ddof=1) / math.sqrt(4000))
+    assert sp[:, 0, 0].std(ddof=1) == pytest.approx(nxt.std(ddof=1), rel=0.06)
+    assert np.allclose(sp[:, :, 1], -0.02, atol=1e-12) and np.allclose(sp[:, :, 2], 0.01, atol=1e-12)
     # no look-ahead: changing nothing but a value inside the history changes the fit, not the dependence on rows after
     # it
     with pytest.raises(ValueError):

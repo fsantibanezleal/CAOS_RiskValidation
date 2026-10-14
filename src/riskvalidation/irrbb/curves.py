@@ -265,7 +265,12 @@ def forecast_dns_factors(factors: np.ndarray, horizon: int, n_paths: int, seed: 
     for j in range(3):
         x, y = f[:-1, j], f[1:, j]
         if np.ptp(x) <= 1e-15 * max(1.0, float(np.max(np.abs(x)))):
-            const[j], phi[j], sd[j] = float(y.mean()), 0.0, 0.0
+            # the lagged series is flat: no slope can be fitted, so phi = 0 and the constant is the mean of the next
+            # values; the innovation spread is the sample spread of those values (zero only when the whole column is
+            # flat)
+            flat = np.ptp(f[:, j]) <= 1e-15 * max(1.0, float(np.max(np.abs(f[:, j]))))
+            const[j], phi[j] = float(y.mean()), 0.0
+            sd[j] = 0.0 if flat else float(np.sqrt(np.sum((y - y.mean()) ** 2) / (y.size - 1)))
             continue
         design = np.column_stack([np.ones_like(x), x])
         coef = np.linalg.lstsq(design, y, rcond=None)[0]

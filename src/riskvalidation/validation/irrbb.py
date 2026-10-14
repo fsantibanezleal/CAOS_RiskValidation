@@ -140,10 +140,14 @@ def cmf_annex1_goldens() -> TestResult:
     cases += [run(f"Hoja 9 {k}", lambda k=k, v=v: tuple(_shocks.shock_table("cmf-annex1")[k]) == v
                   and list(_shocks.shock_table("cmf-annex1")) == list(hoja9)) for k, v in hoja9.items()]
     cases.append(run("indexation_charge(-200) = 5", lambda: abs(_eve_nii.indexation_charge(-200.0) - 5.0) <= 1e-12))
-    r = _eve_nii.annex1_delta_eve(np.array([10, -20, 0, 5, -30, 40.0]), np.array([20, 30, -10, -2, 50, -15.0]))
-    cases.append(run("annex1 pairs", lambda: np.allclose(r.pairs, [30, 20, 0, 4, 35, 32.5], atol=1e-12, rtol=0)))
-    cases.append(run("annex1 delta_eve = 35", lambda: abs(r.delta_eve - 35.0) <= 1e-12))
-    cases.append(run("annex1 worst shock = short-up", lambda: r.worst_shock == "short-up"))
+    eve_clp, eve_ur = np.array([10, -20, 0, 5, -30, 40.0]), np.array([20, 30, -10, -2, 50, -15.0])
+
+    def annex1():  # computed inside each case, so a function that raises fails the three cases instead of escaping
+        return _eve_nii.annex1_delta_eve(eve_clp, eve_ur)
+
+    cases.append(run("annex1 pairs", lambda: np.allclose(annex1().pairs, [30, 20, 0, 4, 35, 32.5], atol=1e-12, rtol=0)))
+    cases.append(run("annex1 delta_eve = 35", lambda: abs(annex1().delta_eve - 35.0) <= 1e-12))
+    cases.append(run("annex1 worst shock = short-up", lambda: annex1().worst_shock == "short-up"))
     # the worked example of Annex 1 Hoja 10 (dossier 03 G3), at the precision it is printed: 0.417 and +41.7 bp
     t35 = np.array([3.5])
     cases.append(run("Hoja 10 alpha_short(3.5) = 0.417",
@@ -152,9 +156,12 @@ def cmf_annex1_goldens() -> TestResult:
                      lambda: abs(float(_shocks.shock_curve("short-up", 100, 100, 100, t35)[0]) - 41.7) <= 5e-2))
     failed = [name for name, ok in cases if not ok]
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=RAN_21_13, policy_version=_version(tolerance=1e-12),
+        test_id=test_id, h0=h0, alternative=alt, reference=RAN_21_13, policy_version=_version(
+            tolerance=1e-12, tolerance_printed="alpha_short 5e-4, bp 5e-2"),
         light=Light.RED if failed else Light.GREEN, statistic=float(len(failed)), n=len(cases),
-        n_events=len(failed), extras={"failed": failed, "thresholds": {"tolerance": 1e-12}},
+        n_events=len(failed),
+        extras={"failed": failed,
+                "thresholds": {"tolerance": 1e-12, "tolerance_printed": {"alpha_short": 5e-4, "bp": 5e-2}}},
         notes=f"failed: {'; '.join(failed)}" if failed else "")
 
 
