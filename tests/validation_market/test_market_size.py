@@ -40,6 +40,20 @@ def test_size_of_the_var_backtests():
         check_size(flags, slack=0.01)
 
 
+def test_size_of_the_dq_test_at_production_configurations():
+    """Review M1: the asymptotic chi-square DQ rejected correct forecasts 9.9 percent at (alpha 0.01, T 250), 8.2 percent at
+    (0.025, 250) and 14.3 percent at (0.01, 750); the light now follows a Monte Carlo p-value, which is exact in size."""
+    rng = np.random.default_rng(104)
+    for alpha, t, reps in ((0.01, 250, 400), (0.025, 250, 400), (0.01, 750, 300)):
+        flags = []
+        for i in range(reps):
+            hits = rng.random(t) < alpha
+            var = -0.02 + 0.004 * rng.standard_normal(t)
+            r = m.dynamic_quantile_test(hits, var, alpha, lags=4, n_mc=199, seed=i)
+            flags.append(r.p_value <= 0.05)
+        check_size(flags, slack=0.01)
+
+
 def test_size_of_the_duration_test():
     rng = np.random.default_rng(102)
     alpha, t, reps = 0.05, 400, 240

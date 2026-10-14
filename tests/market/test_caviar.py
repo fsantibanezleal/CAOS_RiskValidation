@@ -90,6 +90,19 @@ def test_caviar_es_forecast(series):
     assert 0.3 * (v - e) < var - es < 4.0 * (v - e)
 
 
+def test_caviar_es_fit_declares_the_two_step_estimator(series):
+    """Decision D-10 (review M3): the ES parameters are estimated in a second step on the VaR path of the tick-loss fit, not
+    jointly as in Taylor (2019); the result, the docstrings and the page say so."""
+    fit = cv.fit_caviar(series, 0.05, spec="sav", n_starts=3, seed=2)
+    ef = cv.caviar_es_fit(fit, series)
+    assert isinstance(ef, cv.CaviarEsFit) and ef.estimator == "two-step"
+    assert ef.var == cv.caviar_var_forecast(fit, series) and ef.es == cv.caviar_es_forecast(fit, series)
+    assert ef.es <= ef.var < 0.0 and ef.gamma.shape == (3,) and np.all(ef.gamma >= 0.0) and ef.gamma[2] < 1.0
+    assert np.isfinite(ef.log_likelihood)
+    assert "two-step" in (cv.caviar_es_forecast.__doc__ or "") and "D-10" in (cv.caviar_es_forecast.__doc__ or "")
+    assert "two-step" in (cv.caviar_es_fit.__doc__ or "")
+
+
 def test_fit_caviar_refusals_and_determinism(series):
     a = cv.fit_caviar(series, 0.05, n_starts=3, seed=7)
     b = cv.fit_caviar(series, 0.05, n_starts=3, seed=7)
