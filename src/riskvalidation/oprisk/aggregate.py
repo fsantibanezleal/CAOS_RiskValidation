@@ -287,7 +287,8 @@ def quantile_from_pmf(h: np.ndarray, step: float, level: float) -> float:
     return float(idx * step)
 
 
-def es_from_pmf(h: np.ndarray, step: float, level: float, max_missing_share: float = 1e-3) -> float:
+def es_from_pmf(h: np.ndarray, step: float, level: float, max_missing_share: float = 1e-3,
+                infinite_mean: bool = False) -> float:
     """The expected shortfall ``ES = (E[Z; Z > q] + q (P(Z <= q) - level)) / (1 - level)`` with ``q =
     quantile_from_pmf(h, step, level)``; equivalently ``q + E[(Z - q)^+] / (1 - level)``, so ``ES >= VaR``, with
     equality for a point mass.
@@ -295,10 +296,16 @@ def es_from_pmf(h: np.ndarray, step: float, level: float, max_missing_share: flo
     The grid must carry the tail: ``ValueError`` when the mass beyond the grid, ``1 - sum(h)``, exceeds
     ``max_missing_share * (1 - level)`` (default ``1e-3 * (1 - level)``), because an expected shortfall read off a grid
     that ends before the tail is too small (on the benchmark's grid of 6000 points it would be 377.8 against a VaR of
-    5849). The expected shortfall does not exist for a severity with a tail index of 1 or more (the compound loss has an
-    infinite mean) and is never computed for it: the guard refuses such a grid at any size, since its missing mass does
-    not fall below the tolerance as the grid grows. ``ValueError`` as ``quantile_from_pmf`` otherwise.
+    5849). **The pmf alone cannot reveal the tail index**: the expected shortfall does not exist for a severity with a
+    tail index of 1 or more (the compound loss has an infinite mean), yet on a coarse enough grid (a large step) the
+    missing mass of such a severity falls below the tolerance and a finite, meaningless number comes out. The caller
+    therefore decides from the severity, before calling, whether the expected shortfall exists: pass
+    ``infinite_mean=True`` (or use ``es_for_severity``, which asks ``severity_moment``) and the function raises
+    ``ValueError("infinite mean")`` instead of computing. ``ValueError`` as ``quantile_from_pmf`` otherwise.
     """
+    if infinite_mean:
+        raise ValueError("infinite mean: the severity has a tail index of 1 or more, so the expected shortfall "
+                         "does not exist and is never computed")
     hv, step = _pmf(h, step)
     level = level_in_open_unit(level)
     share = scalar(max_missing_share, "max_missing_share")
@@ -316,6 +323,18 @@ def es_from_pmf(h: np.ndarray, step: float, level: float, max_missing_share: flo
     x = np.arange(hv.size, dtype=float) * step
     above = float(np.dot(x[idx + 1:], hv[idx + 1:]))
     return (above + q * (float(cs[idx]) - level)) / (1.0 - level)
+
+
+def es_for_severity(h: np.ndarray, step: float, level: float, sev_law: str, sev_params: Sequence[float],
+                    max_missing_share: float = 1e-3) -> float:
+    """``es_from_pmf`` gated on the severity: ``ValueError("infinite mean")`` before anything is computed when
+    ``severity_moment(sev_law, sev_params, 1)`` is infinite (a GPD or splice tail index of 1 or more), whatever the
+    grid.
+    The C17 bake writes the expected shortfall as null with the reason ``infinite mean`` on that error."""
+    if math.isinf(severity_moment(sev_law, sev_params, 1)):
+        raise ValueError("infinite mean: the severity has a tail index of 1 or more, so the expected shortfall "
+                         "does not exist and is never computed")
+    return es_from_pmf(h, step, level, max_missing_share)
 
 
 def exceedance_from_pmf(h: np.ndarray, step: float) -> tuple[np.ndarray, np.ndarray]:

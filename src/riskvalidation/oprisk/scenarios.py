@@ -67,6 +67,7 @@ def _log_excess_residuals(xi: float, beta: float, cond: np.ndarray, u: np.ndarra
 
 
 _STARTS = (0.05, 0.2, 0.5, 1.0, 2.0)
+XI_BOUNDS = (1e-3, 50.0)
 
 
 def _fit_scenario_gpd(cond: np.ndarray, u: np.ndarray, starts: Sequence[float] = _STARTS,
@@ -76,8 +77,8 @@ def _fit_scenario_gpd(cond: np.ndarray, u: np.ndarray, starts: Sequence[float] =
     excesses) so that no start wanders into an overflow."""
     best: optimize.OptimizeResult | None = None
     i = int(np.argmax(u))
-    lo = np.array([math.log(1e-3), math.log(float(u.min()) * 1e-6)])
-    hi = np.array([math.log(50.0), math.log(float(u.max()) * 1e6)])
+    lo = np.array([math.log(XI_BOUNDS[0]), math.log(float(u.min()) * 1e-6)])
+    hi = np.array([math.log(XI_BOUNDS[1]), math.log(float(u.max()) * 1e6)])
     initial = [(xi0, xi0 * u[i] / math.expm1(-xi0 * math.log(cond[i]))) for xi0 in starts]
     if warm is not None:
         initial.insert(0, warm)
@@ -89,6 +90,14 @@ def _fit_scenario_gpd(cond: np.ndarray, u: np.ndarray, starts: Sequence[float] =
             best = res
     assert best is not None
     return math.exp(best.x[0]), math.exp(best.x[1]), best
+
+
+def _on_search_bound(xi: float, beta: float, u: np.ndarray) -> bool:
+    """True when the optimum sits on the box of ``_fit_scenario_gpd``: such a value is the box, not a statistic."""
+    tol = 1e-6
+    lo_b, hi_b = float(u.min()) * 1e-6, float(u.max()) * 1e6
+    return bool(xi <= XI_BOUNDS[0] * (1 + tol) or xi >= XI_BOUNDS[1] * (1 - tol)
+                or beta <= lo_b * (1 + tol) or beta >= hi_b * (1 - tol))
 
 
 def _scenario_inputs(points: Sequence[ScenarioPoint], threshold: float,
@@ -122,7 +131,8 @@ def fit_tail_to_scenarios(points: Sequence[ScenarioPoint], threshold: float,
     the LDCE percentiles. At least two points with distinct losses, every loss above the threshold and every conditional
     probability in (0, 1). Exact when the points lie on a GPD (zero residual). The fit has no likelihood (``loglik`` is
     ``nan``); its standard errors come from the residual variance and are ``nan`` with two points; ``converged`` is the
-    least squares solver's.
+    least squares solver's and is False when the optimum sits on the search bound of ``xi`` or ``beta`` (a bound is
+    not a statistic).
     """
     h, fa, pts = _scenario_inputs(points, threshold, frequency_above_threshold)
     cond = _conditional(np.array([p.exceedance_frequency for p in pts]), fa)
@@ -148,7 +158,8 @@ def fit_tail_to_scenarios(points: Sequence[ScenarioPoint], threshold: float,
                 se = (math.sqrt(float(diag[0])), math.sqrt(float(diag[1])), 0.0)
         except np.linalg.LinAlgError:
             pass
-    return SeverityFit("gpd", (xi, beta, h), se, h, True, n, _NAN, bool(best.success))
+    return SeverityFit("gpd", (xi, beta, h), se, h, True, n, _NAN,
+                       bool(best.success and not _on_search_bound(xi, beta, u)))
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -218,8 +229,11 @@ def gamma_prior_from_scenarios(points: Sequence[ScenarioPoint], threshold: float
     (``numpy.random.Generator(PCG64(seed))``) form the interval of mass ``interval_level``. (3)
     ``gamma_prior_from_mean_interval`` solves the Gamma shape and rate.
     ``basis_years`` is the number of years of experience each scenario frequency is worth (a policy parameter of the
-    caller). Deterministic for the same ``seed``; the prior is never truncated to ``alpha`` above 1. A replicate whose
-    redrawn frequency reaches ``frequency_above_threshold`` raises ``ValueError`` like ``fit_tail_to_scenarios``.
+    caller). Deterministic for the same ``seed``; the prior is never truncated to ``alpha`` above 1. ``ValueError`` when
+    a point is worth less than one expected event in the basis years (``exceedance_frequency * basis_years < 1``: most
+    redraws are then 0 and the refits collapse onto the search bound), when the point estimate or any bootstrap
+    replicate sits on the search bound of the least squares fit (the share is named; a bound is never put into the
+    percentiles), and when a replicate's redrawn frequency reaches ``frequency_above_threshold``.
     """
     h, fa, pts = _scenario_inputs(points, threshold, frequency_above_threshold)
     basis = positive(basis_years, "basis_years")
@@ -230,17 +244,28 @@ def gamma_prior_from_scenarios(points: Sequence[ScenarioPoint], threshold: float
         raise ValueError(f"n_bootstrap must be an integer of at least 2, got {n_bootstrap}")
     if int(seed) != seed or seed < 0:
         raise ValueError(f"seed must be a non-negative integer, got {seed}")
+    freq = np.array([p.exceedance_frequency for p in pts])
+    if np.any(freq * basis < 1.0):
+        raise ValueError("every scenario point must be worth at least one expected event in basis_years "
+                         f"(exceedance_frequency * basis_years >= 1); the smallest is "
+                         f"{float(np.min(freq * basis)):.3g}")
     base = fit_tail_to_scenarios(pts, h, fa)
+    if not base.converged:
+        raise ValueError("the scenario fit sits on the search bound: the points do not define a tail")
     alpha_s = 1.0 / base.params[0]
     u = np.array([p.loss - h for p in pts])
-    freq = np.array([p.exceedance_frequency for p in pts])
     rng = np.random.Generator(np.random.PCG64(int(seed)))
     alphas = np.empty(int(n_bootstrap))
+    on_bound = 0
     for b in range(int(n_bootstrap)):
         counts = rng.poisson(freq * basis)
         redrawn = np.where(counts == 0, 0.5, counts) / basis
-        xi_b, _, _ = _fit_scenario_gpd(_conditional(redrawn, fa), u, starts=(), warm=tuple(base.params[:2]))
+        xi_b, beta_b, _ = _fit_scenario_gpd(_conditional(redrawn, fa), u, starts=(), warm=tuple(base.params[:2]))
+        on_bound += _on_search_bound(xi_b, beta_b, u)
         alphas[b] = 1.0 / xi_b
+    if on_bound:
+        raise ValueError(f"{on_bound} of {int(n_bootstrap)} bootstrap refits sit on the search bound: the interval "
+                         "would end at the bound, not at a statistic; raise basis_years or use more frequent points")
     lo, hi = (float(v) for v in np.percentile(alphas, [50.0 * (1.0 - level), 50.0 * (1.0 + level)]))
     return gamma_prior_from_mean_interval(alpha_s, lo, hi, level)
 

@@ -73,9 +73,15 @@ Golden: $h = [0.5, 0.3, 0.2]$, step 10, level 0.75 gives $q = 10$, $E[Z; Z>q] = 
 the function raises when the mass beyond the grid exceeds `max_missing_share` (default $10^{-3}$) of the tail $1 - \text{level}$,
 because an expected shortfall read off a grid that ends before the tail is too small and can fall below its own VaR. On the
 benchmark's grid of 6000 points the missing mass is 0.000936 and a grid-only reading would be 377.8 against a VaR of 5849. The
-expected shortfall does not exist for a severity with a tail index of 1 or more (the compound loss has an infinite mean) and is
-never computed for it: a grid of such a severity always misses mass above the tolerance, however large (a Pareto-type tail with
-index 1.1 gives a finite grid-only value that keeps growing with the grid: 818.6 at 4000 points, 1073.6 at 8000).
+expected shortfall does not exist for a severity with a tail index of 1 or more (the compound loss has an infinite mean), and
+**the grid guard cannot detect that**: the pmf alone does not reveal the tail index, and on a coarse enough grid the missing mass
+of such a severity falls below the tolerance (GPD(1.1, 100, 0), Poisson(10), step 1e6 and 32768 points miss 1.7e-7 and give a
+finite 3.17e7 against a VaR of 2e6; on finer grids a Pareto-type tail with index 1.1 gives a finite grid-only value that keeps
+growing with the grid: 818.6 at 4000 points, 1073.6 at 8000). The caller therefore decides from the severity, before the
+expected shortfall, whether it exists: `es_for_severity(h, step, level, sev_law, sev_params)` raises `ValueError("infinite mean")`
+when `severity_moment(sev_law, sev_params, 1)` is infinite, whatever the grid, and `es_from_pmf(..., infinite_mean=True)` does the
+same for a caller that knows it from a fitted tail index or `CredibilityFit.infinite_mean`. The C17 bake gates on that, never on
+the grid guard's `ValueError`, and writes the expected shortfall as null with the reason `infinite mean`.
 
 `compound_poisson_moments(lam, sev_law, sev_params)` gives $E[Z] = \lambda E[X]$, $\mathrm{Var}[Z] = \lambda E[X^2]$ and skewness
 $\lambda E[X^3]/\mathrm{Var}[Z]^{3/2}$, with the mean infinite when the severity mean is, the variance infinite when its second

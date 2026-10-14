@@ -28,7 +28,7 @@ deviation is $|q - 5853.1|/5853.1$.
 
 $$m = \max\Big(\frac{\max\text{ moment deviations}}{\text{moment\_rel\_tol}},\ \frac{\max\text{ quantile deviations}}{\text{quantile\_rel\_tol}}\Big)$$
 
-`statistic` equals `metric`; `extras["deviations"]` lists every deviation by name and `extras["max_quantile_rel_dev"]` the largest
+The references carry four decimals (the skewness 40.3428 is the exact $e^6/10 = 40.342879$ cut, a relative error of $1.97	imes10^{-6}$), so with moments from the engine `moment_rel_tol` must be at least $10^{-5}$ (at $10^{-6}$ the engine's exact moments read amber). `statistic` equals `metric`; `extras["deviations"]` lists every deviation by name and `extras["max_quantile_rel_dev"]` the largest
 quantile deviation. A missing method gives `not_evaluated`. Golden: the moments above, quantiles Panjer 5849, FFT 5850, Monte Carlo 5900,
 tolerances $10^{-6}$ and 0.01 give a Monte Carlo deviation $46.9/5853.1 = 0.008013$, $m = 0.801285$, green.
 

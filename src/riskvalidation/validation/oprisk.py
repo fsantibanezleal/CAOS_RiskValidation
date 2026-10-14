@@ -99,6 +99,9 @@ def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mappi
     max(moment deviations / `moment_rel_tol`, quantile deviations / `quantile_rel_tol`) and statistic equals metric;
     extras carry `deviations` by name, `max_moment_rel_dev` and `max_quantile_rel_dev`. A missing method gives
     not_evaluated.
+    The references carry four decimals (the skewness 40.3428 is the exact e^6 / 10 = 40.342879 cut, a relative error of
+    1.97e-6), so `moment_rel_tol` must exceed that rounding when the moments come from the engine: use at least 1e-5
+    (at 1e-6 the engine's exact moments read amber).
     Light (a Contraste internal gate): green when metric <= 1, amber when metric <= 2, red above.
     """
     test_id = "oprisk.benchmark_reproduction"
@@ -169,7 +172,8 @@ def threshold_stability(thresholds: np.ndarray, xi_hat: np.ndarray, model_id: st
     finite = xi[np.isfinite(xi)]
     if finite.size < 2:
         return _not_evaluated(test_id, h0, reference, version, "fewer than 2 thresholds with a fitted tail index",
-                              model_id=model_id, n=int(finite.size), extras={"thresholds": gates, "n_infinite_mean": 0})
+                              model_id=model_id, n=int(finite.size), extras={"thresholds": gates,
+                                      "n_infinite_mean": int((finite >= 1.0).sum())})
     metric = float(finite.max() - finite.min())
     return TestResult(
         test_id=test_id, h0=h0, alternative="the fitted tail index drifts with the threshold", reference=reference,

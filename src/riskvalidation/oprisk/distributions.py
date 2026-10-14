@@ -263,10 +263,17 @@ def frequency_pmf(law: str, params: Sequence[float], n_max: int) -> np.ndarray:
 # severity
 
 
+def _no_nan(x: np.ndarray) -> np.ndarray:
+    a = np.array(x, dtype=float, ndmin=1)
+    if np.any(np.isnan(a)):
+        raise ValueError("x contains NaN")
+    return a
+
+
 def severity_cdf(law: str, params: Sequence[float], x: np.ndarray) -> np.ndarray:
     """``F(x)``: zero at and below the origin of the law (0, or the location of the GPD)."""
     p = _sev_params(law, params)
-    return _cdf(law, p, np.array(x, dtype=float, ndmin=1))
+    return _cdf(law, p, _no_nan(x))
 
 
 def severity_ppf(law: str, params: Sequence[float], q: np.ndarray) -> np.ndarray:
@@ -327,7 +334,7 @@ def truncated_severity_cdf(law: str, params: Sequence[float], x: np.ndarray, thr
     """``(F(x) - F(H)) / (1 - F(H))`` for ``x >= H`` and 0 below; ``ValueError`` when ``F(H) = 1``."""
     p = _sev_params(law, params)
     h = scalar(threshold, "threshold")
-    xa = np.array(x, dtype=float, ndmin=1)
+    xa = _no_nan(x)
     sf_h = _sf_at_threshold(law, p, h)
     above = xa >= h
     out = np.zeros_like(xa)
