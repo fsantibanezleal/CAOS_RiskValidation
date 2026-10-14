@@ -225,7 +225,7 @@ def dynamic_quantile_statistic(hits: np.ndarray, var: np.ndarray, alpha: float, 
 
 
 def dq_statistic_unchecked(h: np.ndarray, v: np.ndarray, alpha: float, lags: int) -> tuple[float, int]:
-    """The DQ quadratic form and the rank of `X` from validated float arrays (the inner loop of the Monte Carlo p-value).
+    """The DQ quadratic form and the rank of `X` from validated float arrays (the Monte Carlo p-value's inner loop).
 
     `Hit'X (X'X)^+ X'Hit` through the eigendecomposition of the small matrix `X'X` (a direction is dropped when its
     eigenvalue is below 1e-12 of the largest, which removes the exact collinearities: a constant VaR, no hit)."""
