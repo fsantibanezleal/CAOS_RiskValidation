@@ -69,7 +69,8 @@ Gamma(1, 1)). `gamma_prior_from_scenarios` maps the scenario points to that inpu
 $\alpha_s = 1/\xi_s$ as the prior mean; a parametric bootstrap redraws each exceedance frequency as $k/\text{basis\_years}$ with $k$
 Poisson (a count of 0 replaced by 0.5), refits the GPD, and the 5th and 95th percentiles of $\alpha$ form the expert interval; the
 Gamma is then solved from the two. `basis_years`, the years of experience each scenario frequency is worth, is a policy parameter of
-the caller. **The prior is unrestricted and says so** (`kind = "unrestricted-gamma-on-pareto-shape"` on every result): Shevchenko and
+the caller; every point must be worth at least one expected event in it (`exceedance_frequency * basis_years >= 1`), and a refit that
+sits on the search bound of the least squares fit is refused, because a bound is not a statistic (both raise `ValueError`). **The prior is unrestricted and says so** (`kind = "unrestricted-gamma-on-pareto-shape"` on every result): Shevchenko and
 Wuthrich restrict it to $\alpha > 1$ (a finite mean, section 3.4), which would exclude the true value $\alpha = 0.909$ of the
 tail-index 1.1 variant. A posterior with $\bar\alpha \le 1$ is flagged `infinite_mean` and no mean-based number follows.
 
