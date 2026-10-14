@@ -1,7 +1,7 @@
 """The dynamic NII simulation and the stochastic EaR and EVaR: Hull-White one-factor and dynamic Nelson-Siegel
 scenarios (dossier 05 C.4, D.5 and D.6).
 
-Contract: ``engine-irrbb-api`` 1.0.0, module simulation. Every function with randomness takes a seed and uses
+Contract: ``engine-irrbb-api`` 1.1.0, module simulation. Every function with randomness takes a seed and uses
 ``numpy.random.default_rng(seed)``.
 """
 
@@ -144,22 +144,28 @@ def ear_evar(nii_paths: np.ndarray, eve_paths: np.ndarray, base_nii: float, base
 
 
 
-def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, base_nii: float, base_eve: float,
-                      level: float = 0.99, n_batches: int = 20) -> EarEvar:
-    """The Monte Carlo standard error of the EaR and of the EVaR reported by ``ear_evar`` at the same ``level``, in
-    money.
+@dataclass(frozen=True)
+class EarEvarMcError:
+    level: float
+    nii_quantile_se: float
+    eve_quantile_se: float
+    ear_se: float
+    evar_se: float
 
-    Batch means: path ``i`` goes to batch ``i % n_batches`` (so an antithetic pair ``i, i + P / 2`` stays in one batch
-    and the batches are independent), the ``1 - level`` quantile is taken in each batch, and the error is the standard
-    deviation of the batch quantiles divided by ``sqrt(n_batches)`` (the standard error of the mean of the batch
-    quantiles, which estimates the sampling error of the full-sample quantile). ``ear = base_nii - quantile``, so the
-    base value does not change the error; it is accepted so the call mirrors ``ear_evar``. Needs ``n_batches >= 2``
-    and at least ``2 n_batches`` paths. The relative noise of the estimate itself is about ``1 / sqrt(2 (n_batches -
-    1))``; a bake reports the number of paths, the seed and the number of batches with it."""
+
+def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, level: float = 0.99,
+                      n_batches: int = 20) -> EarEvarMcError:
+    """The Monte Carlo standard error, in money, of the ``1 - level`` quantile of the NII paths and of the EVE paths,
+    which is the Monte Carlo error of the EaR and of the EVaR reported by ``ear_evar`` at the same ``level``.
+
+    Batch means: the first ``n_batches * (P // n_batches)`` paths, in the order they were simulated, are cut into
+    ``n_batches`` contiguous batches, the ``1 - level`` quantile (linear interpolation, as ``ear_evar``) is taken in
+    each batch, and the standard error is ``sd(batch quantiles, ddof=1) / sqrt(n_batches)``. The base NII and EVE are
+    constants, so ``ear_se = nii_quantile_se`` and ``evar_se = eve_quantile_se``. Deterministic, no randomness; it
+    needs ``n_batches >= 2`` and ``P >= 2 n_batches``. The relative noise of the estimate itself is about ``1 / sqrt(2
+    (n_batches - 1))``."""
     nii, ev = vec(nii_paths, "nii_paths", allow_empty=True), vec(eve_paths, "eve_paths", allow_empty=True)
     same_length(nii_paths=nii, eve_paths=ev)
-    scalar(base_nii, "base_nii")
-    scalar(base_eve, "base_eve")
     lv = scalar(level, "level")
     if not 0.0 < lv < 1.0:
         raise ValueError("level must lie in (0, 1)")
@@ -168,9 +174,11 @@ def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, base_nii: fl
         raise ValueError("n_batches must be an integer of at least 2")
     if nii.size < 2 * nb:
         raise ValueError(f"at least {2 * nb} paths are needed for {nb} batches, got {nii.size}")
+    size = nii.size // nb
 
     def error(paths: np.ndarray) -> float:
-        quantiles = np.array([np.quantile(paths[k::nb], 1.0 - lv) for k in range(nb)])
+        quantiles = np.quantile(paths[: nb * size].reshape(nb, size), 1.0 - lv, axis=1)
         return float(np.std(quantiles, ddof=1) / np.sqrt(nb))
 
-    return EarEvar(error(nii), error(ev))
+    nii_se, eve_se = error(nii), error(ev)
+    return EarEvarMcError(lv, nii_se, eve_se, nii_se, eve_se)

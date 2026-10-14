@@ -3,7 +3,7 @@
 
 Rates are decimals and discounting is continuously compounded, ``DF(t) = exp(-R t)`` (SRP31.129). The functions are
 pure NumPy and SciPy: QuantLib is at most an optional test extra that cross-checks the discount factors. Contract:
-``engine-irrbb-api`` 1.0.0, module curves.
+``engine-irrbb-api`` 1.1.0, module curves.
 """
 
 from __future__ import annotations

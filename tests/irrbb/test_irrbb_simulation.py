@@ -249,62 +249,63 @@ def test_ear_evar_golden_and_invariants():
 
 
 def test_ear_evar_mc_error_golden_and_invariants():
-    # golden on a closed form: i.i.d. standard normal paths, the standard error of the q-quantile is
-    # sqrt(q (1 - q) / P) / phi(z_q), z_q the normal quantile (the asymptotic variance of a sample quantile)
     from scipy import stats
 
-    p_paths, n_b = 100_000, 100
-    for level in (0.95, 0.99):
-        q = 1 - level
-        exact = math.sqrt(q * (1 - q) / p_paths) / stats.norm.pdf(stats.norm.ppf(q))
-        errs = []
-        for seed in range(12):
-            r = np.random.default_rng(seed)
-            nii, eve = r.standard_normal(p_paths), 3.0 * r.standard_normal(p_paths)
-            out = sim.ear_evar_mc_error(nii, eve, 0.0, 0.0, level=level, n_batches=n_b)
-            errs.append((out.ear, out.evar))
-        errs = np.array(errs)
-        # batch means have a relative noise of about 1 / sqrt(2 (B - 1)) = 7 percent each; the mean over seeds is closer
-        assert errs[:, 0].mean() == pytest.approx(exact, rel=0.06), level
-        assert errs[:, 1].mean() == pytest.approx(3.0 * exact, rel=0.06), level
-        assert np.all(np.abs(errs[:, 0] / exact - 1) < 0.35)
-    # an asymmetric case pins the tail: Exp(1) has density 1 - q at its q-quantile, so the error is
-    # sqrt(q (1 - q) / P) / (1 - q), and the 1 % and 99 % tails differ by a factor 99
-    for level in (0.95, 0.99):
-        q = 1 - level
-        exact = math.sqrt(q * (1 - q) / p_paths) / (1 - q)
-        got = [sim.ear_evar_mc_error(np.random.default_rng(s).exponential(size=p_paths), np.zeros(p_paths), 0.0, 0.0,
-                                     level, n_b).ear for s in range(12)]
-        assert np.mean(got) == pytest.approx(exact, rel=0.08), level
-    # a quantile with a closed form checked against the actual Monte Carlo spread of the quantile over many replications
-    reps = [float(np.quantile(np.random.default_rng(100 + s).standard_normal(20_000), 0.01)) for s in range(300)]
-    one = sim.ear_evar_mc_error(np.random.default_rng(7).standard_normal(20_000), np.zeros(20_000), 0.0, 0.0, 0.99, 50)
-    assert one.ear == pytest.approx(float(np.std(reps, ddof=1)), rel=0.3)
-    # the base values do not move the error; deterministic; inputs not mutated; zero spread gives zero error
+    # exact golden of the contract: n_batches = 2, level = 0.5, batch medians 10.5 and 110.5, error (100 / sqrt 2) /
+    # sqrt 2
+    paths = np.r_[np.arange(1.0, 21.0), np.arange(101.0, 121.0)]
+    g = sim.ear_evar_mc_error(paths, paths, level=0.5, n_batches=2)
+    assert g.nii_quantile_se == pytest.approx(50.0, abs=1e-12) and g.eve_quantile_se == pytest.approx(50.0, abs=1e-12)
+    assert (g.ear_se, g.evar_se, g.level) == (g.nii_quantile_se, g.eve_quantile_se, 0.5)
+    assert dataclasses.is_dataclass(g)
+    # the closed form of the asymptotic standard error of a quantile: sigma sqrt(p (1 - p) / P) / phi(z_p)
+    def closed(p, n, sigma=1.0):
+        return sigma * math.sqrt(p * (1 - p) / n) / stats.norm.pdf(stats.norm.ppf(p))
+
+    assert closed(0.01, 10_000) == pytest.approx(0.037332, abs=5e-7)
+    assert closed(0.05, 10_000) == pytest.approx(0.021132, abs=5e-7)
+    # the estimator against it on seeded N(0, 1) and N(0, 9) samples: P = 100000, 20 batches, within 50 percent per
+    # sample
+    # (20 batches carry about 16 percent of relative noise) and within 10 percent on the mean of 12 seeds
+    ratios = {0.95: [], 0.99: []}
+    for seed in range(12):
+        r = np.random.default_rng(seed)
+        nii, eve = r.standard_normal(100_000), 3.0 * r.standard_normal(100_000)
+        for level in (0.95, 0.99):
+            out = sim.ear_evar_mc_error(nii, eve, level=level, n_batches=20)
+            exact = closed(1 - level, 100_000)
+            assert abs(out.ear_se / exact - 1) < 0.5 and abs(out.evar_se / (3 * exact) - 1) < 0.5
+            ratios[level].append(out.ear_se / exact)
+    for level, rs in ratios.items():
+        assert np.mean(rs) == pytest.approx(1.0, abs=0.1), level
+    # the error is that of the (1 - level) tail: for Exp(1) the 5 and 1 percent tails are pinned by the density 1 - q
+    got = np.mean([sim.ear_evar_mc_error(np.random.default_rng(s).exponential(size=100_000), np.zeros(100_000), 0.99,
+                                         50).ear_se for s in range(12)])
+    assert got == pytest.approx(math.sqrt(0.01 * 0.99 / 100_000) / 0.99, rel=0.1)
+    # linear in the scale, unchanged by a shift, deterministic, inputs not mutated, nonnegative, zero for equal paths
     x = np.random.default_rng(1).standard_normal(4000)
     x0 = x.copy()
-    a = sim.ear_evar_mc_error(x, x, 5.0, -3.0, 0.99, 20)
-    assert a == sim.ear_evar_mc_error(x, x, 0.0, 0.0, 0.99, 20) and np.array_equal(x, x0)
-    assert a.ear >= 0 and a.evar >= 0 and dataclasses.is_dataclass(a)
+    a = sim.ear_evar_mc_error(x, x, 0.99, 20)
+    assert a == sim.ear_evar_mc_error(x, x, 0.99, 20) and np.array_equal(x, x0) and a.ear_se >= 0
+    k = sim.ear_evar_mc_error(5.0 * x, 5.0 * x, 0.99, 20)
+    assert k.ear_se == pytest.approx(5.0 * a.ear_se, rel=1e-12)
+    assert k.evar_se == pytest.approx(5.0 * a.evar_se, rel=1e-12)
+    sh_ = sim.ear_evar_mc_error(x + 100.0, x - 7.0, 0.99, 20)
+    assert sh_.ear_se == pytest.approx(a.ear_se, rel=1e-9) and sh_.evar_se == pytest.approx(a.evar_se, rel=1e-9)
     flat = np.full(400, 7.0)
-    assert sim.ear_evar_mc_error(flat, flat, 1.0, 2.0, 0.95, 10) == sim.EarEvar(0.0, 0.0)
-    # interleaved batches keep an antithetic pair (i, i + P/2) in the same batch: the error of a symmetric, mirrored
-    # sample is finite and nonnegative, and more paths give a smaller error
-    half = np.random.default_rng(2).standard_normal(5000)
-    mirrored = np.r_[half, -half]
-    small = sim.ear_evar_mc_error(mirrored[::10], mirrored[::10], 0.0, 0.0, 0.99, 10)
-    big = sim.ear_evar_mc_error(mirrored, mirrored, 0.0, 0.0, 0.99, 10)
-    assert 0 < big.ear < small.ear
-    # interleaved batches: a mirrored skewed sample [h, -h] (the antithetic layout) gives each batch both halves, where
-    # contiguous batches would put the halves in different batches and inflate the error by an order of magnitude
-    h = np.random.default_rng(4).exponential(size=5000)
-    mir = np.r_[h, -h]
-    contiguous = np.std([np.quantile(mir[k * 1000:(k + 1) * 1000], 0.01) for k in range(10)], ddof=1) / math.sqrt(10)
-    assert sim.ear_evar_mc_error(mir, mir, 0.0, 0.0, 0.99, 10).ear < 0.2 * contiguous
+    zero = sim.ear_evar_mc_error(flat, flat, 0.95, 10)
+    assert (zero.ear_se, zero.evar_se) == (0.0, 0.0)
+    # the batches are contiguous cuts of the first n_batches * (P // n_batches) paths: a remainder is ignored
+    base = np.random.default_rng(9).standard_normal(41)
+    changed = base.copy()
+    changed[40] = -1e6  # the 41st path is a remainder of 4 batches of 10 and is ignored
+    assert sim.ear_evar_mc_error(base, base, 0.9, 4) == sim.ear_evar_mc_error(changed, changed, 0.9, 4)
+    changed[39] = -1e6  # the 40th path belongs to the last batch (the 10 percent tail is the lower one)
+    assert sim.ear_evar_mc_error(base, base, 0.9, 4) != sim.ear_evar_mc_error(changed, changed, 0.9, 4)
     for bad in (dict(level=0.0), dict(level=1.0), dict(n_batches=1), dict(n_batches=300)):
         with pytest.raises(ValueError):
-            sim.ear_evar_mc_error(flat, flat, 0.0, 0.0, **{"level": 0.99, "n_batches": 10, **bad})
+            sim.ear_evar_mc_error(flat, flat, **{"level": 0.99, "n_batches": 10, **bad})
     with pytest.raises(ValueError):
-        sim.ear_evar_mc_error(flat, flat[:10], 0.0, 0.0)
+        sim.ear_evar_mc_error(flat, flat[:10])
     with pytest.raises(ValueError):
-        sim.ear_evar_mc_error(flat, flat, float("nan"), 0.0)
+        sim.ear_evar_mc_error(np.r_[flat[:-1], np.nan], flat)

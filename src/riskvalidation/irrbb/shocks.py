@@ -3,7 +3,7 @@ floors (dossier 01 H.2, H.3 and H.5; dossier 03 F.2).
 
 Shock sizes are basis points. A size outside the transcribed tables is never invented: ``shock_size`` refuses a
 currency without an entry unless the caller supplies the size with a bilingual label and the method. Contract:
-``engine-irrbb-api`` 1.0.0, module shocks.
+``engine-irrbb-api`` 1.1.0, module shocks.
 """
 
 from __future__ import annotations
