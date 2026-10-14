@@ -2,7 +2,7 @@
 deposit beta with asymmetric pass-through, and the prepayment logit with its maximum-likelihood fit (dossier 05 D.3
 and D.4).
 
-Contract: ``engine-irrbb-api`` 1.0.0, module behavioural.
+Contract: ``engine-irrbb-api`` 1.1.0, module behavioural.
 """
 
 from __future__ import annotations

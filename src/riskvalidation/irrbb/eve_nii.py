@@ -2,7 +2,7 @@
 and D.2; dossier 01 H.4 and H.5; dossier 03 F.2).
 
 A positive delta EVE or delta NII is a **loss** (SRP31.129). Discounting is continuously compounded. Money is a float
-in the currency of the call; the engine never converts between currencies. Contract: ``engine-irrbb-api`` 1.0.0,
+in the currency of the call; the engine never converts between currencies. Contract: ``engine-irrbb-api`` 1.1.0,
 module eve_nii.
 """
 

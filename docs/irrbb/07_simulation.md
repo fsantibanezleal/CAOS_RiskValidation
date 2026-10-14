@@ -54,18 +54,23 @@ Loss-positive, with $\ell$ the confidence level (default 0.99), $Q$ the linearly
 simulated NII and EVE paths, and $NII_0$, $EVE_0$ the base values. Monotone in the level; all-equal paths give base minus path; at
 least 2 paths. Golden: `nii_paths = 1..100`, base 60, level 0.99: the first percentile is `1.99`, so `ear = 58.01`.
 
-`ear_evar_mc_error(nii_paths, eve_paths, base_nii, base_eve, level, n_batches=20)` returns the Monte Carlo standard error of the
-EaR and of the EVaR at the same level (in money), so the case document carries an engine number, not a hand-rolled one. Batch
-means: path $i$ goes to batch $i \bmod B$ (an antithetic pair $i,\,i+P/2$ stays in one batch and the batches are independent), the
-$1-\ell$ quantile is taken in each batch, and
+`ear_evar_mc_error(nii_paths, eve_paths, level, n_batches=20)` returns an `EarEvarMcError` (`level`, `nii_quantile_se`,
+`eve_quantile_se`, `ear_se`, `evar_se`): the Monte Carlo standard error, in money, of the $1-\ell$ quantile of the NII paths and of
+the EVE paths, which is the Monte Carlo error of the EaR and of the EVaR at the same level (the base values are constants, so
+`ear_se = nii_quantile_se`). The case document carries an engine number, not a hand-rolled one. Batch means: the first
+$B\lfloor P/B\rfloor$ paths, in the order they were simulated, are cut into $B$ contiguous batches, the $1-\ell$ quantile (linear
+interpolation) is taken in each batch, and
 
 $$SE=\frac{\operatorname{sd}(Q_1,\dots,Q_B)}{\sqrt B}$$
 
-with $Q_b$ the batch quantiles; the base values do not change it. The estimate itself has a relative noise of about
-$1/\sqrt{2(B-1)}$. Golden on a closed form: for i.i.d. standard normal paths the standard error of the $q$-quantile is
-$\sqrt{q(1-q)/P}\,/\,\varphi(z_q)$ (the asymptotic variance of a sample quantile; $z_q$ the normal quantile), checked at the 95 and 99
-percent levels for $P=10^5$, $B=100$, and for Exp(1) paths with density $1-q$ at the quantile; it needs $B\ge2$ and at least $2B$
-paths.
+with $Q_b$ the batch quantiles. It needs $B\ge2$ and $P\ge2B$, is deterministic and linear in the scale of the paths. The estimate
+itself has a relative noise of about $1/\sqrt{2(B-1)}$.
+
+Golden (exact): $B=2$, $\ell=0.5$, paths $1..20,101..120$: the batch medians are $10.5$ and $110.5$, so $SE=(100/\sqrt2)/\sqrt2=50$.
+Closed form for the check of the estimator: for independent $N(0,\sigma^2)$ paths the asymptotic standard error of the empirical
+$p$-quantile is $\sigma\sqrt{p(1-p)/P}\,/\,\varphi(z_p)$ ($z_p$ the normal quantile), $0.037332$ at $\ell=0.99$ and $0.021132$ at
+$\ell=0.95$ for $\sigma=1$, $P=10^4$; the tests compare the estimator with it on seeded samples of $10^5$ paths and 20 batches, and for
+Exp(1) paths (density $1-q$ at the quantile).
 
 ## Sources
 
@@ -79,8 +84,9 @@ paths.
 
 - The reset rule treats the whole balance of an item as repricing together; the new business is priced at the current reset rate.
 - The Hull-White parameters $a$ and $\sigma$ are inputs: the engine does not calibrate them to swaption volatilities.
-- The Monte Carlo error is a batch-means estimate (a seeded bootstrap would also do); a bake reports the number of paths, the seed
-  and the number of batches with it.
+- The Monte Carlo error is a batch-means estimate over contiguous batches; a bake reports the number of paths, the seed and the
+  number of batches with it. Contiguous batches of an antithetic layout (the mirrored half after the first half) put the mirror
+  images in different batches, which is harmless for a symmetric distribution and conservative for a skewed one.
 - Antithetic pairs halve the Monte Carlo variance for a monotone payoff only; the bake reports the Monte Carlo error with the
   number of paths and the seed.
 - The Kalkbrener and Willing stochastic NMD SDEs are not implemented (dossier 05 D.3, UNVERIFIED detail).

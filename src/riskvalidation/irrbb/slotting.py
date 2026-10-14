@@ -1,7 +1,7 @@
 """The 19 time buckets, the slotting of repricing cash flows, prepayment and term-deposit multipliers, SMM and CPR,
 the PSA curve (SRP31.96 to SRP31.126; dossier 01 H.4; dossier 05 D.4).
 
-Contract: ``engine-irrbb-api`` 1.0.0, module slotting.
+Contract: ``engine-irrbb-api`` 1.1.0, module slotting.
 """
 
 from __future__ import annotations
