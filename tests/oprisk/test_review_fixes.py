@@ -120,6 +120,12 @@ def test_the_benchmark_is_green_on_the_engines_exact_moments_at_a_tolerance_abov
     # the references carry four decimals (e^6 / 10 = 40.342879 is quoted as 40.3428): 1e-6 is below that rounding
     assert abs(cm.skewness - 40.3428) / 40.3428 > 1e-6
     assert "1e-5" in (v.benchmark_reproduction.__doc__ or "")
+    # the contract default (moment_rel_tol 1e-5, quantile_rel_tol 0.01) is green on the exact moments, metric 0.196688
+    default = v.benchmark_reproduction((cm.mean, cm.variance, cm.skewness), quantiles)
+    assert default.light is Light.GREEN and default.metric == pytest.approx(0.196688, abs=5e-7)
+    assert default.extras["thresholds"] == {"moment_rel_tol": 1e-5, "quantile_rel_tol": 0.01}
+    amber = v.benchmark_reproduction((cm.mean, cm.variance, cm.skewness), quantiles, 1e-6, 0.01)
+    assert amber.light is Light.AMBER and amber.metric == pytest.approx(1.966876, abs=5e-7)
 
 
 # ---- minors ----------------------------------------------------------------------------------------------------

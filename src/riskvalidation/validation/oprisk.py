@@ -86,8 +86,9 @@ def _quantile_deviation(method: str, q: float) -> float:
     return (lo - q if q < lo else q - hi) / BENCHMARK_QUANTILE_SCALE
 
 
-def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mapping[str, float], moment_rel_tol: float,
-                           quantile_rel_tol: float, model_id: str | None = None) -> TestResult:
+def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mapping[str, float],
+                           moment_rel_tol: float = 1e-5, quantile_rel_tol: float = 0.01,
+                           model_id: str | None = None) -> TestResult:
     """The engine reproduces Shevchenko's benchmark, Poisson(100) with LN(0, 2): E[Z] = 738.9056, Var[Z] = 298095.7987,
     skewness 40.3428, and a 99.9 percent quantile of 5849 to 5850 (the step-1 discretised quantile) by Panjer and FFT
     and of 5853.1 (the continuous quantile; Shevchenko Table 3 at step 0.0625 and Table 7) by Monte Carlo.
@@ -101,7 +102,7 @@ def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mappi
     not_evaluated.
     The references carry four decimals (the skewness 40.3428 is the exact e^6 / 10 = 40.342879 cut, a relative error of
     1.97e-6), so `moment_rel_tol` must exceed that rounding when the moments come from the engine: use at least 1e-5
-    (at 1e-6 the engine's exact moments read amber).
+    (at 1e-6 the engine's exact moments read amber; 1e-5 is the default).
     Light (a Contraste internal gate): green when metric <= 1, amber when metric <= 2, red above.
     """
     test_id = "oprisk.benchmark_reproduction"
