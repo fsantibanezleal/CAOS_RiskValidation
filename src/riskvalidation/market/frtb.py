@@ -6,6 +6,7 @@ factors of 12 CFR 217.204 Table 1 (dossier 05 B.4) are reference values for a do
 
 from __future__ import annotations
 
+from fractions import Fraction
 from functools import lru_cache
 
 import numpy as np
@@ -100,15 +101,18 @@ def pla_spearman(hpl: np.ndarray, rtpl: np.ndarray) -> float:
     return float(np.clip((rh @ rr) / np.sqrt((rh @ rh) * (rr @ rr)), -1.0, 1.0))
 
 
+def _pla_gap(h: np.ndarray, r: np.ndarray) -> int:
+    """`max_x |#{rtpl <= x} - #{hpl <= x}|`, the exact integer count of ECDF steps."""
+    sh, sr = np.sort(h), np.sort(r)
+    pts = np.union1d(sh, sr)
+    return int(np.max(np.abs(np.searchsorted(sr, pts, side="right") - np.searchsorted(sh, pts, side="right"))))
+
+
 def pla_ks(hpl: np.ndarray, rtpl: np.ndarray) -> float:
     """`KS = sup_x |F_RTPL(x) - F_HPL(x)|` with `F(x) = 0.004 #{obs <= x}` (MAR32.39 to MAR32.41), computed as an exact
     integer count of steps `gap = max_x |#{rtpl <= x} - #{hpl <= x}|` divided by 250 (review F5): 30 steps give
     exactly the float 0.12, where `0.004 * a - 0.004 * b` gives 0.12000000000000002."""
-    h, r = _pla_series(hpl, "hpl"), _pla_series(rtpl, "rtpl")
-    sh, sr = np.sort(h), np.sort(r)
-    pts = np.union1d(sh, sr)
-    gap = int(np.max(np.abs(np.searchsorted(sr, pts, side="right") - np.searchsorted(sh, pts, side="right"))))
-    return gap / PLA_N
+    return _pla_gap(_pla_series(hpl, "hpl"), _pla_series(rtpl, "rtpl")) / PLA_N
 
 
 def pla_zone(spearman: float, ks: float) -> str:
@@ -117,5 +121,55 @@ def pla_zone(spearman: float, ks: float) -> str:
     if spearman < 0.70 or ks > 0.12:
         return "red"
     if spearman > 0.80 and ks < 0.09:
+        return "green"
+    return "amber"
+
+
+def compare_spearman(x: np.ndarray, y: np.ndarray, threshold: float) -> int:
+    """The sign of `rho - threshold` for the Spearman correlation of `x` and `y`, decided in exact arithmetic (review
+    m4).
+
+    With the doubled average ranks (integers) centred by `n`, `rho = Sxy / sqrt(Sxx Syy)` with integer sums, and the
+    comparison with the threshold is made on `Sxy^2` against `threshold^2 Sxx Syy` in rational arithmetic, so a value
+    on a boundary (0.80, 0.70) is never moved by a float quotient, with or without ties. Returns 1, 0 or -1.
+    `ValueError` for a series with no spread or series of different length."""
+    a, b = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    if a.ndim != 1 or a.shape != b.shape or a.size < 2:
+        raise ValueError("x and y must be one-dimensional of the same length (at least 2)")
+    n = a.size
+
+    def centred(v: np.ndarray) -> list[int]:
+        r2 = [int(round(2 * t)) for t in stats.rankdata(v)]
+        tot = sum(r2)
+        return [n * t - tot for t in r2]
+
+    cx, cy = centred(a), centred(b)
+    sxx, syy = sum(t * t for t in cx), sum(t * t for t in cy)
+    if sxx == 0 or syy == 0:
+        raise ValueError("a series has zero spread: the rank correlation is undefined")
+    sxy = sum(p * q for p, q in zip(cx, cy, strict=True))
+    t = Fraction(str(float(threshold)))
+    lhs, rhs = Fraction(sxy * sxy), t * t * sxx * syy
+    if t >= 0:
+        if sxy < 0:
+            return -1
+        return (lhs > rhs) - (lhs < rhs)
+    if sxy >= 0:
+        return 1
+    return (lhs < rhs) - (lhs > rhs)
+
+
+def pla_zone_exact(hpl: np.ndarray, rtpl: np.ndarray) -> str:
+    """The zone of MAR32.42 for two 250-day series, decided on integers: the Spearman boundaries 0.80 and 0.70 by
+    `compare_spearman` (exact rational arithmetic) and the KS boundaries 0.09 and 0.12 on the step gap (`gap / 250 <
+    0.09` is `gap <= 22`, `gap / 250 > 0.12` is `gap >= 31`). Agrees with `pla_zone(pla_spearman, pla_ks)` except
+    where a float quotient would sit on a boundary."""
+    h, r = _pla_series(hpl, "hpl"), _pla_series(rtpl, "rtpl")
+    if np.ptp(h) == 0.0 or np.ptp(r) == 0.0:
+        raise ValueError("a PLA series has zero spread: the rank correlation is undefined")
+    gap = _pla_gap(h, r)
+    if compare_spearman(h, r, 0.70) < 0 or gap * 100 > 12 * PLA_N:
+        return "red"
+    if compare_spearman(h, r, 0.80) > 0 and gap * 100 < 9 * PLA_N:
         return "green"
     return "amber"

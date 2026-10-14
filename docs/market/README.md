@@ -40,11 +40,11 @@ numbers; the functions of `riskvalidation.market` take and return the return con
 
 ## Decisions
 
-D-1 to D-8 are those of the contract `engine-market-api` 1.0.0, D-9 is this unit's (the pages that apply them name them).
+D-1 to D-8 are those of the contract `engine-market-api` 1.0.0, D-9 and D-10 are this unit's (D-10 written in the contract after the review) (the pages that apply them name them).
 D-1 the exact binomial p-value (07); D-2 the Bartlett HAC kernel (05); D-3 the empirical VaR and ES of a sample (01); D-4
 filtered HS without resampling (01); D-5 the one-sided Du-Escanciano p-value (07); D-6 the Cornish-Fisher validity domain (02);
 D-7 the independence test at no exceedance (07); D-8 the minimum of 2 exceedances of the duration and McNeil-Frey tests (07);
-D-9 the ES of the age-weighted HS (01).
+D-9 the ES of the age-weighted HS (01); D-10 the two-step estimator of the ES-CAViaR (04), declared in the contract after the review.
 
 ## Limits of what the engine claims
 

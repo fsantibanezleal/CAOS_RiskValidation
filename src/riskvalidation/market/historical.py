@@ -33,13 +33,18 @@ def age_weighted_var_es(returns: np.ndarray, alpha: float, lam: float, window: i
     """Age-weighted (hybrid) historical simulation of Boudoukh, Richardson and Whitelaw (1998).
 
     The return observed `i` days ago has the weight `age_weights(lam, window)[i-1]`. The returns are sorted ascending
-    and the weights cumulated; half of each return's weight lies on each side of it (section 3 of the paper), so the
-    sorted return `j` sits at the cumulated level `C_j - w_j / 2`. The VaR is the linear interpolation of the returns
-    at those levels, evaluated at `alpha` (the smallest return below the first level, the largest above the last).
+    and the weights cumulated (`C_j`). Section 3 of the paper puts half of a return's weight on each side of it, up
+    to the point halfway to the neighbouring return, and interpolates linearly "between adjacent points". The
+    quantile function therefore has two knots per return: `(C_j - w_j / 2, r_j)` (the return itself) and `(C_j, (r_j
+    + r_{j+1}) / 2)` (the point halfway to the next return, at the cumulated weight). The worked example of pages 6
+    and 7 (5% VaR 2.63% and 2.34%) uses exactly these knots: `2.70% - (2.70% - 2.60%) (0.05 - 0.0478) / (0.0511 -
+    0.0478)`, with 2.60% halfway between 2.70% and 2.50%. The VaR is that function evaluated at `alpha` (the smallest
+    return below the first knot, the largest above the last).
 
-    Decision D-9 (the paper gives no ES rule): the ES is the tail integral `(1/alpha) int_0^alpha Q(u) du` of that
-    interpolated quantile function `Q` (constant at the smallest return on `(0, p_1)`), the definition of dossier 05 A.0
-    applied to the same distribution the VaR is read from; `es <= var` because `Q` is nondecreasing.
+    Decision D-9 (the paper gives no ES rule): the ES is the tail integral `(1/alpha) int_0^alpha Q(u) du` of that same
+    piecewise linear function `Q` (constant at the smallest return on `(0, p_1)`), the definition of dossier 05 A.0
+    applied to the distribution the VaR is read from; the integral is exact (trapezoids). `es <= var` because `Q` is
+    nondecreasing.
     """
     alpha = check_alpha(alpha)
     r = vec(returns, "returns")
@@ -49,14 +54,20 @@ def age_weighted_var_es(returns: np.ndarray, alpha: float, lam: float, window: i
     w = age_weights(lam, window)
     order = np.argsort(recent, kind="stable")
     x, ws = recent[order], w[order]
-    p = np.cumsum(ws) - 0.5 * ws                # the level of each sorted return
-    var = float(np.interp(alpha, p, x))
-    if alpha <= p[0]:
+    cum = np.cumsum(ws)
+    p_ret = cum - 0.5 * ws                       # the level of each sorted return
+    # interleave (C_j - w_j/2, r_j) and (C_j, (r_j + r_{j+1})/2), the last return having no right neighbour
+    knots_p = np.empty(2 * x.size - 1)
+    knots_x = np.empty(2 * x.size - 1)
+    knots_p[0::2], knots_x[0::2] = p_ret, x
+    knots_p[1::2], knots_x[1::2] = cum[:-1], 0.5 * (x[:-1] + x[1:])
+    var = float(np.interp(alpha, knots_p, knots_x))
+    if alpha <= knots_p[0]:
         return var, float(x[0])
-    inside = p < alpha
-    knots = np.concatenate([[0.0], p[inside], [alpha]])
-    vals = np.concatenate([[x[0]], x[inside], [var]])
-    area = float(np.sum(0.5 * (vals[1:] + vals[:-1]) * np.diff(knots)))
+    inside = knots_p < alpha
+    grid = np.concatenate([[0.0], knots_p[inside], [alpha]])
+    vals = np.concatenate([[x[0]], knots_x[inside], [var]])
+    area = float(np.sum(0.5 * (vals[1:] + vals[:-1]) * np.diff(grid)))
     return var, area / alpha
 
 

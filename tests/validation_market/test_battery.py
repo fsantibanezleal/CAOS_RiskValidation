@@ -36,7 +36,7 @@ def calls():
         "du_escanciano_conditional": lambda: m.du_escanciano_conditional(pit, 0.05),
         "mcneil_frey_residual_test": lambda: m.mcneil_frey_residual_test(loss, np.full(300, 0.02), np.full(300, 0.03),
                                                                          np.full(300, 0.01), 0.05, n_boot=200),
-        "dynamic_quantile_test": lambda: m.dynamic_quantile_test(hits, var, 0.05),
+        "dynamic_quantile_test": lambda: m.dynamic_quantile_test(hits, var, 0.05, n_mc=199),
         "pla_test": lambda: m.pla_test(h, h + pla[:250] * 3),
         "desk_backtest": lambda: m.desk_backtest(np.full(250, 0.03), np.full(250, 0.02), 0.01),
     }

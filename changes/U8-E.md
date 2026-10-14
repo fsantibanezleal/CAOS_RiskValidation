@@ -9,3 +9,9 @@
   dynamic quantile test, the PLA test and the desk back-test, each a `TestResult` with its size checked by simulation.
 - Documentation under `docs/market/` (equations, goldens, sources, decisions D-1 to D-9, limits) and the feature SDD
   `docs/design/features/u8-market/requirements.md`.
+- U8-E review fixes: the age-weighted HS now has the two knots per return of Boudoukh, Richardson and Whitelaw (1998) and
+  reproduces their worked example (VaR 2.63% and 2.34%); the dynamic quantile test takes a Monte Carlo p-value (`n_mc`, `seed`;
+  size between 0.03 and 0.07 at (0.01, 250), (0.025, 250) and (0.01, 750)); the CI installs `.[dev,market]`; the ES-CAViaR is
+  declared two-step (decision D-10, `caviar_es_fit`); the duration test censors the first spell only when the sample does not
+  start with a hit and reports a capped shape; the PLA zone is decided in exact arithmetic (`frtb.compare_spearman`,
+  `frtb.pla_zone_exact`).

@@ -27,7 +27,7 @@ from scipy import optimize, special, stats
 from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.market import frtb
-from riskvalidation.market.caviar import dynamic_quantile_statistic
+from riskvalidation.market.caviar import dq_statistic_unchecked, dynamic_quantile_statistic
 from riskvalidation.market.conventions import vec
 
 POLICY_LABEL = "contraste-market-battery-1.0.0"
@@ -248,7 +248,9 @@ def _spells(ex: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """Completed no-hit spells between consecutive exceedances and the censored first and last spells."""
     idx = np.flatnonzero(ex)
     completed = np.diff(idx).astype(float)
-    cens = [float(idx[0] + 1)]
+    # the first spell is censored only when the sample does not start with an exceedance (review m2); a first-day
+    # exceedance leaves no first spell
+    cens = [float(idx[0] + 1)] if idx[0] > 0 else []
     if idx[-1] < ex.size - 1:
         cens.append(float(ex.size - 1 - idx[-1]))
     return completed, np.array(cens)
@@ -304,6 +306,8 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
         return _not_evaluated(test_id, h0, alt, CHRISTOFFERSEN_PELLETIER_2004, version,
                               "fewer than 2 exceedances: no completed no-hit duration", inputs=inputs_hash(ex), **kw)
     stat, b_hat = _weibull_lr(*_spells(ex))
+    # review m3: for perfectly regular spells the MLE of b is unbounded
+    at_bound = bool(b_hat >= 19.99 or b_hat <= 0.0501)
     rng = np.random.default_rng(seed)
     hits = 0
     done = 0
@@ -321,7 +325,10 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=CHRISTOFFERSEN_PELLETIER_2004, policy_version=version,
         light=_p_light(pv, alpha_amber, alpha_red), statistic=stat, p_value=pv, inputs_hash=inputs_hash(ex, p),
-        extras={"weibull_b": b_hat, "n_mc": int(n_mc), "n_completed_spells": x - 1}, **kw)
+        notes=("the Weibull shape reached the bound of its search [0.05, 20]: the statistic is capped"
+               if at_bound else ""),
+        extras={"weibull_b": b_hat, "weibull_b_at_bound": at_bound, "n_mc": int(n_mc),
+                "n_completed_spells": x - 1}, **kw)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -590,10 +597,18 @@ def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray,
 
 
 def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags: int = 4, model_id: str | None = None,
-                          alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
-    """The dynamic quantile (DQ) test of Engle and Manganelli (2004): wraps `caviar.dynamic_quantile_statistic` (the
-    regression of `hits - alpha` on a constant, `lags` lagged hits and the contemporaneous VaR, chi-square on the rank
-    of the regressors) and adds nothing. Light: by the p_value. not_evaluated when `T <= lags + 2`."""
+                          n_mc: int = 10000, seed: int = 0, alpha_amber: float = 0.10,
+                          alpha_red: float = 0.05) -> TestResult:
+    """The dynamic quantile (DQ) test of Engle and Manganelli (2004): the statistic is that of
+    `caviar.dynamic_quantile_statistic` (the regression of `hits - alpha` on a constant, `lags` lagged hits and the
+    contemporaneous VaR).
+
+    The asymptotic chi-square law is poor with sparse hits (review M1: the plain test rejected correct forecasts 9.9
+    percent of the time at alpha 0.01 and T 250, 14.3 percent at T 750), so the **light follows a Monte Carlo p-value**
+    (Dufour form): `n_mc` Bernoulli(alpha) hit sequences of the same length with the same VaR column, `p = (1 +
+    #{S_sim >= S}) / (n_mc + 1)`, reproducible for the same `seed`; the asymptotic p-value stays in
+    # `extras["p_value_asymptotic"]`.
+    not_evaluated when `T <= lags + 2`."""
     test_id = "market.dynamic_quantile_test"
     h0 = "the hits are unpredictable from their past and from the VaR (conditional coverage holds)"
     alt = "the hits are predictable: the quantile forecasts are conditionally biased"
@@ -605,14 +620,25 @@ def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags:
         raise ValueError(f"hits and var must have the same length, got {hit.size} and {v.size}")
     if int(lags) != lags or lags < 0:
         raise ValueError(f"lags must be a non-negative integer, got {lags}")
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, lags=int(lags))
+    if int(n_mc) != n_mc or n_mc < 1:
+        raise ValueError(f"n_mc must be a positive integer, got {n_mc}")
+    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, lags=int(lags), n_mc=int(n_mc), seed=int(seed))
     t, x = int(hit.size), int(hit.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red, extras={"lags": int(lags)})
     if t <= lags + 2:
         return _not_evaluated(test_id, h0, alt, ENGLE_MANGANELLI_2004, version, f"T <= lags + 2 ({lags + 2})",
                               inputs=inputs_hash(hit, v), **kw)
-    stat, pv = dynamic_quantile_statistic(hit.astype(float), v, a, lags=int(lags))
+    stat, pv_asym = dynamic_quantile_statistic(hit.astype(float), v, a, lags=int(lags))
+    rng = np.random.default_rng(seed)
+    ge = 0
+    for _ in range(int(n_mc)):
+        sim = (rng.random(t) < a).astype(float)
+        s, _rank = dq_statistic_unchecked(sim, v, a, int(lags))
+        ge += s >= stat - 1e-12 * max(1.0, abs(stat))
+    pv = (1.0 + ge) / (n_mc + 1.0)
+    extras = {"lags": int(lags), "p_value_basis": "monte-carlo", "p_value_asymptotic": pv_asym, "n_mc": int(n_mc)}
+    kw = dict(kw, extras=extras)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ENGLE_MANGANELLI_2004, policy_version=version,
         light=_p_light(pv, alpha_amber, alpha_red), statistic=stat, p_value=pv,
@@ -648,7 +674,7 @@ def pla_test(hpl: np.ndarray, rtpl: np.ndarray, model_id: str | None = None) -> 
                               inputs=inputs_hash(h, r), **kw)
     rho = frtb.pla_spearman(h, r)
     ks = frtb.pla_ks(h, r)
-    zone = frtb.pla_zone(rho, ks)
+    zone = frtb.pla_zone_exact(h, r)   # integer ranks and step gap: no float quotient on a boundary (review m4)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=PLA_REFERENCE, policy_version=version, light=Light(zone),
         statistic=rho, metric=ks, n=n, inputs_hash=inputs_hash(h, r), model_id=model_id,

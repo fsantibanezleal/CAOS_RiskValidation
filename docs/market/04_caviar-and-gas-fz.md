@@ -30,8 +30,13 @@ estimated by maximising the asymmetric Laplace likelihood
 $f(r)=\frac{\alpha-1}{\mathrm{ES}_t}\exp\!\left(\frac{(r-\mathrm{VaR}_t)(\alpha-\mathbb 1\{r\le\mathrm{VaR}_t\})}{\alpha\,\mathrm{ES}_t}\right)$ on the VaR
 path of the fit, with $\gamma_0,\gamma_1\ge0$ and $0\le\gamma_2<1$ so that $x_t\ge0$ and `es <= var` always; $x_1$ is the sample
 gap `VaR - ES` of `y`. **The primary text was not retrieved:** the equations are those restated in Section 3.2 of arXiv 2603.02357
-(the paper gives no constraints of its own; the constraints above are this unit's, to keep `es <= var`). No golden value: the
-invariants (`es <= var`, determinism, the gap of the order of the empirical one) are the tests.
+(the paper gives no constraints of its own; the constraints above are this unit's, to keep `es <= var`). **Decision D-10 (review M3): the estimator is two-step.** Taylor (2019) maximises the asymmetric Laplace likelihood jointly over the
+VaR and the ES parameters (arXiv 2603.02357 section 3.2); here step one is `fit_caviar` (the VaR path of the tick-loss fit) and
+step two fixes that path and maximises the likelihood over $(\gamma_0,\gamma_1,\gamma_2)$ only. The choice keeps the ES forecast
+consistent with `caviar_var_forecast` (`es <= var`) and is declared in the docstrings and in the result:
+`caviar_es_fit(fit, y)` returns `CaviarEsFit(var, es, gamma, log_likelihood, estimator="two-step")`, and `caviar_es_forecast`
+is its `es`. A joint estimator, started from the tick-loss fit, would replace D-10 by an amendment of the contract. No golden
+value: the invariants (`es <= var`, determinism, the gap of the order of the empirical one) are the tests.
 
 `dynamic_quantile_statistic(hits, var, alpha, lags=4)` is the dynamic quantile (DQ) test statistic of Engle and Manganelli:
 

@@ -42,7 +42,7 @@ $$LR=2\big[\ell(\hat a,\hat b)-\ell(\tilde a,1)\big],\qquad a^b=\frac{d_c}{\sum_
 
 with $d_c$ the number of completed spells. The p-value is by Monte Carlo (Dufour 2006): `n_mc` Bernoulli(alpha) sequences of the
 same length, $p=(1+\#\{LR_{sim}\ge LR\})/(n_{mc}+1)$, and a simulated sequence with fewer than 2 exceedances has statistic 0;
-the same inputs and seed give the same p-value. **Decision D-8:** fewer than 2 exceedances is `not_evaluated` (no completed
+the same inputs and seed give the same p-value. The first spell is censored only when the sample does not start with an exceedance (review m2); `extras["weibull_b_at_bound"]` and `notes` say when the shape reached the bound of its search `[0.05, 20]`, as it does for perfectly regular spells (review m3). **Decision D-8:** fewer than 2 exceedances is `not_evaluated` (no completed
 spell; the dossier gives no minimum, so the minimum is the smallest that leaves a completed duration). Source: Christoffersen
 and Pelletier, J. Financial Econometrics 2(1):84-108, 2004, doi:10.1093/jjfinec/nbh004. The Weibull parameterisation is the
 standard one and was not re-checked against the paper's text (UNVERIFIED in dossier 05 B.3); no golden value exists, so the tests
@@ -92,9 +92,14 @@ spread) or an NaN ES.
 
 ## Dynamic quantile, PLA and desk
 
-`market.dynamic_quantile_test` wraps `caviar.dynamic_quantile_statistic` (page 04) and is `not_evaluated` when `T <= lags + 2`.
+`market.dynamic_quantile_test` uses the statistic of `caviar.dynamic_quantile_statistic` (page 04) and is `not_evaluated` when `T <= lags + 2`.
+The asymptotic chi-square law is poor with sparse hits: the plain test rejected correct forecasts 9.9% of the time at (alpha 0.01,
+T 250), 8.2% at (0.025, 250) and 14.3% at (0.01, 750) (review M1). The **light therefore follows a Monte Carlo p-value** (Dufour
+form, as the duration test): `n_mc` Bernoulli(alpha) hit series with the same VaR column, $p=(1+\#\{S_{sim}\ge S\})/(n_{mc}+1)$,
+reproducible for the same `seed`; the chi-square p-value stays in `extras["p_value_asymptotic"]`. The size test runs 2000
+replications at each of the three configurations and requires a rate between 0.03 and 0.07.
 `market.pla_test` returns the Spearman correlation as `statistic`, the KS statistic as `metric`, the zone of `frtb.pla_zone` as the
-light, null p-value and alphas, and the boundaries in `extras["thresholds"]`; `not_evaluated` unless both series have exactly 250
+light, null p-value and alphas, and the boundaries in `extras["thresholds"]`; the zone is decided on integer ranks (`frtb.compare_spearman`, exact rational arithmetic) and the integer step gap (`frtb.pla_zone_exact`), never on a float quotient compared with a boundary (review m4); `not_evaluated` unless both series have exactly 250
 finite observations and a nonzero spread. Golden: identical series give `statistic = 1.0`, `metric = 0.0`, green. `market.desk_backtest`
 returns the exception count of the last 250 days as `statistic`, the limit of `frtb.desk_exception_limit` as `metric` and the basis
 (`HPL` or `APL`) in `extras`; red when the count exceeds the limit, otherwise green (the dossier states one limit; there is no
