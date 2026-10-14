@@ -121,12 +121,30 @@ def test_gaussian_converges_to_lhp():
             se = mc_standard_errors(s.losses, q)[0] / n
             gaps[n, q] = (var - anchor[q], se)
     # the granularity adds to the loss quantile of a small portfolio and the gap closes as the names grow
-    assert gaps[25, 0.99][0] > 4 * gaps[25, 0.99][1] and gaps[25, 0.999][0] > 4 * gaps[25, 0.999][1]
+    # (a lattice VaR of 25 unit names can have a batch-means standard error of exactly 0, so the gap is also bounded
+    # away from zero in absolute terms)
+    for q in anchor:
+        assert gaps[25, q][0] > max(4 * gaps[25, q][1], 0.01)
     assert abs(gaps[200, 0.99][0]) < abs(gaps[25, 0.99][0]) and abs(gaps[1000, 0.99][0]) < abs(gaps[200, 0.99][0])
     # for many names the Monte Carlo quantile sits on the LHP anchor within its Monte Carlo interval (plus one
     # default step)
     for q in anchor:
         assert abs(gaps[1000, q][0]) <= 4 * gaps[1000, q][1] + 2.0 / 1000, (q, gaps[1000, q])
+
+
+def test_mc_standard_errors_match_the_spread_over_replications():
+    """The batch-means standard error has the size of the standard deviation of the estimator over independent samples
+    (it cannot be off by a constant factor)."""
+    var_hat, es_hat, se_var, se_es = [], [], [], []
+    for seed in range(100):
+        x = np.random.default_rng(1000 + seed).gamma(2.0, 1.0, size=100_000)
+        var_hat.append(var_from_sample(x, 0.99))
+        es_hat.append(es_from_sample(x, 0.99))
+        v, e = mc_standard_errors(x, 0.99)
+        se_var.append(v)
+        se_es.append(e)
+    assert 0.8 < float(np.mean(se_var)) / float(np.std(var_hat, ddof=1)) < 1.25
+    assert 0.8 < float(np.mean(se_es)) / float(np.std(es_hat, ddof=1)) < 1.25
 
 
 def test_student_t_joint_default_golden():

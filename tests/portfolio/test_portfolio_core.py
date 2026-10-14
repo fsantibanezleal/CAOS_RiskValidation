@@ -132,7 +132,7 @@ def test_var_es_from_sample_golden_and_invariants():
     # q S a hair above an integer in floating point (0.07 * 100 = 7.000000000000001): k = 7, not 8
     hundred = np.arange(100.0)
     assert var_from_sample(hundred, 0.07) == 6.0 and var_from_sample(hundred, 0.14) == 13.0
-    assert es_from_sample(hundred, 0.07) == pytest.approx(np.mean(np.arange(7, 100.0)) * 93 / 93, rel=1e-12) or True
+    assert es_from_sample(hundred, 0.07) == pytest.approx(53.0, rel=1e-9)  # (7 + ... + 99) / 100 / 0.93
     rng = np.random.default_rng(3)
     x = rng.normal(size=5001) ** 2
     shuffled = rng.permutation(x)

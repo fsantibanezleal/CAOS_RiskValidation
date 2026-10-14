@@ -225,22 +225,34 @@ def importance_sample_gaussian(p: Portfolio, threshold: float, n_scenarios: int,
 
 
 def _weighted_var_es(losses: np.ndarray, weights: np.ndarray, q: float) -> tuple[float, float]:
+    """The tail estimators built on the upper tail probability P(L > x) = sum_{L_i > x} w_i / S.
+
+    The tail is normalised by the scenario count S, as in the contract's sum(w 1{L > x}) / S, never by the realised
+    sum of the weights: the weights average 1 only in expectation, the bulk of an importance sampling sample is
+    sparse and its weights are noisy, and at a threshold far in the tail the realised sum is far below S (mean
+    weight 0.034 in the review). The quantile is the smallest loss whose upper tail probability is at most 1 - q,
+    and the boundary scenario carries the fractional tail mass, so that the tail has exactly mass 1 - q.
+    """
+    s = losses.size
     order = np.argsort(losses, kind="stable")
     x, w = losses[order], weights[order]
-    cum = np.cumsum(w)
-    total = float(cum[-1])
-    k = int(np.searchsorted(cum >= q * total - QUANTILE_GUARD * total / x.size, True))
-    k = min(k, x.size - 1)
-    tail = float((w[k + 1:] * x[k + 1:]).sum()) / total
-    boundary = max(0.0, float(cum[k]) / total - q) * float(x[k])
-    return float(x[k]), (tail + boundary) / (1.0 - q)
+    above = (w.sum() - np.cumsum(w)) / s  # upper tail probability P(L > x_k) for each sorted scenario
+    tail_mass = 1.0 - q
+    if float(w.sum()) / s < tail_mass:
+        raise ValueError(f"the weights account for a total mass {float(w.sum()) / s:.6f} of the scenario count, below "
+                         f"the tail mass {tail_mass:.6f}: use more scenarios or a lower threshold")
+    k = int(np.argmax(above <= tail_mass + QUANTILE_GUARD / s))
+    tail = float((w[k + 1:] * x[k + 1:]).sum()) / s
+    boundary = max(0.0, tail_mass - float(above[k])) * float(x[k])
+    return float(x[k]), (tail + boundary) / tail_mass
 
 
 def weighted_var_es(res: ImportanceResult, q: float) -> tuple[float, float, float, float]:
-    """(var, es, se_var, se_es): the weighted empirical quantile (the smallest loss whose normalised cumulative weight
-    reaches q) and the weighted Acerbi-Tasche ES; the standard errors by the batch-means estimator on 20
-    consecutive batches, NaN when the sample is too short for 20 batches of 10. With unit weights they equal the
-    plain estimators."""
+    """(var, es, se_var, se_es): the smallest loss whose weighted upper tail probability sum(w 1{L > x}) / S is at
+    most 1 - q, and the weighted Acerbi-Tasche ES, both normalised by the scenario count S (not by the realised sum of
+    the weights); the standard errors by the batch-means estimator on 20 consecutive batches, NaN when the sample
+    is too short for 20 batches of 10. With unit weights they equal the plain estimators. Raises ValueError when
+    the weights cannot account for the tail mass 1 - q."""
     q = check_level(q)
     x = float_vector(res.losses, "losses")
     w = float_vector(res.weights, "weights")

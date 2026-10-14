@@ -41,7 +41,9 @@ batch with the sample estimators of page 01, and returns
 
 $$\mathrm{se}=\frac{\mathrm{sd}(\text{batch estimates},\,\mathrm{ddof}=1)}{\sqrt{n_{\text{batches}}}}.$$
 
-The batch-means estimator is the contract's choice, the dossier names none. At least 2 batches of 10 losses are required. The
+The batch-means estimator is the contract's choice, the dossier names none; its size is tested against the spread of the estimator over 100
+independent samples. A VaR on a lattice (for example 25 identical unit names) can be the same in every batch, and its standard error is then exactly 0:
+read it as a lattice, not as a certain quantile. At least 2 batches of 10 losses are required. The
 standard errors fall as $1/\sqrt S$ (tested on $10^5$ and $4\times10^5$ losses).
 
 ## Goldens and gates

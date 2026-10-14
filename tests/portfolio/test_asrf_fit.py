@@ -101,6 +101,13 @@ def test_fit_moments_golden_and_refusal():
 
     joint, _ = integrate.quad(lambda z: conditional_pd(f.pd, f.rho, z) ** 2 * stats.norm.pdf(z), -12, 12, epsabs=1e-15)
     assert joint == pytest.approx(float(np.mean(rates**2)), abs=1e-10)
+    # an asymmetric series (mean 0.03, median 0.02) pins the PD to the mean and rho to the second moment
+    skew = fit_moments(np.array([0.01, 0.02, 0.06]))
+    assert skew.pd == pytest.approx(0.03, abs=1e-15)
+    m2 = (0.01**2 + 0.02**2 + 0.06**2) / 3
+    joint_skew, _ = integrate.quad(lambda z: conditional_pd(0.03, skew.rho, z) ** 2 * stats.norm.pdf(z), -12, 12,
+                                   epsabs=1e-15)
+    assert joint_skew == pytest.approx(m2, abs=1e-10) and skew.rho > f.rho
     g = fit_moments(np.array([0.01, np.nan, 0.02, 0.03]))
     assert g.n_missing == 1 and g.rho == pytest.approx(f.rho, rel=1e-12)
     with pytest.raises(ValueError, match="dispersion"):

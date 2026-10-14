@@ -51,7 +51,7 @@ negative entry was found, so the instability reported in the literature is not r
 - One obligor, $\nu=1$, $p=0.2$, one sector with $\sigma^2=0.5$: the negative binomial 0.826446, 0.150263, 0.020490, 0.002484.
 - `measures_from_pmf`: with $F=\mathrm{cumsum}(\mathrm{pmf})$ and $k=\min\{n:F(n)\ge q-10^{-12}\}$, $\mathrm{VaR}=k\,u$ and
   $\mathrm{ES}=\frac{u}{1-q}\big[\sum_{n>k}n\,\mathrm{pmf}(n)+(F(k)-q)k\big]$; pmf (0.5, 0.3, 0.2), $u=1$: VaR 1.0 and ES 2.0 at 0.8, ES 1.666667 at 0.7, EL 0.7.
-  It raises when the grid holds less mass than the level.
+  It raises when the grid holds less mass than the level and when the VaR falls below the expected loss.
 
 ## Limits
 

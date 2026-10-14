@@ -9,3 +9,8 @@
   `riskvalidation.validation.portfolio` (the tail back-test, Monte Carlo convergence, Euler additivity, CreditRisk+ recursion against
   Monte Carlo, and the size and power of the correlation estimate), contract `engine-portfolio-api` 1.0.0, requirements RV-701 to RV-729,
   documentation in `docs/portfolio/`. Existing engine results are unchanged.
+- engine U7-E review fixes: `importance.weighted_var_es` builds the quantile and the ES on the upper tail probability
+  sum(w 1{L > x}) / S normalised by the scenario count, not by the realised sum of the weights (which gave a VaR of 35
+  against 21.0 at the plain 99.9 percent VaR; blocker B1) and refuses a level whose tail mass the weights cannot
+  account for; tests for the production threshold, for the size of the batch-means standard errors against the spread over
+  replications and for the moments estimator on an asymmetric series; documentation of the lattice case.
