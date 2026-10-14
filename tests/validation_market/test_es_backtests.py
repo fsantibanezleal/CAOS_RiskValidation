@@ -94,7 +94,8 @@ def test_du_escanciano_conditional():
     assert r.test_id == "market.du_escanciano_conditional" and r.extras == {"lags": lags}
     assert r.statistic == pytest.approx(expected, rel=1e-10) and r.statistic >= 0.0
     assert r.p_value == pytest.approx(stats.chi2.sf(expected, lags), abs=1e-12) and r.n == 500
-    assert stats.chi2.ppf(0.95, 1) == pytest.approx(3.841, abs=5e-4) and stats.chi2.ppf(0.95, 2) == pytest.approx(5.991, abs=5e-4)
+    assert stats.chi2.ppf(0.95, 1) == pytest.approx(3.841, abs=5e-4)
+    assert stats.chi2.ppf(0.95, 2) == pytest.approx(5.991, abs=5e-4)
     # clustered tail PITs (a burst of low values) are rejected
     v = np.random.default_rng(3).random(500)
     v[100:130] = 0.01

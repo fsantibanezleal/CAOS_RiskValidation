@@ -101,7 +101,8 @@ def test_diebold_mariano():
     assert r.statistic == pytest.approx(2.401922, abs=5e-7) and r.p_value == pytest.approx(0.016309, abs=5e-7)
     assert r.mean_diff == pytest.approx(d.mean()) and r.n == 6 and r.lags == 0
     rng = np.random.default_rng(3)
-    la, lb = rng.gamma(2, 1, 300), rng.gamma(2, 1, 300) + 0.1
+    la = rng.gamma(2, 1, 300)
+    lb = la + 0.1 + rng.normal(0, 0.2, 300)
     for lags in (0, 1, 5):
         r = s.diebold_mariano(la, lb, lags)
         z, p = hac_reference(list(la - lb), lags)

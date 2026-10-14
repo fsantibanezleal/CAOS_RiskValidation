@@ -52,9 +52,11 @@ def test_var_es_from_sample_invariants_and_refusals():
     before = r.copy()
     c.var_es_from_sample(r, 0.025)
     assert np.array_equal(r, before)
-    for bad_alpha in (0.0, 0.5, -0.1, 0.7):
+    for bad_alpha in (0.0, 0.51, -0.1, 0.7):
         with pytest.raises(ValueError):
             c.var_es_from_sample(r, bad_alpha)
+    # the golden of volatility_updated_hs_var_es uses alpha = 0.5, so the closed upper bound is accepted
+    assert c.var_es_from_sample(a(1, 2, 3, 4), 0.5) == (2.0, 1.5)
     with pytest.raises(ValueError):
         c.var_es_from_sample(a(), 0.05)
     with pytest.raises(ValueError):

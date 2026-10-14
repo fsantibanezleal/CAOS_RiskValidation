@@ -39,7 +39,7 @@ def test_kupiec_pof():
     allx = m.kupiec_pof(np.ones(50, dtype=bool), 0.05)
     assert np.isfinite(allx.statistic) and allx.light is Light.RED
     # lights: amber between the two alphas, by the asymptotic p-value
-    amber = m.kupiec_pof(ex(250, [1, 2, 3, 4, 5, 6, 7]), 0.01, alpha_amber=0.2, alpha_red=0.05)
+    amber = m.kupiec_pof(ex(250, [10, 60, 110, 160, 210]), 0.01, alpha_amber=0.2, alpha_red=0.05)
     assert amber.light is Light.AMBER and 0.05 <= amber.p_value < 0.2
     empty = m.kupiec_pof(np.zeros(0, dtype=bool), 0.01)
     assert empty.light is Light.NOT_EVALUATED and empty.p_value is None and empty.metric is None
@@ -58,7 +58,7 @@ def test_christoffersen_independence():
     assert r.test_id == "market.christoffersen_independence" and r.segment == "alpha=0.01"
     assert r.extras["transitions"] == [16, 1, 1, 1]
     assert r.statistic == pytest.approx(2.407835, abs=5e-7) and r.p_value == pytest.approx(0.120729, abs=5e-7)
-    assert r.n == 20 and r.n_events == 2 and r.light is Light.AMBER
+    assert r.n == 20 and r.n_events == 2 and r.light is Light.GREEN
     for seq in (np.zeros(50, dtype=bool), np.ones(50, dtype=bool)):
         n = m.christoffersen_independence(seq, 0.05)
         assert n.light is Light.NOT_EVALUATED

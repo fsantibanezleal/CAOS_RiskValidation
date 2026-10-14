@@ -1,5 +1,6 @@
 """RV-812: the dynamic semiparametric VaR and ES models of Patton, Ziegel and Chen (2019), estimated by minimising the
-average FZ0 loss (contract `engine-market-api`, module market.gas_fz; recursions: arXiv 1707.05108 eqs 9 to 20 and 27)."""
+average FZ0 loss (contract `engine-market-api`, module market.gas_fz; recursions: arXiv 1707.05108 eqs 9 to 20 and
+27)."""
 
 from __future__ import annotations
 
@@ -43,7 +44,7 @@ def test_fit_gas_fz_beats_the_constant_benchmark(series):
 
 def test_gas_fz_recursion_matches_a_direct_computation(series):
     alpha = 0.05
-    f = gz.GasFzFit(spec="one-factor", alpha=alpha, params=np.array([0.95, -0.02, -1.6, -2.1]), mean_fz0=0.0,
+    f = gz.GasFzFit(spec="one-factor", alpha=alpha, params=np.array([0.95, -0.02, -0.02, -0.03]), mean_fz0=0.0,
                     n_starts=2, converged=True)
     # the scale (a, b) is in units of the recursion: the path is a e^kappa with kappa from eq 20
     v, e, v_next, e_next = one_factor_path(f.params, series, None, None, alpha)
