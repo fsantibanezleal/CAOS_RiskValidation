@@ -50,8 +50,9 @@ $\theta(z)\ge0$ and $\mu$ are, so $E_Q[w]=1$ and $E_Q[wL]=\mathrm{EL}$ hold exac
 names to $10^{-9}$), and the acceptance test is **unbiasedness against plain Monte Carlo**: the weights average 1, the weighted loss
 averages the EL, and the weighted tail probability, VaR and ES agree with `simulate_gaussian` within 4 combined standard errors, for
 several thresholds and for the default, a zero and a negative shift. The default shift maximises
-$-\theta(z)\,x+\ln M(\theta(z),z)-z^\top z/2$ by Nelder-Mead from $z=0$ (deterministic). `weighted_var_es` gives the weighted empirical
-quantile and the weighted Acerbi-Tasche ES with batch-means standard errors, and `variance_ratio` is $(\mathrm{se}_{\text{plain}}/\mathrm{se}_{IS})^2$.
+$-\theta(z)\,x+\ln M(\theta(z),z)-z^\top z/2$ by Nelder-Mead from $z=0$ (deterministic). `weighted_var_es` gives the smallest loss whose
+weighted upper tail probability $\sum_iw_i\mathbf 1\{L_i>x\}/S$ is at most $1-q$ and the weighted Acerbi-Tasche ES built on the same tail,
+both **normalised by the scenario count $S$ and never by the realised sum of the weights**, with batch-means standard errors, and `variance_ratio` is $(\mathrm{se}_{\text{plain}}/\mathrm{se}_{IS})^2$.
 
 Goldens: $p=0.1$, $c=1$, $\theta=\ln2$ gives $p_\theta=0.181818$; the threshold $2/11$ gives $\theta=\ln 2$ (a threshold rounded to 0.181818 gives 0.693146);
 `weighted_var_es` on the losses 0 to 3 with unit weights at $q=0.5$ gives VaR 1.0 and ES 2.5; `variance_ratio(0.002, 0.0005)=16.0`. On the 30-name
@@ -59,9 +60,11 @@ illustrative portfolio of the tests (PD 0.02, $\rho$ 0.3) the default twist and 
 
 ## Limits
 
-The twisted sample is unbiased but its weights are heavy tailed for a threshold far in the tail: on a 60-name portfolio (PD 0.02, $\rho$ 0.3) with
+The twisted sample is unbiased and its tail estimators agree with plain Monte Carlo at the threshold equal to the plain 99.9 percent VaR of a
+60-name portfolio (VaR and ES within their errors; a test), but its weights are heavy tailed for a threshold far in the tail: on a 60-name portfolio (PD 0.02, $\rho$ 0.3) with
 $2\times10^5$ scenarios and the default shift, the sample mean of the weights was 0.70 for a threshold of 7.2 and 0.40 for 14.4, because a few
-scenarios carry most of the weight (the largest 43 percent of the total at 14.4). The unbiasedness identities are then not a useful diagnostic
+scenarios carry most of the weight (the largest 43 percent of the total at 14.4). The realised weight sum is then far from S (0.034 of it in the review at the 99.9 percent VaR), which is why the quantile and the ES are normalised by S: dividing
+by the realised sum gave a VaR of 35 against 21.0 and an ES of 39 against 25.6. The mean-weight identity is not a useful diagnostic
 at that sample size; report the variance ratio and the standard errors with the sample, and raise the scenario count. Only the Gaussian
 copula with uncorrelated factors is supported: a correlated factor matrix raises, and there is no Student-t twist (the multi-factor twist is a
 failure mode of the ladder). The granularity adjustment is the simplified form, second-order terms are missing for very concentrated books,

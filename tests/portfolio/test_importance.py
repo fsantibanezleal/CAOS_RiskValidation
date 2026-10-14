@@ -214,13 +214,36 @@ def test_weighted_var_es_golden_and_unit_weights():
         v, e, sv, se = weighted_var_es(unit, q)
         assert v == var_from_sample(x, q) and e == pytest.approx(es_from_sample(x, q), rel=1e-12)
         assert (sv, se) == pytest.approx(mc_standard_errors(x, q), rel=1e-12)
-    # equal weights scaled by a constant change nothing
-    scaled = ImportanceResult(losses=x, weights=np.full(x.size, 3.0), factor_shift=np.zeros(1), n_scenarios=x.size,
-                              seed=0, chunk_scenarios=x.size)
-    assert weighted_var_es(scaled, 0.99)[:2] == pytest.approx(weighted_var_es(unit, 0.99)[:2], rel=1e-12)
+    # the tail is normalised by the scenario count S, never by the realised sum of the weights: weights that sum to
+    # half of S carry half of the tail mass, so the VaR at q = 0.8 (tail mass 0.2) is the plain VaR at 0.6, and a
+    # level whose tail mass (0.6) exceeds the weight mass is refused
+    half = ImportanceResult(losses=x, weights=np.full(x.size, 0.5), factor_shift=np.zeros(1), n_scenarios=x.size,
+                            seed=0, chunk_scenarios=x.size)
+    assert weighted_var_es(half, 0.8)[0] == var_from_sample(x, 0.6)
+    with pytest.raises(ValueError, match="tail mass"):
+        weighted_var_es(half, 0.4)
     for q in (0.0, 1.0):
         with pytest.raises(ValueError):
             weighted_var_es(unit, q)
+
+
+def test_weighted_var_es_at_the_production_threshold():
+    """Review blocker B1: with the threshold at the plain 99.9 percent VaR the realised mean weight is far below 1, and
+    the tail estimators must still agree with plain Monte Carlo (the tail probability of the contract is
+    sum(w 1{L > x}) / S, normalised by the scenario count)."""
+    book = identical(60, pd=0.02, rho=0.3, lgd=1.0)
+    plain = simulate_gaussian(book, 1_000_000, seed=41, chunk_scenarios=100_000)
+    v_p, e_p = var_from_sample(plain.losses, 0.999), es_from_sample(plain.losses, 0.999)
+    sv_p, se_p = mc_standard_errors(plain.losses, 0.999)
+    res = importance_sample_gaussian(book, v_p, 200_000, seed=42, chunk_scenarios=50_000)
+    assert res.weights.mean() < 0.5  # the realised mean weight is not 1 at this threshold (0.03 in the review)
+    v_is, e_is, sv_is, se_is = weighted_var_es(res, 0.999)
+    assert abs(v_is - v_p) <= 4 * math.hypot(sv_is, sv_p) + 1.0
+    assert abs(e_is - e_p) <= 4 * math.hypot(se_is, se_p) + 0.3
+    assert abs(e_is - e_p) < 2.0  # the normalised estimator gave an ES of about 39 against 25.6
+    # the tail probability the VaR rests on
+    tail = float((res.weights * (res.losses > v_p)).sum()) / res.losses.size
+    assert abs(tail - 0.001) < 0.0005
 
 
 def test_variance_ratio():
