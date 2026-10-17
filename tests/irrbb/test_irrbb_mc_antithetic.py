@@ -72,7 +72,11 @@ def _nii_of(paths: np.ndarray) -> np.ndarray:
 
 def test_antithetic_error_tracks_the_true_quantile_sd(capsys):
     zr, ten = np.array([0.03, 0.04, 0.045]), np.array([1.0, 5.0, 10.0])
-    p, nb, seeds, level = 2000, 20, 300, 0.99
+    # 10 000 paths: with 2 000 (batches of 100) both batchings sit about 22 percent below the truth, because a batch
+    # then holds about one path below the 1 percent quantile; at 10 000 they reach 0.96 and 0.95, at 40 000 1.04 and
+    # 1.07 (measured 2026-10-17). On this NII proxy the two batchings differ within noise; keeping the pairs together
+    # makes the batches independent by construction, which is what the error assumes.
+    p, nb, seeds, level = 10000, 20, 200, 0.99
     q_true, anti, contig = [], [], []
     for seed in range(seeds):
         nii = _nii_of(sim.hw1f_scenarios(zr, ten, 0.1, 0.012, 24, p, seed))
@@ -84,4 +88,4 @@ def test_antithetic_error_tracks_the_true_quantile_sd(capsys):
         print(f"\nBL-074 truth (sd of the 99% NII quantile over {seeds} seeds): {truth:.4f}")
         print(f"BL-074 antithetic=True mean error: {a_mean:.4f} (ratio {a_mean / truth:.3f})")
         print(f"BL-074 antithetic=False mean error: {c_mean:.4f} (ratio {c_mean / truth:.3f})")
-    assert abs(a_mean / truth - 1.0) < 0.25
+    assert abs(a_mean / truth - 1.0) < 0.15
