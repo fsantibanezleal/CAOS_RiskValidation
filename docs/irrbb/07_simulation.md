@@ -54,7 +54,7 @@ Loss-positive, with $\ell$ the confidence level (default 0.99), $Q$ the linearly
 simulated NII and EVE paths, and $NII_0$, $EVE_0$ the base values. Monotone in the level; all-equal paths give base minus path; at
 least 2 paths. Golden: `nii_paths = 1..100`, base 60, level 0.99: the first percentile is `1.99`, so `ear = 58.01`.
 
-`ear_evar_mc_error(nii_paths, eve_paths, level, n_batches=20)` returns an `EarEvarMcError` (`level`, `nii_quantile_se`,
+`ear_evar_mc_error(nii_paths, eve_paths, level, n_batches=20, antithetic=False)` returns an `EarEvarMcError` (`level`, `nii_quantile_se`,
 `eve_quantile_se`, `ear_se`, `evar_se`): the Monte Carlo standard error, in money, of the $1-\ell$ quantile of the NII paths and of
 the EVE paths, which is the Monte Carlo error of the EaR and of the EVaR at the same level (the base values are constants, so
 `ear_se = nii_quantile_se`). The case document carries an engine number, not a hand-rolled one. Batch means: the first
@@ -65,6 +65,8 @@ $$SE=\frac{\operatorname{sd}(Q_1,\dots,Q_B)}{\sqrt B}$$
 
 with $Q_b$ the batch quantiles. It needs $B\ge2$ and $P\ge2B$, is deterministic and linear in the scale of the paths. The estimate
 itself has a relative noise of about $1/\sqrt{2(B-1)}$.
+
+`antithetic=True` is for an antithetic path set such as `hw1f_scenarios` returns (path $i+P/2$ mirrors path $i$). Contiguous batches would put a path and its mirror in different batches (batch $i$ and batch $i+B/2$), which are then not independent, and the error is mis-stated (BL-074: on the long-uf CLP leg of C15 the 99 percent error is 25.5 with the pairs kept together against 33.7 contiguous). With the keyword, the first $B\lfloor (P/2)/Bfloor$ pair indices are cut into $B$ contiguous groups and batch $j$ holds both paths of each of its pairs, so a batch is a union of whole pairs and two batches never share a pair. It needs $P$ even and $P/2\ge B$ (ValueError otherwise); the NII and EVE errors use the same batching, and the result for `antithetic=False` is unchanged.
 
 Golden (exact): $B=2$, $\ell=0.5$, paths $1..20,101..120$: the batch medians are $10.5$ and $110.5$, so $SE=(100/\sqrt2)/\sqrt2=50$.
 Closed form for the check of the estimator: for independent $N(0,\sigma^2)$ paths the asymptotic standard error of the empirical

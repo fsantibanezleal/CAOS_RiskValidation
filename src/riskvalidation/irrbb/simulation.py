@@ -153,8 +153,27 @@ class EarEvarMcError:
     evar_se: float
 
 
+def _batch_indices(n_paths: int, n_batches: int, antithetic: bool) -> np.ndarray:
+    """(n_batches, m) path indices of the batches of ``ear_evar_mc_error``. Contiguous: the first
+    ``n_batches * (P // n_batches)`` paths cut in order. Antithetic: path ``i + P // 2`` mirrors path ``i``; the first
+    ``n_batches * (half // n_batches)`` pair indices are cut into ``n_batches`` contiguous groups and batch ``j`` holds
+    the paths ``idx`` and ``idx + half`` of its pairs, so no pair is split and no pair is shared."""
+    nb = n_batches
+    if not antithetic:
+        size = n_paths // nb
+        return np.arange(nb * size).reshape(nb, size)
+    if n_paths % 2:
+        raise ValueError(f"antithetic batches need an even number of paths, got {n_paths}")
+    half = n_paths // 2
+    if half < nb:
+        raise ValueError(f"antithetic batches need at least {2 * nb} paths ({nb} pairs) for {nb} batches, "
+                         f"got {n_paths}")
+    pairs = np.arange(nb * (half // nb)).reshape(nb, half // nb)
+    return np.hstack([pairs, pairs + half])
+
+
 def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, level: float = 0.99,
-                      n_batches: int = 20) -> EarEvarMcError:
+                      n_batches: int = 20, antithetic: bool = False) -> EarEvarMcError:
     """The Monte Carlo standard error, in money, of the ``1 - level`` quantile of the NII paths and of the EVE paths,
     which is the Monte Carlo error of the EaR and of the EVaR reported by ``ear_evar`` at the same ``level``.
 
@@ -174,10 +193,10 @@ def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, level: float
         raise ValueError("n_batches must be an integer of at least 2")
     if nii.size < 2 * nb:
         raise ValueError(f"at least {2 * nb} paths are needed for {nb} batches, got {nii.size}")
-    size = nii.size // nb
+    idx = _batch_indices(nii.size, nb, bool(antithetic))
 
     def error(paths: np.ndarray) -> float:
-        quantiles = np.quantile(paths[: nb * size].reshape(nb, size), 1.0 - lv, axis=1)
+        quantiles = np.quantile(paths[idx], 1.0 - lv, axis=1)
         return float(np.std(quantiles, ddof=1) / np.sqrt(nb))
 
     nii_se, eve_se = error(nii), error(ev)
