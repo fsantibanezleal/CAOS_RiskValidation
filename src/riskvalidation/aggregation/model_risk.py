@@ -1,12 +1,16 @@
-"""The model risk measures of dossier 06 B.12 over the set of aggregation models of the band: sensitivity information, never a
+"""The model risk measures of dossier 06 B.12 over the set of aggregation models of the band: sensitivity information,
+never a
 regulatory capital figure (dossier 06 l.699-704).
 
-- Barrieu and Scandolo (2015), "Assessing financial model risk", European Journal of Operational Research 242(2):546-556:
+- Barrieu and Scandolo (2015), "Assessing financial model risk", European Journal of Operational Research
+242(2):546-556:
   the add-on multiplier AM = max rho / rho(X0) - 1 ("generalizes the Basel multiplier") and the relative measure RM =
   (max rho - rho(X0)) / (max rho - min rho) (dossier 06 l.692-698).
-- Glasserman and Xu (2014), "Robust risk measurement and model risk", Quantitative Finance 14(1):29-58: the worst case of
+- Glasserman and Xu (2014), "Robust risk measurement and model risk", Quantitative Finance 14(1):29-58: the worst case
+of
   E[m V] over the likelihood ratios m with relative entropy E[m log m] <= eta is attained at m_theta = exp(theta V) /
-  E[exp(theta V)], with theta > 0 set (by bisection) so that the entropy constraint binds (dossier 06 l.684-691); the worst
+  E[exp(theta V)], with theta > 0 set (by bisection) so that the entropy constraint binds (dossier 06 l.684-691); the
+  worst
   case is computed by reweighting the baseline sample.
 
 Contract: `engine-aggregation-api` 1.0.0, module aggregation.model_risk.
@@ -28,7 +32,8 @@ MAX_BISECTIONS = 300
 
 @dataclass(frozen=True)
 class ModelRisk:
-    """`rho_x0` the risk measure under the reference model, `rho_max` and `rho_min` over the set (money), `am` = rho_max /
+    """`rho_x0` the risk measure under the reference model, `rho_max` and `rho_min` over the set (money), `am` =
+    rho_max /
     rho_x0 - 1 and `rm` = (rho_max - rho_x0) / (rho_max - rho_min) in [0, 1] (decimals)."""
 
     rho_x0: float
@@ -39,7 +44,8 @@ class ModelRisk:
 
 
 def barrieu_scandolo(rhos: Sequence[float], reference_index: int) -> ModelRisk:
-    """AM and RM of the risk measures `rhos` (money, one per model of the set, the band rows) with the reference model at
+    """AM and RM of the risk measures `rhos` (money, one per model of the set, the band rows) with the reference model
+    at
     `reference_index`. RM is 0 when rho_max = rho_min (this contract's convention for the undefined 0 / 0; UNVERIFIED in
     the paper). Golden: (100, 130, 90) with reference 0 gives AM 0.3 and RM 0.75."""
     x = float_vector(rhos, "rhos")
@@ -58,7 +64,8 @@ def barrieu_scandolo(rhos: Sequence[float], reference_index: int) -> ModelRisk:
 
 @dataclass(frozen=True)
 class GlassermanXu:
-    """`theta` the tilt (in the inverse units of V), `relative_entropy` E[m log m] at theta (equal to the budget to `tol`),
+    """`theta` the tilt (in the inverse units of V), `relative_entropy` E[m log m] at theta (equal to the budget to
+    `tol`),
     `baseline` = E[V] and `worst_case` = E[m V] in the units of V."""
 
     theta: float
@@ -77,10 +84,12 @@ def _entropy(x: np.ndarray, theta: float) -> tuple[float, np.ndarray]:
 
 
 def glasserman_xu_worst_case(v: np.ndarray, budget: float, tol: float = 1e-10) -> GlassermanXu:
-    """sup over m with E[m log m] <= budget of E[m V] on the baseline sample `v` (S,), by the exponential tilt of the module
+    """sup over m with E[m log m] <= budget of E[m V] on the baseline sample `v` (S,), by the exponential tilt of the
+    module
     docstring. `budget` > 0 is the relative entropy budget eta. Refused: a budget that is not attainable on the sample
     (the entropy of the tilt rises to log(S / k) with k the number of sample points at the maximum, at most log S), a
-    constant V and a nonpositive budget. Golden: V = (0, 1) equally likely, theta = 1: m = (0.5379, 1.4621), entropy 0.1109,
+    constant V and a nonpositive budget. Golden: V = (0, 1) equally likely, theta = 1: m = (0.5379, 1.4621), entropy
+    0.1109,
     worst case 0.7311 against the baseline 0.5; the budget 0.1109 recovers theta = 1."""
     x = float_vector(v, "v")
     if x.size < 2:

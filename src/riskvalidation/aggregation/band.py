@@ -1,16 +1,22 @@
-"""The dependence-uncertainty band every aggregate is shown with (dossier 05 G.3, l.366; the SDD): the lower bound, the simple
-sum, the variance-covariance, the Gaussian copula, one Student t copula per degrees-of-freedom value and the worst case, on
+"""The dependence-uncertainty band every aggregate is shown with (dossier 05 G.3, l.366; the SDD): the lower bound,
+the simple
+sum, the variance-covariance, the Gaussian copula, one Student t copula per degrees-of-freedom value and the worst
+case, on
 the same marginals. The band is returned whole, never one diversified number.
 
 Every row is economic capital on the unexpected-loss basis, `EC = VaR - EL` (dossier 04 l.652-653); the expected loss is
-additive, so the simple sum of the marginal EC equals the comonotonic EC of the total. The simple sum is the headline capital
+additive, so the simple sum of the marginal EC equals the comonotonic EC of the total. The simple sum is the headline
+capital
 (`status = "headline-capital"`); every other row is information, not capital (`"information-not-capital"`, dossier 05
 l.519). A row above the headline is a true result (VaR is not subadditive, dossier 05 l.366): it is reported by
-`validation.aggregation.diversification_sign`, never repaired and never refused here. The lower-bound row is signed: the best
+`validation.aggregation.diversification_sign`, never repaired and never refused here. The lower-bound row is signed:
+the best
 VaR less the sum of the expected losses may be negative and is reported as computed.
 
-A marginal with an infinite-mean severity has no expected loss: the caller passes it as `ec = VaR` and `el = 0.0`, so that
-every row is built on the EC the document carries. The caller converts a marginal read at another level or horizon, never the
+A marginal with an infinite-mean severity has no expected loss: the caller passes it as `ec = VaR` and `el = 0.0`, so
+that
+every row is built on the EC the document carries. The caller converts a marginal read at another level or horizon,
+never the
 engine. Contract: `engine-aggregation-api` 1.0.0, module aggregation.band.
 """
 
@@ -58,7 +64,8 @@ class BandRow:
 
 @dataclass(frozen=True)
 class Band:
-    """The rows (lower bound, simple sum, variance-covariance, Gaussian, one t row per nu, worst case), the `headline` (the
+    """The rows (lower bound, simple sum, variance-covariance, Gaussian, one t row per nu, worst case), the `headline`
+    (the
     capital of the single simple-sum row), the horizon in years, the confidence level and the capital basis."""
 
     rows: tuple[BandRow, ...]
@@ -86,9 +93,11 @@ def dependence_band(ppfs: Sequence[Ppf], ec: np.ndarray, el: np.ndarray, corr: n
     (K,), the correlation `corr` of the copulas and the t degrees of freedom `nu_set` (above 2, ascending, distinct).
 
     The rows: `simple_sum`, `variance_covariance`, `copula_aggregate` for the Gaussian copula and for each nu (the same
-    `seed` on every row), and `worst_var_bounds` (its `lower_range[0]` and `upper_range[1]` less the sum of `el`) for the
+    `seed` on every row), and `worst_var_bounds` (its `lower_range[0]` and `upper_range[1]` less the sum of `el`) for
+    the
     lower and the worst case. One horizon and one confidence level apply to every row: `level` lies in (0, 1) and
-    `horizon_years` is a positive integer. Golden: ec (3, 4), el (0, 0), R = [[1, 0.5], [0.5, 1]] gives the simple-sum row 7.0
+    `horizon_years` is a positive integer. Golden: ec (3, 4), el (0, 0), R = [[1, 0.5], [0.5, 1]] gives the simple-sum
+    row 7.0
     and the variance-covariance row 6.0828, with lower <= 6.0828 <= worst."""
     lv = check_level(level, "level")
     if isinstance(horizon_years, bool) or not isinstance(horizon_years, (int, np.integer)) or horizon_years < 1:

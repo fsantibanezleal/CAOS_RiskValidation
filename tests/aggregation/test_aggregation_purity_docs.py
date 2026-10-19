@@ -34,7 +34,8 @@ def _ident(u):
 
 
 def _pareto(u):
-    return (1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0
+    with np.errstate(divide="ignore"):  # F^-1(1) is +infinity, the last cell of the upper matrix
+        return (1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0
 
 
 def _calls():

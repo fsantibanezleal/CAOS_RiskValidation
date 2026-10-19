@@ -6,11 +6,14 @@ because `portfolio.copula` keeps its sampler private:
 - Gaussian copula (Li 2000, doi:10.3905/jfi.2000.319253): Z = L e with L a factor of the correlation matrix R and e
   independent standard normals, U = Phi(Z).
 - Student t copula (Frey and McNeil 2003, doi:10.21314/jor.2003.089; Demarta and McNeil 2005,
-  doi:10.1111/j.1751-5823.2005.tb00254.x): W = nu / chi2_nu independent of Z, X = sqrt(W) Z, U = t_nu(X). The t copula has
+  doi:10.1111/j.1751-5823.2005.tb00254.x): W = nu / chi2_nu independent of Z, X = sqrt(W) Z, U = t_nu(X). The t copula
+  has
   the symmetric tail dependence of `t_tail_dependence`.
 
-The total of the K risks is the row sum of L_k = F_k^-1(U_k) (Sklar). The VaR, ES, EC = VaR - EL and the Monte Carlo errors
-of an aggregate are those of the reused `portfolio.portfolio.measures_from_sample`. Clayton sampling and vine copulas are
+The total of the K risks is the row sum of L_k = F_k^-1(U_k) (Sklar). The VaR, ES, EC = VaR - EL and the Monte Carlo
+errors
+of an aggregate are those of the reused `portfolio.portfolio.measures_from_sample`. Clayton sampling and vine copulas
+are
 deferred (BL-078); only the closed forms of the bivariate Clayton copula are here.
 
 Randomness: `numpy.random.Generator(numpy.random.PCG64(seed))`; the result is reproducible for the same (seed, n,
@@ -90,7 +93,8 @@ def marginal_ppf_pmf(grid: np.ndarray, pmf: np.ndarray) -> Callable[[np.ndarray]
 def _factor(corr: np.ndarray) -> np.ndarray:
     """A matrix A with A A' = corr: the Cholesky factor, or for a singular positive semi-definite correlation (the
     all-ones matrix of the comonotonic case) the eigen factor with the null eigenvalues set to zero and the rows
-    rescaled to unit length, so that every Z_k is exactly standard normal and a unit correlation is exactly comonotonic."""
+    rescaled to unit length, so that every Z_k is exactly standard normal and a unit correlation is exactly
+    comonotonic."""
     try:
         return np.linalg.cholesky(corr)
     except np.linalg.LinAlgError:

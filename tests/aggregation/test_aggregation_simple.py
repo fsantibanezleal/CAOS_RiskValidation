@@ -136,7 +136,8 @@ def test_std_contributions_golden_and_full_allocation():
     # the allocation of the variance-covariance total: cov = D R D with D = diag(EC)
     ec = arr(3, 4)
     corr = np.array([[1, 0.5], [0.5, 1]])
-    assert s.std_contributions(np.outer(ec, ec) * corr).sum() == pytest.approx(s.variance_covariance(ec, corr), rel=1e-12)
+    assert s.std_contributions(np.outer(ec, ec) * corr).sum() == pytest.approx(s.variance_covariance(ec, corr),
+    rel=1e-12)
     with pytest.raises(ValueError, match="symmetric"):
         s.std_contributions(np.array([[4.0, 2.0], [1.0, 9.0]]))
     with pytest.raises(ValueError, match="positive semi-definite"):
