@@ -1,6 +1,6 @@
 # Liquidity: run-off, counterbalancing capacity, ladders, scenarios, reverse stress, the depositor generator, the LCR and NSFR, and the validation tests (U11)
 
-The liquidity part of `riskvalidation` (contract `engine-liquidity-api` 1.0.0, requirements in
+The liquidity part of `riskvalidation` (contract `engine-liquidity-api` 1.2.0, requirements in
 [`docs/design/features/u11-liquidity/requirements.md`](../design/features/u11-liquidity/requirements.md)). The engine computes and states no
 compliance claim: the LCR is a Basel formula on aggregates with stated assumptions, never the bank's reported or regulatory LCR. Rates are
 decimals per relevant day, cumulative outflow is `1 - (1 - q)^n`, a survival period is "survives the horizon" with the horizon when the net

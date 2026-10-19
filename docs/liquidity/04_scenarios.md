@@ -2,7 +2,7 @@
 
 Module `riskvalidation.liquidity.scenarios`. Sources: dossier 05 section E.2 line 244 (BCBS Principle 10 and Table A.1), E.5 lines 276 to
 278 (rungs 2 to 4); the U11 research addendum L1 (the LiST shocks are idiosyncratic only, annex slide 5; collateral calls, note paras 123
-to 126). Contract `engine-liquidity-api` 1.0.0.
+to 126). Contract `engine-liquidity-api` 1.2.0.
 
 ## The scenario
 
@@ -29,7 +29,7 @@ rule names (the named parameter `fast_run_calibration_rule`):
 
 $$\hat q=\operatorname{stat}\{\,1-(1-F_i)^{1/n_i}\,\},\qquad \operatorname{stat}\in\{\max,\ \operatorname{median},\ \operatorname{mean}\}.$$
 
-When the caller marks the rows `scored=True`, a 2023 row of Table A.1 is refused with a message (decision Q4: the scored variant is
+When the caller marks the rows `scored=True` (keyword-only), a 2023 row of Table A.1 is refused with a message (decision Q4: the scored variant is
 calibrated on pre-2023 rows, the 2023 rows are scored against). The result `FastRun` holds the fitted rate, the implied rates and the
 class `concentrated-uninsured`, the only class a fast-run parameter set holds. `anchor_from_observation(share, days)` returns the observed
 outflow, the days and the implied daily rate, with `forecast_claim` always `False`: an observation is never a forecast.

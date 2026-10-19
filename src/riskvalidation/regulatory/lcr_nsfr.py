@@ -3,7 +3,7 @@ data: each with its paragraph and the in-force date 2019-12-15 (dossier 01 G.1 a
 
 Sources: BCBS Basel Framework LCR20 (published 2022-12-08), LCR30 (2020-06-05), LCR40 (2023-03-30), LCR99 (2019-12-15),
 NSF20, NSF30 and NSF99 Tables 1 to 3, all in force 2019-12-15, https://www.bis.org/basel_framework/ . The text is never
-reproduced, only the parameters. Contract `engine-liquidity-api` 1.0.0, module regulatory.lcr_nsfr.
+reproduced, only the parameters. Contract `engine-liquidity-api` 1.2.0, module regulatory.lcr_nsfr.
 
 The categories are inputs the caller maps to (the C16 mapping table); the engine does not map customers to categories.
 The LCR computed here is a Basel formula applied to aggregates with stated assumptions: it is never the bank's reported
@@ -18,6 +18,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 IN_FORCE = "2019-12-15"
 LCR_INFLOW_CAP = 0.75               # inflows are capped at 75 percent of gross outflows (LCR40.1, LCR99)
@@ -121,6 +122,7 @@ _RSF: dict[str, tuple[float, str]] = {
     "loans_fi_6m_to_1y": (0.50,
         _NSF99_RSF + "loans to financial institutions and central banks 6 months to under one year"),
     "other_assets_lt_1y": (0.50, _NSF99_RSF + "all other assets under one year (corporate, retail, sovereign loans)"),
+    "operational_deposits_held": (0.50, _NSF99_RSF + "operational deposits held"),
     "residential_mortgages_ge_1y_rw35": (0.65,
         _NSF99_RSF + "unencumbered residential mortgages of one year or more, SA risk weight at most 35 percent"),
     "other_loans_ge_1y_rw35": (0.65, _NSF99_RSF + "other loans of one year or more, risk weight at most 35 percent"),
@@ -139,16 +141,16 @@ _RSF: dict[str, tuple[float, str]] = {
 }
 OBS_KEYS = frozenset({"undrawn_facilities_obs"})  # the off-balance-sheet keys of the RSF table
 
-LCR_OUTFLOW_RATES: dict[str, float] = {k: v[0] for k, v in _OUTFLOWS.items()}
-LCR_OUTFLOW_REFERENCES: dict[str, str] = {k: v[1] for k, v in _OUTFLOWS.items()}
-LCR_INFLOW_RATES: dict[str, float] = {k: v[0] for k, v in _INFLOWS.items()}
-LCR_INFLOW_REFERENCES: dict[str, str] = {k: v[1] for k, v in _INFLOWS.items()}
-HQLA_HAIRCUTS: dict[str, float] = {k: v[0] for k, v in _HAIRCUTS.items()}
-HQLA_REFERENCES: dict[str, str] = {k: v[1] for k, v in _HAIRCUTS.items()}
-NSFR_ASF_FACTORS: dict[str, float] = {k: v[0] for k, v in _ASF.items()}
-NSFR_ASF_REFERENCES: dict[str, str] = {k: v[1] for k, v in _ASF.items()}
-NSFR_RSF_FACTORS: dict[str, float] = {k: v[0] for k, v in _RSF.items()}
-NSFR_RSF_REFERENCES: dict[str, str] = {k: v[1] for k, v in _RSF.items()}
+LCR_OUTFLOW_RATES: Mapping[str, float] = MappingProxyType({k: v[0] for k, v in _OUTFLOWS.items()})
+LCR_OUTFLOW_REFERENCES: Mapping[str, str] = MappingProxyType({k: v[1] for k, v in _OUTFLOWS.items()})
+LCR_INFLOW_RATES: Mapping[str, float] = MappingProxyType({k: v[0] for k, v in _INFLOWS.items()})
+LCR_INFLOW_REFERENCES: Mapping[str, str] = MappingProxyType({k: v[1] for k, v in _INFLOWS.items()})
+HQLA_HAIRCUTS: Mapping[str, float] = MappingProxyType({k: v[0] for k, v in _HAIRCUTS.items()})
+HQLA_REFERENCES: Mapping[str, str] = MappingProxyType({k: v[1] for k, v in _HAIRCUTS.items()})
+NSFR_ASF_FACTORS: Mapping[str, float] = MappingProxyType({k: v[0] for k, v in _ASF.items()})
+NSFR_ASF_REFERENCES: Mapping[str, str] = MappingProxyType({k: v[1] for k, v in _ASF.items()})
+NSFR_RSF_FACTORS: Mapping[str, float] = MappingProxyType({k: v[0] for k, v in _RSF.items()})
+NSFR_RSF_REFERENCES: Mapping[str, str] = MappingProxyType({k: v[1] for k, v in _RSF.items()})
 TRADE_FINANCE_REFERENCE = _LCR99 + "trade finance contingent outflows, 0 to 5 percent at national discretion"
 
 
@@ -213,7 +215,9 @@ def hqla_stock(l1: float, l2a: float, l2b: float, adjusted_l1: float | None = No
     days, LCR30.37), which default to the unadjusted ones. Level 1 is unlimited; Level 2 at most 0.40 of HQLA
     (LCR30.31) and Level 2B at most 0.15 (LCR30.33), both after haircuts (LCR30.34); adjusted Level 2 at most
     two-thirds of adjusted Level 1 (LCR30.35). `l2b_share = (L2B - Adj15) / HQLA` and `l2_share = (L2A + L2B - Adj15 -
-    Adj40) / HQLA`, both 0 for an empty stock. Money in USD thousands."""
+    Adj40) / HQLA`, both NaN for an empty stock (HQLA 0: a share of nothing has no value, never 0). The shares are
+    of the unadjusted stock and may exceed 0.15 and 0.40 when the adjusted amounts differ, as the caps bind on the
+    adjusted amounts (LCR30.37 to 39). Money in USD thousands."""
     a1, a2a, a2b = _amount(l1, "l1"), _amount(l2a, "l2a"), _amount(l2b, "l2b")
     j1 = a1 if adjusted_l1 is None else _amount(adjusted_l1, "adjusted_l1")
     j2a = a2a if adjusted_l2a is None else _amount(adjusted_l2a, "adjusted_l2a")
@@ -221,8 +225,8 @@ def hqla_stock(l1: float, l2a: float, l2b: float, adjusted_l1: float | None = No
     adj15 = max(j2b - 15.0 / 85.0 * (j1 + j2a), j2b - 15.0 / 60.0 * j1, 0.0)
     adj40 = max(j2a + j2b - adj15 - 2.0 / 3.0 * j1, 0.0)
     hqla = a1 + a2a + a2b - adj15 - adj40
-    l2b_share = (a2b - adj15) / hqla if hqla > 0.0 else 0.0
-    l2_share = (a2a + a2b - adj15 - adj40) / hqla if hqla > 0.0 else 0.0
+    l2b_share = (a2b - adj15) / hqla if hqla > 0.0 else math.nan
+    l2_share = (a2a + a2b - adj15 - adj40) / hqla if hqla > 0.0 else math.nan
     return HqlaResult(l1=a1, l2a=a2a, l2b=a2b, adj_15=adj15, adj_40=adj40, hqla=hqla, l2_share=l2_share,
                       l2b_share=l2b_share)
 
@@ -271,11 +275,15 @@ def lcr_inflows(balances: Mapping[str, float], rates: Mapping[str, float] | None
 
 def net_cash_outflows(outflows: float, inflows: float, cap: float = LCR_INFLOW_CAP) -> NetOutflowResult:
     """`net = outflows - min(inflows, 0.75 x outflows)` (LCR40.1): inflows never offset more than 0.75 of outflows, so
-    `net >= 0.25 x outflows`. `cap_binds` is `inflows > cap x outflows`."""
+    `net >= 0.25 x outflows`. `cap_binds` is `inflows > cap x outflows`. A `cap` above `LCR_INFLOW_CAP` raises
+    `ValueError` naming `cap` (LCR40.1 fixes 75 percent as the ceiling); a stricter cap below it is allowed."""
     out, inn = _amount(outflows, "outflows"), _amount(inflows, "inflows")
     c = float(cap)
     if not 0.0 <= c <= 1.0:
         raise ValueError(f"cap: must lie in [0, 1], got {cap}")
+    if c > LCR_INFLOW_CAP:
+        raise ValueError(f"cap: must not exceed {LCR_INFLOW_CAP} (LCR40.1: inflows offset at most 75 percent of "
+                         f"outflows), got {cap}")
     counted = min(inn, c * out)
     return NetOutflowResult(inflows_counted=counted, net=out - counted, cap_binds=inn > c * out)
 

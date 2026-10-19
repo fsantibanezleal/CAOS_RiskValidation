@@ -9,7 +9,7 @@ returns
 the light `not_evaluated` with its reason in `notes` and a null statistic, metric and p-value once serialised, never a
 fabricated number. The tests are plain functions that do not read the registry or the default policy: their rules are
 the
-contract's (`engine-liquidity-api`, module validation.liquidity). They state no compliance claim. The tests of
+contract's (`engine-liquidity-api` 1.2.0, module validation.liquidity). They state no compliance claim. The tests of
 `regulatory.lcr_nsfr` are constructed tests and invariants (`tests/liquidity/test_lcr_nsfr.py`), not `TestResult`
 functions.
 """
@@ -28,6 +28,7 @@ from riskvalidation.liquidity import cbc as _cbc
 from riskvalidation.liquidity import ladder as _ladder
 from riskvalidation.liquidity import runoff as _runoff
 from riskvalidation.liquidity._checks import check_increasing_grid, check_unit_share
+from riskvalidation.liquidity.ladder import SurvivalResult
 
 POLICY_LABEL = "contraste-liquidity-battery-1.0.0"
 NAN = float("nan")
@@ -89,6 +90,14 @@ def _scalar(x: Any, name: str) -> float:
         raise ValueError(f"{name}: must be numeric, got {x!r}") from exc
     if not math.isfinite(v):
         raise ValueError(f"{name}: must be finite, got {x!r}")
+    return v
+
+
+def _nonneg_tol(x: Any, name: str) -> float:
+    """A tolerance: finite and not negative (a negative tolerance would turn a shortening into a failure)."""
+    v = _scalar(x, name)
+    if v < 0.0:
+        raise ValueError(f"{name}: must be non-negative, got {x!r}")
     return v
 
 
@@ -185,7 +194,7 @@ def survival_monotone_in_severity(survival_days: Sequence[float | None], tol_day
     test_id = "liq.survival_monotone_in_severity"
     h0 = "the survival period does not lengthen as the scenario severity rises"
     alt = "a more severe scenario survives longer than a milder one"
-    tol = _scalar(tol_days, "tol_days")
+    tol = _nonneg_tol(tol_days, "tol_days")
     days = _days(survival_days, "survival_days")
     version = _version(tolerance_days=tol)
     thresholds = {"tolerance_days": tol}
@@ -425,7 +434,7 @@ def uninsured_share_sensitivity(shares: Sequence[float], survival_days: Sequence
     test_id = "liq.uninsured_share_sensitivity"
     h0 = "the survival period does not lengthen as the uninsured share rises"
     alt = "a higher uninsured share survives longer than a lower one"
-    tol = _scalar(tol_days, "tol_days")
+    tol = _nonneg_tol(tol_days, "tol_days")
     grid = check_increasing_grid(check_unit_share(shares, "shares"), "shares")
     days = _days(survival_days, "survival_days")
     if days.size != grid.size:
@@ -446,19 +455,28 @@ def uninsured_share_sensitivity(shares: Sequence[float], survival_days: Sequence
 
 
 def reverse_stress_round_trip(solved_multiplier: float | None, survival_at_multiplier: int | None, target_days: int,
-                              tol_days: float = 0.0) -> TestResult:
-    """The reverse stress round trip (dossier 05 line 279): the survival period at the solved multiplier is the target.
+                              tol_days: float = 0.0, *,
+                              survival_just_below: SurvivalResult | float | None = None) -> TestResult:
+    """The reverse stress round trip (dossier 05 line 279): the solved multiplier is the threshold at which the survival
+    period reaches the target.
 
-    statistic = `abs(survival_at_multiplier - target_days)`, metric = the multiplier. Light (a Contraste internal gate):
-    green when the statistic is at most `tol_days` (the named parameter `round_trip_tolerance_days`), red otherwise;
-    not_evaluated with the reason when the multiplier is `None` (a refused solve);
-    `extras["thresholds"] = {"tolerance_days": tol_days}`. Golden: `(2.085164, 5, 5)` gives 0 and green; `(2.0, 7, 5)`
-    gives
-    2 and red; `(None, None, 30)` gives not_evaluated."""
+    Without `survival_just_below` (the 1.1.0 call): statistic = `abs(survival_at_multiplier - target_days)`, metric =
+    the multiplier, green when the statistic is at most `tol_days` (the named parameter `round_trip_tolerance_days`),
+    red otherwise. With `survival_just_below` (the survival period at `m* - 1e-6`: a `SurvivalResult`, a number of days,
+    or `math.inf` for "survives the horizon"), the threshold property is tested: statistic = the larger of the shortfall
+    `max(survival_at_multiplier - target_days, 0)` (the multiplier fails to reach the target) and the overshoot
+    `max(target_days + 1 - survival_just_below, 0)` (the multiplier is not the smallest one, so the period just below it
+    is already at or under the target); green when the statistic is at most `tol_days`, red otherwise. Overshoot is
+    measured against `target_days + 1`, the shortest period that does not reach the target. When the curve stepped
+    (`survival_at_multiplier` below the target, because the CBC grows over time) the notes give the gap
+    `target - SP(m*)` and the light stays green. Not_evaluated with the reason when the multiplier is `None` (a
+    refused solve); `extras["thresholds"] = {"tolerance_days": tol_days}`. Golden: `(2.085164, 5, 5)` gives 0 and
+    green; `(2.0, 7, 5)` gives 2 and red; `(None, None, 30)` gives not_evaluated;
+    `(1.5, 1, 5, survival_just_below=math.inf)` is green with the gap 4 in the notes."""
     test_id = "liq.reverse_stress_round_trip"
     h0 = "the survival period at the solved multiplier equals the target"
     alt = "the survival period at the solved multiplier differs from the target"
-    tol = _scalar(tol_days, "tol_days")
+    tol = _nonneg_tol(tol_days, "tol_days")
     target = int(_scalar(target_days, "target_days"))
     thresholds = {"tolerance_days": tol}
     version = _version(tolerance_days=tol)
@@ -468,12 +486,29 @@ def reverse_stress_round_trip(solved_multiplier: float | None, survival_at_multi
                               extras={"thresholds": thresholds, "target_days": target})
     mult = _scalar(solved_multiplier, "solved_multiplier")
     surv = _scalar(survival_at_multiplier, "survival_at_multiplier")
-    stat = abs(surv - target)
+    notes = ""
+    if survival_just_below is None:
+        stat = abs(surv - target)
+        below_hash = -2.0
+    else:
+        h0 = "the solved multiplier is the threshold: the target is reached at it and not just below it"
+        alt = "the solved multiplier does not reach the target, or a smaller multiplier already does"
+        if isinstance(survival_just_below, SurvivalResult):
+            below = math.inf if survival_just_below.survives else float(survival_just_below.day)
+        elif isinstance(survival_just_below, float) and math.isinf(survival_just_below):
+            below = math.inf
+        else:
+            below = _scalar(survival_just_below, "survival_just_below")
+        stat = max(surv - target, 0.0, target + 1 - below)
+        below_hash = -1.0 if math.isinf(below) else below
+        if surv < target:
+            notes = (f"the survival period steps past the target: it is {int(surv)} days at the threshold multiplier, "
+                     f"a gap of {int(target - surv)} days to the target of {target} days")
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_REVERSE, policy_version=version,
         light=Light.GREEN if stat <= tol + EPS else Light.RED, statistic=stat, metric=mult, n=1,
-        inputs_hash=inputs_hash(np.array([mult, surv, target])),
-        extras={"thresholds": thresholds, "target_days": target})
+        inputs_hash=inputs_hash(np.array([mult, surv, target, below_hash])),
+        extras={"thresholds": thresholds, "target_days": target}, notes=notes)
 
 
 def htm_revaluation_vs_reported(model_fair_value: float | None, reported_fair_value: float, amortised_cost: float,

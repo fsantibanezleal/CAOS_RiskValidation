@@ -2,7 +2,7 @@
 
 Module `riskvalidation.liquidity.ladder`. Sources: dossier 05 section E.1 lines 234 to 236 (ECB LiST 2019 final results annex and
 methodological note), E.5 rungs 1 and 2; dossier 01 G.3 lines 642 and 643 (SRP50, the contractual maturity mismatch tool); the U11
-research addendum L1.6 (paras 84 to 89, 128 to 132; annex slides 8 and 24). Contract `engine-liquidity-api` 1.0.0.
+research addendum L1.6 (paras 84 to 89, 128 to 132; annex slides 8 and 24). Contract `engine-liquidity-api` 1.2.0.
 
 ## Equations
 

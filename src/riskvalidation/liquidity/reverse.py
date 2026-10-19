@@ -1,11 +1,13 @@
 """Reverse liquidity stress: the multiplier on the run-off rates at which the survival period first falls to a target.
 
 Source: dossier 05 E.5 rung 5, line 279 ("the run-off multiplier at which the survival period falls below a target, for
-example 30 days", the named parameter `reverse_target_days`). Contract `engine-liquidity-api` 1.0.0, module reverse.
+example 30 days", the named parameter `reverse_target_days`). Contract `engine-liquidity-api` 1.2.0, module reverse.
 
 The multiplier is applied to every segment of a base scenario and capped so that each rate stays at or below 1 (decision
 Q9): the cap is `1 / max(q below 1)`. The survival period `SP(m)` is non-increasing in `m`, and "survives the horizon"
-counts as longer than any day. A target that is not bracketed is refused with its reason, never a number.
+counts as longer than any day. A target that is not bracketed is refused with its reason, never a number. The
+survival period is an integer day, so `SP(m)` can step past the target when the CBC grows over time (a monetisation
+schedule); the solve then returns the threshold multiplier (decision F2, contract 1.2.0).
 """
 
 from __future__ import annotations
@@ -26,12 +28,16 @@ ROUNDING = 1e-6  # the multiplier is rounded up to six decimals
 
 @dataclass(frozen=True)
 class SolveResult:
-    """`status` is `"solved"` or `"refused"`; a refusal carries its `reason` and no number."""
+    """`status` is `"solved"` or `"refused"`; a refusal carries its `reason` and no number. `multiplier` is the
+    threshold `m*`; `survival_at_multiplier` is `SP(m*)`, which is below the target when the curve steps;
+    `survival_just_below` is the `SurvivalResult` at `m* - 1e-6` (`survives` true and `day` None when the bank
+    survives the horizon there), None for a refusal."""
 
     status: str
     multiplier: float | None
     survival_at_multiplier: int | None
     reason: str | None
+    survival_just_below: SurvivalResult | None = None
 
 
 def max_multiplier(scenario: Scenario) -> float:
@@ -74,16 +80,19 @@ def survival_vs_multiplier(scenario: Scenario, cbc: np.ndarray, multipliers: np.
 
 
 def solve_multiplier(scenario: Scenario, cbc: np.ndarray, target_days: int) -> SolveResult:
-    """The smallest multiplier (rounded up to six decimals) at which `SP(m) <= target_days`, never above the cap.
+    """The threshold multiplier `m*`: the smallest `m` (rounded up to six decimals, never above the cap) at which
+    `SP(m) <= target_days`.
 
     `SP(m) <= target` holds exactly when the minimum of `NLP(t)` over `t <= target` is negative, a continuous,
     non-increasing function of `m`, so the root is bracketed with `scipy.optimize.brentq` between 1 and the cap. The
-    round
-    trip holds: `survival_at_multiplier` equals the target (the position is monotone in `m`). A target that is not
-    bracketed (the base survival period already at or below it, no multiplier under the cap reaches it, or a target not
-    below the horizon) is refused with the reason, never a number. Golden: the one-segment bank of
-    `survival_vs_multiplier` and `target_days = 5` gives `2.085164` (`1 - 0.9^(1/5) = 0.0208516` over `q`, rounded
-    up)."""
+    survival period is an integer day, so when the CBC grows over time `SP(m)` can step past the target (for example
+    from "survives the horizon" straight to day 1): `survival_at_multiplier` is then `SP(m*)`, below the target, and no
+    multiplier gives exactly the target. The round trip is the threshold property `SP(m*) <= target` and
+    `SP(m* - 1e-6) > target`, whose second term is `survival_just_below`; with a CBC that does not grow it also holds
+    with `SP(m*) == target`. A target that is not bracketed (the base survival period already at or below it, no
+    multiplier under the cap reaches it, or a target not below the horizon) is refused with the reason, never a number.
+    Golden: the one-segment bank of `survival_vs_multiplier` and `target_days = 5` gives `2.085164` (`1 - 0.9^(1/5) =
+    0.0208516` over `q`, rounded up)."""
     c = _cbc(scenario, cbc)
     if target_days != int(target_days) or int(target_days) < 1:
         raise ValueError(f"target_days: must be a positive integer, got {target_days!r}")
@@ -124,7 +133,9 @@ def solve_multiplier(scenario: Scenario, cbc: np.ndarray, target_days: int) -> S
     sp = _ladder.survival_period(_nlp(scenario, c, candidate))
     if sp.day is None:  # pragma: no cover - guarded by reached(top) and the loops above
         return refused("no multiplier under the cap reaches the target")
-    return SolveResult(status="solved", multiplier=candidate, survival_at_multiplier=int(sp.day), reason=None)
+    below = _ladder.survival_period(_nlp(scenario, c, round(candidate - ROUNDING, 6)))
+    return SolveResult(status="solved", multiplier=candidate, survival_at_multiplier=int(sp.day), reason=None,
+                       survival_just_below=below)
 
 
 __all__ = ["ROUNDING", "SolveResult", "SurvivalResult", "max_multiplier", "solve_multiplier", "survival_vs_multiplier"]

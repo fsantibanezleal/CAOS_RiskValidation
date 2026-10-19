@@ -166,3 +166,38 @@ def test_htm_loss_grid_golden():
     with pytest.raises(ValueError, match="^reported_loss: "):
         sc.htm_loss_grid(float("nan"), [1.0])
     assert np.isfinite(sc.htm_loss_grid(-15.0, [0.0])[0])
+
+
+def test_fast_run_scenario_scored_refuses_an_observed_run_of_2023():
+    """F4: an `ObservedRun` row of 2023 is refused when scored, by its year (mutation M15 survived without this)."""
+    with pytest.raises(ValueError, match="2023.*scored"):
+        sc.fast_run_scenario([r.TABLE_A1[0]], scored=True)
+    sc.fast_run_scenario([r.TABLE_A1[0]])  # not scored: allowed
+    assert "ObservedRun" in sc.fast_run_scenario.__doc__ and "ObservedRun" in r.ObservedRun.__doc__
+
+
+def test_fast_run_scenario_scored_is_keyword_only():
+    """F3: the contract's signature is `(rows, rule, *, scored)`."""
+    with pytest.raises(TypeError):
+        sc.fast_run_scenario([(0.2, 4)], "maximum-implied-daily-rate", True)
+
+
+def test_scenario_parameter_sets_and_paths_are_immutable():
+    """F6: the dicts of a `ListScenario` and the rate paths of a segment cannot be written; the set hashes."""
+    adverse = sc.list_scenario("adverse")
+    for table in (adverse.open_maturity, adverse.contractual_outflow, adverse.contractual_inflow, adverse.drawdown):
+        with pytest.raises(TypeError):
+            table["stable-retail"] = 0.9
+    assert adverse.stable_retail == 0.00103258
+    assert hash(adverse) == hash(sc.list_scenario("adverse")) and hash(adverse) != hash(sc.list_scenario("extreme"))
+    with pytest.raises(TypeError):
+        sc.list_scenario("baseline").open_maturity["stable-retail"] = 1.0
+    with pytest.raises(TypeError):
+        r.LIST_PARAMETERS["adverse"]["open_maturity"]["stable-retail"] = 0.9
+    with pytest.raises(TypeError):
+        r.LIST_PARAMETERS["adverse"] = {}
+    s = sc.compose_scenario("idiosyncratic", "acute", adverse, {"retail": ("other-retail", 100.0)}, 3)
+    with pytest.raises(ValueError):
+        s.segments[0].daily_rates[0] = 0.5
+    with pytest.raises(TypeError):
+        sc.FastRun("r", 0.1, (0.1,), ()).open_maturity["x"] = 1.0

@@ -5,7 +5,7 @@ Sources: dossier 05 E.1 line 237 (the open-maturity deposits of the ECB LiST 201
 compounding
 rate on relevant days, cumulative outflow `1 - (1 - q)^n`) and E.2 (BCBS d555 Table A.1); the U11 research addendum L1
 (the ECB methodological note of February 2019, Tables 3.2 and 3.3, paragraphs 94 to 126) and L2.1. Contract
-`engine-liquidity-api` 1.0.0, module runoff.
+`engine-liquidity-api` 1.2.0, module runoff.
 
 The arithmetic is that of `provisions.term_structure.from_hazard`, considered and not reused: that function refuses a
 rate of exactly 0 or 1, both legitimate for a segment, and indexes months. Money is a float in USD thousands (the
@@ -17,7 +17,9 @@ choice, the contract's open item A2).
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -91,15 +93,15 @@ def _by_severity(block: dict[str, tuple[float, float, float]], column: int) -> d
     return {key: values[column] for key, values in block.items()}
 
 
-LIST_PARAMETERS: dict[str, dict[str, dict[str, float]]] = {
-    severity: {
-        "open_maturity": _by_severity(_OPEN_MATURITY, column),
-        "contractual_outflow": _by_severity(_CONTRACTUAL_OUTFLOW, column),
-        "contractual_inflow": _by_severity(_CONTRACTUAL_INFLOW, column),
-        "drawdown": _by_severity(_DRAWDOWN, column),
-    }
+LIST_PARAMETERS: Mapping[str, Mapping[str, Mapping[str, float]]] = MappingProxyType({
+    severity: MappingProxyType({
+        "open_maturity": MappingProxyType(_by_severity(_OPEN_MATURITY, column)),
+        "contractual_outflow": MappingProxyType(_by_severity(_CONTRACTUAL_OUTFLOW, column)),
+        "contractual_inflow": MappingProxyType(_by_severity(_CONTRACTUAL_INFLOW, column)),
+        "drawdown": MappingProxyType(_by_severity(_DRAWDOWN, column)),
+    })
     for column, severity in enumerate(("baseline", "adverse", "extreme"))
-}
+})
 
 SEGMENTS = ("retail-insured", "retail-uninsured", "operational", "non-operational-corporate", "financial")
 
@@ -183,7 +185,10 @@ def _days(x: Any, name: str, *, minimum: int) -> np.ndarray:
 
 @dataclass(frozen=True)
 class ObservedRun:
-    """One row of BCBS d555 Table A.1: a deposit outflow share observed over a number of days."""
+    """One row of BCBS d555 Table A.1: a deposit outflow share observed over a number of days. Pass `ObservedRun` rows
+    to `scenarios.fast_run_scenario`: it recognises a 2023 row of a scored calibration by `year`, whereas a plain
+    `(share, days)` pair is matched to `TABLE_A1` by exact float equality, so a pair that differs by rounding passes
+    as a pre-2023 row."""
 
     row_id: str
     bank: str

@@ -5,7 +5,7 @@ Sources: dossier 05 E.1 line 238 (ECB LiST 2019 methodological note, paras 73 to
 of an asset is its market value less a haircut, the haircut order, the equity table, 30 and 50 percent for the rest),
 lines 263 and 480 (held-to-maturity unrealised losses reduce the effective CBC), 276 (the monetisation schedule); the
 U11 research addendum L1.6 (the exact order of para 74) and L4 (the Federal Reserve margins, the central bank's haircut
-is 1 minus the margin). Contract `engine-liquidity-api` 1.0.0, module cbc.
+is 1 minus the margin). Contract `engine-liquidity-api` 1.2.0, module cbc.
 
 The LCR haircut is taken from `regulatory.lcr_nsfr.HQLA_HAIRCUTS`, never a second table (decision Q1); the central
 bank's
@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from types import MappingProxyType
 
 import numpy as np
 
@@ -25,7 +26,8 @@ from riskvalidation.regulatory.lcr_nsfr import HQLA_HAIRCUTS
 
 # Table 2.1 of the note (para 74, third bullet): the haircut of a marketable equity not eligible for a central bank,
 # by the issuer's rating.
-ECB_EQUITY_HAIRCUTS: dict[str, float] = {"AAA-A-": 0.20, "BBB+-BBB-": 0.35, "lower-or-unrated": 0.50}
+ECB_EQUITY_HAIRCUTS: Mapping[str, float] = MappingProxyType(
+    {"AAA-A-": 0.20, "BBB+-BBB-": 0.35, "lower-or-unrated": 0.50})
 ECB_NON_EQUITY_HQLA_HAIRCUT = 0.30   # a non-equity marketable asset that is HQLA under the LCR Delegated Regulation
 FALLBACK_HAIRCUT = 0.50              # every other case where no haircut can be determined
 KINDS = ("cash", "equity", "non-equity")

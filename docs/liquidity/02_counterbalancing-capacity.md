@@ -2,7 +2,7 @@
 
 Module `riskvalidation.liquidity.cbc`. Sources: dossier 05 section E.1 line 238 (ECB LiST 2019 methodological note, paras 73 to 75 and
 Table 2.1), lines 263 and 480 (held-to-maturity unrealised losses reduce the effective CBC), line 276 (the monetisation schedule); the
-U11 research addendum L1.6 (the exact order of para 74) and L4 (the Federal Reserve margins). Contract `engine-liquidity-api` 1.0.0.
+U11 research addendum L1.6 (the exact order of para 74) and L4 (the Federal Reserve margins). Contract `engine-liquidity-api` 1.2.0.
 
 ## Equations
 

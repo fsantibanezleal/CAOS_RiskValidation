@@ -8,7 +8,7 @@ scenarios, individually and in combination), E.5 lines 276 to 278 (rungs 2 to 4:
 calibration to Table A.1, sensitivity to the uninsured share and to unrealised securities losses), 279; the U11 research
 addendum L1 (the LiST shocks are idiosyncratic only, annex slide 5; collateral calls have no numeric parameter, N paras
 123
-to 126). Contract `engine-liquidity-api` 1.0.0, module scenarios.
+to 126). Contract `engine-liquidity-api` 1.2.0, module scenarios.
 
 `Scenario`, `ListScenario` and `FastRun` are frozen dataclasses. A scenario input the dossiers do not settle is a
 convention, labelled: the fast-run calibration rule (the dossiers give no method, UNVERIFIED), collateral calls (a
@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any
 
 import numpy as np
@@ -42,11 +43,22 @@ class ListScenario:
     underscores (`stable_retail`)."""
 
     severity: str
-    open_maturity: dict[str, float]
-    contractual_outflow: dict[str, float]
-    contractual_inflow: dict[str, float]
-    drawdown: dict[str, float]
+    open_maturity: Mapping[str, float]
+    contractual_outflow: Mapping[str, float]
+    contractual_inflow: Mapping[str, float]
+    drawdown: Mapping[str, float]
     relevant_days: int = _runoff.LIST_RELEVANT_DAYS
+
+    def __post_init__(self) -> None:
+        for name in ("open_maturity", "contractual_outflow", "contractual_inflow", "drawdown"):
+            object.__setattr__(self, name, MappingProxyType(dict(getattr(self, name))))
+
+    def __reduce__(self) -> tuple[Any, ...]:  # a mappingproxy cannot be pickled or deep-copied
+        return (type(self), (self.severity, dict(self.open_maturity), dict(self.contractual_outflow),
+                             dict(self.contractual_inflow), dict(self.drawdown), self.relevant_days))
+
+    def __hash__(self) -> int:
+        return hash((self.severity, self.relevant_days, tuple(self.open_maturity.items())))
 
     def class_rate(self, liquidity_class: str) -> float:
         """The daily rate of an open-maturity class; a class the set does not hold raises, never mapped silently."""
@@ -76,8 +88,8 @@ class FastRun:
     rows: tuple[tuple[float, int], ...]
 
     @property
-    def open_maturity(self) -> dict[str, float]:
-        return {FAST_RUN_CLASS: self.daily_rate}
+    def open_maturity(self) -> Mapping[str, float]:
+        return MappingProxyType({FAST_RUN_CLASS: self.daily_rate})
 
     def class_rate(self, liquidity_class: str) -> float:
         if liquidity_class != FAST_RUN_CLASS:
@@ -94,6 +106,11 @@ class ScenarioSegment:
     liquidity_class: str
     opening: float
     daily_rates: np.ndarray = field(repr=False)
+
+    def __post_init__(self) -> None:
+        rates = np.array(self.daily_rates, dtype=float)
+        rates.setflags(write=False)
+        object.__setattr__(self, "daily_rates", rates)
 
 
 @dataclass(frozen=True, eq=False)
@@ -173,7 +190,7 @@ def _row(row: Any) -> tuple[float, int, int | None]:
     return share, days, None
 
 
-def fast_run_scenario(rows: Sequence[tuple[float, int]], rule: str = "maximum-implied-daily-rate",
+def fast_run_scenario(rows: Sequence[tuple[float, int]], rule: str = "maximum-implied-daily-rate", *,
                       scored: bool = False) -> FastRun:
     """The daily rate of the concentrated uninsured segment from observed runs (Table A.1 `(outflow share, days)` pairs
     the caller selects): each row's rate is `daily_rate_from_cumulative`; the fitted rate is the rule's statistic
@@ -182,8 +199,10 @@ def fast_run_scenario(rows: Sequence[tuple[float, int]], rule: str = "maximum-im
 
     Calibration on the 2023 rows is refused with a message when the caller marks the rows `scored` (decision Q4: the
     scored variant is calibrated on pre-2023 rows only); a row is recognised as a 2023 row by its `ObservedRun` year or
-    by its `(share, days)` pair equal to a 2023 row of `TABLE_A1`. Golden: Icesave, Northern Rock, WaMu and IndyMac give
-    `[0.002971, 0.054258, 0.010481, 0.005938]` and `0.054258` (maximum), `0.0082095` (median), `0.018412` (mean)."""
+    by its `(share, days)` pair equal to a 2023 row of `TABLE_A1`. Plain pairs are matched by exact float equality
+    (`(0.850000001, 2)` passes as a pre-2023 row), so callers should pass `ObservedRun` rows. Golden: Icesave, Northern
+    Rock, WaMu and IndyMac give `[0.002971, 0.054258, 0.010481, 0.005938]` and `0.054258` (maximum), `0.0082095`
+    (median), `0.018412` (mean)."""
     if rule not in FAST_RUN_RULES:
         raise ValueError(f"rule: must be one of {FAST_RUN_RULES}, got {rule!r}")
     if len(rows) == 0:

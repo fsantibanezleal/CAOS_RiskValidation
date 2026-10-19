@@ -4,6 +4,7 @@ line 238, LiST note paras 73 to 75)."""
 from __future__ import annotations
 
 import dataclasses
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -137,3 +138,9 @@ def test_cbc_with_htm_loss_golden_and_invariants():
     # an encumbered amount above the fair value is refused: the same amount is encumbered on both bases
     with pytest.raises(ValueError, match="encumbered"):
         cbc.cbc_with_htm_loss(100.0, 15.0, 20.0, 0.1)
+
+
+def test_equity_haircut_table_is_read_only():
+    """F6."""
+    assert isinstance(cbc.ECB_EQUITY_HAIRCUTS, MappingProxyType)
+    assert not hasattr(cbc.ECB_EQUITY_HAIRCUTS, "__setitem__")
