@@ -117,8 +117,8 @@ def test_weak_spots_planted_slice_three_times_the_rest():
 
 
 def test_weak_spots_min_n_sorting_and_refusals():
-    err = np.ones(260)
-    bins = np.r_[np.repeat(0, 100), np.repeat(1, 100), np.repeat(2, 50), np.repeat(3, 10)]
+    err = np.ones(3160)
+    bins = np.r_[np.repeat(0, 3000), np.repeat(1, 100), np.repeat(2, 50), np.repeat(3, 10)]
     err[bins == 1] = 4.0
     err[bins == 2] = 6.0
     err[bins == 3] = 100.0  # a huge error on a slice below min_n: never reported
