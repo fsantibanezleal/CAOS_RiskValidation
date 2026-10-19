@@ -124,11 +124,11 @@ def test_simulate_component_losses_dependence_and_marginals():
     for i in range(3):
         for j in range(i):
             assert abs(cc[i, j]) < 4.0 / math.sqrt(s)
-    assert stats.kstest(ind[:, 1], "norm", args=(3.0, 2.0)).statistic < 3.0 / math.sqrt(s)
+    assert stats.kstest(ind[:, 1], stats.norm(3.0, 2.0).cdf).statistic < 3.0 / math.sqrt(s)
     assert stats.kstest(ind[:, 2], "expon").statistic < 3.0 / math.sqrt(s)
     assert stats.kstest(ind[:, 0], "uniform").statistic < 3.0 / math.sqrt(s)
     dep = c.simulate_component_losses(ppfs[:2], R5, "t", 4.0, s, seed=3)
-    assert stats.kstest(dep[:, 1], "norm", args=(3.0, 2.0)).statistic < 3.0 / math.sqrt(s)
+    assert stats.kstest(dep[:, 1], stats.norm(3.0, 2.0).cdf).statistic < 3.0 / math.sqrt(s)
     with pytest.raises(ValueError, match="ppfs"):
         c.simulate_component_losses(ppfs, R5, "gaussian", None, 10, seed=0)
     with pytest.raises(ValueError, match="n_draws"):
@@ -141,11 +141,13 @@ def test_simulate_component_losses_chunks_and_seed():
     ppfs = [_ident, _ident]
     a = c.simulate_component_losses(ppfs, R5, "gaussian", None, 10_500, seed=9, chunk_size=1000)
     b = c.simulate_component_losses(ppfs, R5, "gaussian", None, 10_500, seed=9, chunk_size=1000)
-    d = c.simulate_component_losses(ppfs, R5, "gaussian", None, 10_500, seed=9, chunk_size=2000)
     assert a.shape == (10_500, 2)
     assert np.array_equal(a, b)
-    assert not np.array_equal(a, d)  # another chunk size: a different, equally valid sample
-    assert stats.kstest(d[:, 0], "uniform").statistic < 3.0 / math.sqrt(10_500)
+    # the t family interleaves its chi-square draws per chunk: another chunk size is a different, equally valid sample
+    t1 = c.simulate_component_losses(ppfs, R5, "t", 5.0, 10_500, seed=9, chunk_size=1000)
+    t2 = c.simulate_component_losses(ppfs, R5, "t", 5.0, 10_500, seed=9, chunk_size=2000)
+    assert not np.array_equal(t1, t2)
+    assert stats.kstest(t2[:, 0], "uniform").statistic < 3.0 / math.sqrt(10_500)
     n, k, chunk = 60_000, 3, 500
     ppfs3 = [_ident] * 3
     tracemalloc.start()
@@ -261,6 +263,7 @@ def test_copula_aggregate_invariants_and_refusals():
     with pytest.raises(ValueError, match="nu"):
         c.copula_aggregate(ppfs, R5, "t", None, 0.0, 0.99, 1000, seed=0)
     with pytest.raises(ValueError, match="positive semi-definite"):
-        c.copula_aggregate(ppfs * 1, np.array([[1, 2], [2, 1]]), "gaussian", None, 0.0, 0.99, 1000, seed=0)
+        c.copula_aggregate(ppfs + ppfs[:1], np.array([[1, .9, -.9], [.9, 1, .9], [-.9, .9, 1]]), "gaussian", None, 0.0,
+                           0.99, 1000, seed=0)
     with pytest.raises(ValueError, match="el"):
         c.copula_aggregate(ppfs, R5, "gaussian", None, float("nan"), 0.99, 1000, seed=0)

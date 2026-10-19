@@ -22,7 +22,11 @@ SCALE_999 = 0.001 ** -0.5 - 1.0  # F^-1(0.999) of the unit Pareto(2) of the test
 
 
 def _pareto(scale):
-    return lambda u: scale * ((1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0)
+    def ppf(u):
+        with np.errstate(divide="ignore"):  # F^-1(1) is +infinity, the last cell of the upper matrix
+            return scale * ((1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0)
+
+    return ppf
 
 
 PPFS = [_pareto(3.0 / SCALE_999), _pareto(4.0 / SCALE_999)]  # the quantile at 0.999 is the EC of each marginal
@@ -77,9 +81,10 @@ def test_band_expected_loss_and_signed_lower_bound():
     assert by["lower-bound"].capital == pytest.approx(wb.lower_range[0] - 1.5, rel=1e-12)
     assert by["worst-case"].capital == pytest.approx(wb.upper_range[1] - 1.5, rel=1e-12)
     # a lower bound below the expected loss is reported as computed, signed (Table 4, d = 56: 45.82 against an EL of 56)
-    big_el = np.array([30.0, 30.0])
-    neg = bd.dependence_band(PPFS, EC, big_el, R5, [5.0], **dict(tiny, n_draws=4000))
+    big_el = np.array([1.7, 1.7])  # the best VaR is 3.2: below the expected loss of 3.4
+    neg = bd.dependence_band(PPFS, EC, big_el, R5, [5.0], **tiny)
     assert [r for r in neg.rows if r.method == "lower-bound"][0].capital < 0.0
+    assert all(r.capital > 0.0 for r in neg.rows if r.method != "lower-bound")  # every other row is not below zero
 
 
 def test_band_euler_additivity_of_the_aggregate():
@@ -113,10 +118,25 @@ def test_dependence_band_refusals_and_seed(band):
     with pytest.raises(ValueError, match="same length|length"):
         bd.dependence_band(PPFS[:1], EC, EL0, R5, [4.0], **small)
     with pytest.raises(ValueError, match="positive semi-definite"):
-        bd.dependence_band(PPFS, EC, EL0, np.array([[1.0, 2.0], [2.0, 1.0]]), [4.0], **small)
+        bd.dependence_band(PPFS, EC, EL0, np.array([[1, .9, -.9], [.9, 1, .9], [-.9, .9, 1]]), [4.0], **small)
     with pytest.raises(ValueError, match="ec"):
         bd.dependence_band(PPFS, np.zeros(2), EL0, R5, [4.0], **small)
     with pytest.raises(ValueError, match="ec"):
         bd.dependence_band(PPFS, np.array([3.0, -4.0]), EL0, R5, [4.0], **small)
     with pytest.raises(ValueError, match="el"):
         bd.dependence_band(PPFS, EC, np.array([0.0, float("nan")]), R5, [4.0], **small)
+
+
+def test_band_row_invariants():
+    ok = bd.BandRow("t-copula", 4.0, 5.0, 0.7, "information-not-capital", 0.1)
+    assert ok.nu == 4.0
+    with pytest.raises(ValueError, match="status"):
+        bd.BandRow("simple-sum", None, 7.0, 1.0, "information-not-capital", None)
+    with pytest.raises(ValueError, match="status"):
+        bd.BandRow("gaussian-copula", None, 5.0, 0.7, "headline-capital", None)
+    with pytest.raises(ValueError, match="nu"):
+        bd.BandRow("gaussian-copula", 4.0, 5.0, 0.7, "information-not-capital", None)
+    with pytest.raises(ValueError, match="nu"):
+        bd.BandRow("t-copula", None, 5.0, 0.7, "information-not-capital", None)
+    with pytest.raises(ValueError, match="method"):
+        bd.BandRow("median", None, 5.0, 0.7, "information-not-capital", None)
