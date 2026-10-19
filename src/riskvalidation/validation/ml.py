@@ -41,7 +41,10 @@ DOSSIER_06_C7 = (
     "dossier 06 (model risk management and validation) C.7 ML/AI validation and I.1, the validation engine "
     "catalogue; contract engine-ml-api 1.0.0"
 )
-SR_11_7 = "SR 11-7 sensitivity analysis (unexpectedly large changes in outputs for small changes in inputs)"
+SR_11_7 = (
+    "SR 11-7 sensitivity analysis (historical reference text, superseded in the US by SR 26-2; dossier 06 A.1): "
+    "unexpectedly large changes in outputs for small changes in inputs"
+)
 ECB_43 = (
     "ECB guide to internal models, paragraph 43 (randomness of the training process, overfitting) and 59 (stored seeds)"
 )

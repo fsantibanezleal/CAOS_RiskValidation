@@ -27,8 +27,13 @@ from riskvalidation.ml import conformal, robustness
 from riskvalidation.validation.discrimination import auc_with_variance
 
 PORTFOLIO = {"intercept": -1.5, "coefficients": (0.8, 0.5, 0.3), "correlation": 0.3}  # about 20 percent defaults
-# the curvature of the true logit in the first covariate that the linear model omits (CovariateShiftPlant)
-QUADRATIC = -0.5
+SHIFT_PORTFOLIO = {
+    "intercept": 0.0,
+    "coefficients": (1.6, 1.0, 0.6),
+    "correlation": 0.3,
+}  # the shift plant: AUC about 0.85
+SHIFTED_SHARE = 0.25  # the share of evaluation rows that come from the shifted region
+BREAK_AT, BREAK_SLOPE = 1.5, 2.0  # beyond x_0 = 1.5 the true logit loses 2 per unit: its slope 1.6 reverses to -0.4
 PREVALENCE = 0.3  # the share of defaulters of the noise and seed plants
 SEPARATION = 1.5  # the standardised separation of the signal column of the seed plant
 ALPHA = 0.10  # the miscoverage of the conformal check in the C20 shift kind (a convention of the contract)
@@ -114,11 +119,14 @@ class LeakPlant(_Plant):
 
 @dataclass(frozen=True)
 class CovariateShiftPlant(_Plant):
-    """A development sample and an evaluation sample of ``n`` obligors each from the logistic portfolio; the evaluation
-    covariates in ``features`` are shifted by ``shift`` standard deviations (shift 0 is the null). The true logit holds
-    the curvature ``QUADRATIC * (x_1^2 - 1)`` that the linear model ``predict`` omits: inside the development support
-    the model ranks well and in the shifted region it does not, so a shift that the shift score finds is also one that
-    costs AUC."""
+    """A development sample and an evaluation sample of ``n`` obligors each. A quarter of the evaluation rows
+    (``SHIFTED_SHARE``, placed at random) come from a shifted region: their covariates in ``features`` are shifted by
+    ``shift`` standard deviations (shift 0 is the null: no row is shifted). The true logit follows the linear model
+    inside the development support and its slope in the first covariate reverses beyond ``BREAK_AT`` (a regime the
+    development sample barely contains), so the shifted rows are the ones the model ranks badly: the worst subsample by
+    shift score is the shifted quarter, and its AUC collapses. ``predict`` is the linear model, valid where the
+    development sample lives. The portfolio is the stronger one of ``SHIFT_PORTFOLIO`` (about 50 percent defaults, AUC
+    about 0.85); ``draw`` also returns the boolean mask ``shifted`` of the evaluation rows."""
 
     name: ClassVar[str] = "ml_covariate_shift_plant"
     n: int
@@ -132,48 +140,79 @@ class CovariateShiftPlant(_Plant):
             raise ValueError("shift must be finite")
         object.__setattr__(self, "shift", float(self.shift))
         feats = tuple(int(f) for f in self.features)
-        p = len(PORTFOLIO["coefficients"])
+        p = len(SHIFT_PORTFOLIO["coefficients"])
         if not feats or any(not 0 <= f < p for f in feats) or len(set(feats)) != len(feats):
             raise ValueError(f"features must be distinct column indices in [0, {p}), got {list(self.features)}")
         object.__setattr__(self, "features", frozen_array(feats, dtype=int))
 
     def _shift_vector(self) -> np.ndarray:
-        v = np.zeros(len(PORTFOLIO["coefficients"]))
+        v = np.zeros(len(SHIFT_PORTFOLIO["coefficients"]))
         v[list(self.features)] = self.shift
         return v
 
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """The linear (misspecified) model: ``expit(intercept + X @ coefficients)``."""
-        return special.expit(
-            PORTFOLIO["intercept"] + np.asarray(X, dtype=float) @ np.asarray(PORTFOLIO["coefficients"])
-        )
+        """The linear model: ``expit(intercept + X @ coefficients)``, valid inside the development support."""
+        beta = np.asarray(SHIFT_PORTFOLIO["coefficients"])
+        return special.expit(SHIFT_PORTFOLIO["intercept"] + np.asarray(X, dtype=float) @ beta)
+
+    def _labels(self, x: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+        beta = np.asarray(SHIFT_PORTFOLIO["coefficients"])
+        eta = SHIFT_PORTFOLIO["intercept"] + x @ beta - BREAK_SLOPE * np.clip(x[:, 0] - BREAK_AT, 0.0, None)
+        return (rng.random(len(x)) < special.expit(eta)).astype(np.int64)
 
     def draw(self, rng: np.random.Generator) -> dict[str, Any]:
-        dev = _portfolio(self.n, quadratic=QUADRATIC).draw(rng)
-        ev = _portfolio(self.n, quadratic=QUADRATIC, shift=self._shift_vector()).draw(rng)
-        return {"X_dev": dev["x"], "y_dev": dev["defaults"], "X_eval": ev["x"], "y_eval": ev["defaults"]}
+        x_dev = LogisticPortfolio(n=self.n, **SHIFT_PORTFOLIO).draw(rng)["x"]
+        x_eval = LogisticPortfolio(n=self.n, **SHIFT_PORTFOLIO).draw(rng)["x"]
+        shifted = np.zeros(self.n, dtype=bool)
+        shifted[rng.permutation(self.n)[: round(SHIFTED_SHARE * self.n)]] = True
+        if self.shift != 0.0:
+            x_eval[shifted] += self._shift_vector()
+        else:
+            shifted[:] = False
+        return {
+            "X_dev": x_dev,
+            "y_dev": self._labels(x_dev, rng),
+            "X_eval": x_eval,
+            "y_eval": self._labels(x_eval, rng),
+            "shifted": shifted,
+        }
 
     def truth(self) -> dict[str, Any]:
+        share = SHIFTED_SHARE if self.shift != 0.0 else 0.0
         return {
             "shifted_features": [int(f) for f in self.features],
             "shift": self.shift,
             "null": self.shift == 0.0,
-            "eval_mean": [float(m) for m in self._shift_vector()],
-            "quadratic": QUADRATIC,
+            "shifted_share": share,
+            "eval_mean": [float(share * m) for m in self._shift_vector()],
+            "break_at": BREAK_AT,
+            "break_slope": BREAK_SLOPE,
         }
 
     def verify(self, n_draws: int = 500, seed: int = 20261005) -> list[Check]:
-        """The mean of every evaluation covariate against the planted shift (development covariates are mean zero)."""
+        """The mean of every evaluation covariate against the planted shift (development covariates are mean zero), the
+        share of shifted rows and the mean of the rows that were shifted."""
         rng = np.random.default_rng(np.random.SeedSequence([seed, 1402]))
-        dev, ev = [], []
+        dev, ev, share, hit = [], [], [], []
         for _ in range(n_draws):
             d = self.draw(rng)
             dev.append(d["X_dev"].mean(axis=0))
             ev.append(d["X_eval"].mean(axis=0))
+            share.append(d["shifted"].mean())
+            if d["shifted"].any():
+                hit.append(d["X_eval"][d["shifted"]].mean(axis=0) - d["X_eval"][~d["shifted"]].mean(axis=0))
         dev_a, ev_a = np.array(dev), np.array(ev)
-        shift = self._shift_vector()
-        out = [mean_check(f"evaluation mean of feature {j}", float(shift[j]), ev_a[:, j]) for j in range(len(shift))]
+        t = self.truth()
+        out = [
+            mean_check(f"evaluation mean of feature {j}", t["eval_mean"][j], ev_a[:, j]) for j in range(ev_a.shape[1])
+        ]
         out.append(mean_check("development mean of feature 0", 0.0, dev_a[:, 0]))
+        if hit:
+            out.append(
+                mean_check(
+                    "shifted minus other rows, first shifted feature", self.shift, np.array(hit)[:, self.features[0]]
+                )
+            )
         return out
 
 

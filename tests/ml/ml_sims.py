@@ -275,7 +275,7 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
     """name: (test callable, null generator, defect generator, feed or None, description)."""
     grid = (0.0, 0.25, 0.5, 1.0)
     noise_null, noise_def = NoiseSensitivityPlant(2000, 0.25, 1), NoiseSensitivityPlant(2000, 2.5, 1)
-    shift_null, shift_def = CovariateShiftPlant(3000, 0.0, [0], 1), CovariateShiftPlant(3000, 2.5, [0], 1)
+    shift_null, shift_def = CovariateShiftPlant(3000, 0.0, [0], 1), CovariateShiftPlant(3000, 3.0, [0], 1)
     seed_null, seed_def = SeedUnstablePlant(4000, 0.2, 1), SeedUnstablePlant(4000, 1.0, 1)
     return {
         "ml.robustness": (
@@ -290,7 +290,7 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
             shift_null,
             shift_def,
             run_shift(shift_def, 0.25),
-            {"null": "shift 0", "defect": "shift 2.5 sd on feature 0"},
+            {"null": "shift 0", "defect": "a quarter of the rows shifted 3 sd on feature 0"},
         ),
         "ml.seed_stability": (
             run_seeds(seed_null, 10),

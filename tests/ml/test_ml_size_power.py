@@ -15,7 +15,8 @@ from riskvalidation.ml.cbpe import cbpe_auc
 from riskvalidation.validation.discrimination import auc_with_variance
 
 COND = conditions()
-SIZE_MAX = {"ml.conformal_coverage": 0.10}  # the binomial test on an estimated quantile is slightly oversized
+# the binomial test on an estimated quantile is slightly oversized; the worst subsample is a region (finding F4)
+SIZE_MAX = {"ml.conformal_coverage": 0.10, "ml.shift_resilience": 0.15}
 SIZE_DEFAULT, POWER_MIN = 0.05, 0.90
 
 
