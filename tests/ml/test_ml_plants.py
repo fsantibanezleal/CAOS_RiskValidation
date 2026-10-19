@@ -76,18 +76,27 @@ def test_leak_plant_single_feature_auc_of_the_leak_rises_with_strength_and_match
 def test_covariate_shift_plant_truth_and_the_shift_score_finds_the_shift():
     plant = CovariateShiftPlant(3000, 1.5, [0, 2], 7)
     t = plant.truth()
-    assert t["shifted_features"] == [0, 2] and t["shift"] == 1.5 and t["null"] is False
+    assert t["shifted_features"] == [0, 2] and t["shift"] == 1.5 and t["null"] is False and t["shifted_share"] == 0.25
     assert CovariateShiftPlant(3000, 0.0, [0], 7).truth()["null"] is True
     d = plant.draw(np.random.default_rng(8))
-    assert d["X_dev"].shape == d["X_eval"].shape == (3000, 3)
-    means = d["X_eval"].mean(axis=0) - d["X_dev"].mean(axis=0)
-    assert means[0] > 1.2 and means[2] > 1.2 and abs(means[1]) < 0.15
+    assert d["X_dev"].shape == d["X_eval"].shape == (3000, 3) and d["shifted"].sum() == 750
+    gap = d["X_eval"][d["shifted"]].mean(axis=0) - d["X_eval"][~d["shifted"]].mean(axis=0)
+    assert gap[0] > 1.3 and gap[2] > 1.3 and abs(gap[1]) < 0.15  # the shifted rows sit shift sd above the rest
     score = shift_score_rank(d["X_dev"], d["X_eval"], seed=9)
+    assert float(score[d["shifted"]].mean()) > float(score[~d["shifted"]].mean()) + 0.15  # ranks shifted rows above
+    assert auc_with_variance(score, d["shifted"].astype(int))[0] > 0.8
     null = CovariateShiftPlant(3000, 0.0, [0, 2], 7).draw(np.random.default_rng(8))
+    assert not null["shifted"].any()
     null_score = shift_score_rank(null["X_dev"], null["X_eval"], seed=9)
-    assert float(score.mean()) > 0.7 and abs(float(null_score.mean()) - 0.5) < 0.05
+    assert abs(float(null_score.mean()) - 0.5) < 0.05
     pred = plant.predict(d["X_eval"])
     assert pred.shape == (3000,) and np.all((pred > 0.0) & (pred < 1.0))
+    # the planted defect costs AUC where the shifted rows are: the model is right outside them and wrong inside
+    big = CovariateShiftPlant(20_000, 3.0, [0], 7).draw(np.random.default_rng(3))
+    m = big["shifted"]
+    auc_in = auc_with_variance(plant.predict(big["X_eval"][m]), big["y_eval"][m])[0]
+    auc_out = auc_with_variance(plant.predict(big["X_eval"][~m]), big["y_eval"][~m])[0]
+    assert auc_out > 0.8 and auc_in < auc_out - 0.1
     with pytest.raises(ValueError, match="features"):
         CovariateShiftPlant(100, 1.0, [5], 1)
 
