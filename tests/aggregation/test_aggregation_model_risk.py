@@ -30,7 +30,7 @@ def test_barrieu_scandolo_golden_and_invariants():
     top = mr.barrieu_scandolo((100.0, 130.0), 1)  # the reference is the maximum
     assert top.am == 0.0 and top.rm == 0.0
     bottom = mr.barrieu_scandolo((100.0, 130.0), 0)
-    assert bottom.rm == 0.0 and bottom.am == pytest.approx(0.3)
+    assert bottom.rm == 1.0 and bottom.am == pytest.approx(0.3)
     with pytest.raises(ValueError, match="rho_x0|rhos"):
         mr.barrieu_scandolo((0.0, 130.0), 0)
     with pytest.raises(ValueError, match="rho_x0|rhos"):

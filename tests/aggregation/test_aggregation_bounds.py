@@ -12,7 +12,8 @@ from riskvalidation.aggregation import copulas as c
 
 def pareto2_ppf(u):
     """F(x) = 1 - (1 + x)^-2, so F^-1(u) = (1 - u)^(-1/2) - 1 (equation 11 of the paper with theta = 2)."""
-    return (1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0
+    with np.errstate(divide="ignore"):  # F^-1(1) is +infinity, the last cell of the upper matrix
+        return (1.0 - np.asarray(u, dtype=float)) ** -0.5 - 1.0
 
 
 def test_comonotonic_var_pareto_goldens():
