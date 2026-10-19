@@ -6,6 +6,8 @@ U9-E1 owns `tests/regulatory/`."""
 from __future__ import annotations
 
 import dataclasses
+import math
+from types import MappingProxyType
 
 import pytest
 
@@ -52,8 +54,8 @@ def test_hqla_stock_goldens_and_caps():
                 if r.hqla > 0.0:
                     assert r.l2b_share == pytest.approx((l2b - r.adj_15) / r.hqla, abs=1e-12)
                     assert r.l2_share == pytest.approx(l2 / r.hqla, abs=1e-12)
-                else:  # an empty stock has no shares to report
-                    assert (r.l2_share, r.l2b_share) == (0.0, 0.0)
+                else:  # an empty stock has no shares to report: NaN, never 0 (F11)
+                    assert math.isnan(r.l2_share) and math.isnan(r.l2b_share)
     for bad in ((-1.0, 0.0, 0.0), (0.0, -1.0, 0.0), (1.0, 0.0, -1.0)):
         with pytest.raises(ValueError, match="^l"):
             m.hqla_stock(*bad)
@@ -255,6 +257,7 @@ RSF = {
     "coins_banknotes_reserves": 0.00, "unencumbered_level_1": 0.05, "loans_fi_lt_6m_level1_secured": 0.10,
     "loans_fi_lt_6m_other": 0.15, "unencumbered_level_2a": 0.15, "unencumbered_level_2b": 0.50,
     "encumbered_hqla_6m_to_1y": 0.50, "loans_fi_6m_to_1y": 0.50, "other_assets_lt_1y": 0.50,
+    "operational_deposits_held": 0.50,
     "residential_mortgages_ge_1y_rw35": 0.65, "other_loans_ge_1y_rw35": 0.65, "initial_margin_ccp_default_fund": 0.85,
     "other_loans_ge_1y_rw_gt_35": 0.85, "non_hqla_securities_ge_1y": 0.85, "physical_commodities": 0.85,
     "encumbered_ge_1y": 1.00, "net_derivative_assets": 1.00, "other_assets": 1.00, "undrawn_facilities_obs": 0.05,
@@ -281,3 +284,36 @@ def test_parameter_tables_transcription():
     # the factors are shares
     for table in (OUTFLOW, INFLOW, HAIRCUT, ASF, RSF):
         assert all(0.0 <= v <= 1.0 for v in table.values())
+
+
+def test_net_cash_outflows_refuses_a_cap_above_the_basel_ceiling():
+    """F1: inflows never offset more than 0.75 of outflows; a stricter cap is allowed."""
+    for cap in (0.9, 1.0, 0.75 + 1e-9):
+        with pytest.raises(ValueError, match="^cap: "):
+            m.net_cash_outflows(100.0, 90.0, cap=cap)
+    assert m.net_cash_outflows(100.0, 90.0, cap=0.75).net == 25.0
+    assert m.net_cash_outflows(100.0, 90.0, cap=0.0).net == 100.0
+
+
+def test_hqla_stock_empty_stock_shares_are_nan():
+    """F11: a share of an empty stock has no value, never 0 and never an error."""
+    r = m.hqla_stock(0.0, 0.0, 0.0)
+    assert r.hqla == 0.0 and math.isnan(r.l2_share) and math.isnan(r.l2b_share)
+    full = m.hqla_stock(100.0, 20.0, 30.0)
+    assert not math.isnan(full.l2_share) and not math.isnan(full.l2b_share)
+
+
+def test_nsfr_rsf_operational_deposits_held_key():
+    """C2: dossier 01 l.634 lists "operational deposits held" at a 50 percent RSF factor."""
+    assert m.NSFR_RSF_FACTORS["operational_deposits_held"] == 0.50
+    assert m.nsfr_rsf({"operational_deposits_held": 10.0}) == 5.0
+    assert "operational deposits held" in m.NSFR_RSF_REFERENCES["operational_deposits_held"]
+
+
+def test_module_tables_are_read_only():
+    """F6: the module tables are mappings that cannot be written."""
+    for table in (m.LCR_OUTFLOW_RATES, m.LCR_INFLOW_RATES, m.HQLA_HAIRCUTS, m.NSFR_ASF_FACTORS, m.NSFR_RSF_FACTORS,
+                  m.LCR_OUTFLOW_REFERENCES, m.LCR_INFLOW_REFERENCES, m.HQLA_REFERENCES, m.NSFR_ASF_REFERENCES,
+                  m.NSFR_RSF_REFERENCES):
+        assert isinstance(table, MappingProxyType)
+        assert not hasattr(table, "__setitem__")

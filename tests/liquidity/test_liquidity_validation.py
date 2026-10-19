@@ -4,6 +4,7 @@ Each returns one `TestResult`; the rows serialise into the fields of `common/tes
 from __future__ import annotations
 
 import math
+from types import MappingProxyType
 
 import numpy as np
 import pytest
@@ -63,10 +64,11 @@ def test_cbc_haircut_rules(monkeypatch):
     assert r.test_id == "liq.cbc_haircut_rules" and r.light is Light.GREEN and r.statistic == 0.0 and r.n == 9
     assert r.extras["thresholds"] == {"tolerance": 1e-12}
     # a haircut table with 0.25 for BBB+-BBB- is red
-    monkeypatch.setitem(cbc_module.ECB_EQUITY_HAIRCUTS, "BBB+-BBB-", 0.25)
+    altered = MappingProxyType({**cbc_module.ECB_EQUITY_HAIRCUTS, "BBB+-BBB-": 0.25})
+    monkeypatch.setattr(cbc_module, "ECB_EQUITY_HAIRCUTS", altered)
     bad = v.cbc_haircut_rules()
     assert bad.light is Light.RED and bad.statistic == pytest.approx(0.10, abs=1e-12)
-    monkeypatch.setitem(cbc_module.ECB_EQUITY_HAIRCUTS, "BBB+-BBB-", 0.35)
+    monkeypatch.undo()
     assert v.cbc_haircut_rules().light is Light.GREEN
     # a wrong label with the right haircut is red too
     original = cbc_module.haircut_rule
@@ -273,3 +275,14 @@ def test_every_result_serialises_with_its_reference():
         v.runoff_adequacy_back_test(float("inf"), 0.85)
     with pytest.raises(ValueError):
         v.htm_loss_effect(float("nan"), 1.0, None, None)
+
+
+def test_negative_tolerance_is_refused():
+    """F7: a negative tolerance would turn a shortening of the survival period into a failure."""
+    with pytest.raises(ValueError, match="^tol_days: "):
+        v.survival_monotone_in_severity([100, 90], tol_days=-5)
+    with pytest.raises(ValueError, match="^tol_days: "):
+        v.uninsured_share_sensitivity([0.5, 0.9], [100, 90], tol_days=-5)
+    with pytest.raises(ValueError, match="^tol_days: "):
+        v.reverse_stress_round_trip(2.0, 5, 5, tol_days=-1.0)
+    assert v.survival_monotone_in_severity([100, 90], tol_days=0.0).light is Light.GREEN

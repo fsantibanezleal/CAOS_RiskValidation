@@ -4,7 +4,7 @@ hazard by the state of the day.
 Source: dossier 08 G.2 line 698 (a depositor generator with known truth) and G.4 lines 739 to 742 (the generator's
 verification); the generator contract of `generators._base` (a frozen configuration, one dataset per seed, an exact
 truth,
-a verifier). Contract `engine-liquidity-api` 1.0.0, module deposits; placement in the engine, option (a), no
+a verifier). Contract `engine-liquidity-api` 1.2.0, module deposits; placement in the engine, option (a), no
 concentration parameter (decision Q10).
 
 The mechanism: the state is calm (0) on day 1; per day it moves calm to stress with probability `p_enter` and stress to

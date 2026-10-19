@@ -2,7 +2,7 @@
 
 Module `riskvalidation.regulatory.lcr_nsfr`. Sources: dossier 01 section G.1 and G.2 (BCBS Basel Framework LCR20 published 2022-12-08,
 LCR30 2020-06-05, LCR40 2023-03-30, LCR99 2019-12-15; NSF20, NSF30 and NSF99 Tables 1 to 3; all in force 2019-12-15) and M.1 to M.3
-(constructed tests, the paragraph and in-force date of every parameter). Contract `engine-liquidity-api` 1.0.0, decision Q1.
+(constructed tests, the paragraph and in-force date of every parameter). Contract `engine-liquidity-api` 1.2.0, decision Q1.
 
 The LCR computed here is a Basel formula applied to aggregates with stated assumptions: it is never the bank's reported or regulatory LCR,
 and that label is the caller's, required in the document. No official LCR or NSFR worked example exists (dossier 01 lines 1045 to 1046), so
@@ -21,7 +21,8 @@ Adj_{40}=\max\!\Big(aL2A+aL2B-Adj_{15}-\tfrac23\,aL1,\ 0\Big)\ (\text{LCR30.39})
 with `aL` the adjusted amounts after unwinding short-term SFTs and collateral swaps maturing within 30 days (LCR30.37), which default to the
 unadjusted ones. Level 1 is unlimited; Level 2 is at most 40 percent of HQLA (LCR30.31) and Level 2B at most 15 percent (LCR30.33), both
 after haircuts (LCR30.34); adjusted Level 2 is at most two-thirds of adjusted Level 1 (LCR30.35). `l2b_share = (L2B - Adj15) / HQLA` and
-`l2_share = (L2A + L2B - Adj15 - Adj40) / HQLA`, both 0 for an empty stock.
+`l2_share = (L2A + L2B - Adj15 - Adj40) / HQLA`, both NaN for an empty stock (a share of nothing has no value, never 0). The shares are of the unadjusted stock and
+may exceed 0.15 and 0.40 when the adjusted amounts differ, as the caps bind on the adjusted amounts (LCR30.37 to 39).
 
 $$NSFR=\frac{ASF}{RSF}\ge 100\%\ (\text{NSF20.2}),\qquad ASF=\sum_j f^{ASF}_jL_j,\qquad
 RSF=\sum_i f^{RSF}_iA_i+\sum_k f^{RSF}_kOBS_k+r\,D ,$$
@@ -53,7 +54,7 @@ caller maps to (the C16 mapping table, decision Q13); the engine does not map cu
 | `lcr_outflows({"retail_stable": 1000})` | `total = 50` |
 | `lcr_outflows` on less stable 100, non-financial corporate 100, other legal entity 10 | `10 + 40 + 10 = 60` |
 | `lcr_inflows({"retail_and_nonfinancial_wholesale": 100})`; `{"secured_lending_level2a": 100}` | `50`; `15` |
-| `net_cash_outflows(100, 90)`; `(100, 50)` | counted 75, net 25, cap binds; counted 50, net 50 |
+| `net_cash_outflows(100, 90)`; `(100, 50)` | counted 75, net 25, cap binds; counted 50, net 50; a `cap` above 0.75 raises (LCR40.1), a stricter one is allowed |
 | `lcr_ratio(100, 50)`; `lcr_ratio(100, 0)` | `2.0`; raises |
 | `nsfr_asf({"regulatory_capital": 10, "stable_retail_deposits": 100})` | `10 + 95 = 105` |
 | `nsfr_rsf({"unencumbered_level_2b": 100})`, with OBS 100, with derivatives 200 at 0.10 | `50`; `55`; `75`; a rate of 0.25 raises |

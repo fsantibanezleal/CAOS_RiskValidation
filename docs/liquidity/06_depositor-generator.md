@@ -2,7 +2,7 @@
 
 Module `riskvalidation.liquidity.deposits`. Sources: dossier 08 G.2 line 698 (a depositor generator with known truth) and G.4 lines 739 to
 742 (its verification); the generator contract of `riskvalidation.generators._base` (a frozen configuration, one dataset per seed, an
-exact truth, a verifier; Morris, White and Crowther 2019, doi:10.1002/sim.8086). Contract `engine-liquidity-api` 1.0.0, decision Q10
+exact truth, a verifier; Morris, White and Crowther 2019, doi:10.1002/sim.8086). Contract `engine-liquidity-api` 1.2.0, decision Q10
 (placement in the engine, option (a), no concentration parameter).
 
 ## The mechanism

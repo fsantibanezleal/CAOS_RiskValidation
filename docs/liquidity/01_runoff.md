@@ -3,7 +3,7 @@
 Module `riskvalidation.liquidity.runoff`. Sources: dossier 05 section E.1 (line 237: the open-maturity deposits of the ECB LiST 2019
 run off at a constant daily compounding rate on relevant days) and E.2 (BCBS d555 Table A.1); the U11 research addendum L1 (the ECB
 methodological note of February 2019, Tables 3.2, 3.3, 2.2 and 2.3, paragraphs 94 to 126) and L2.1. The engine contract is
-`engine-liquidity-api` 1.0.0 (Contraste `docs/contracts/engine/liquidity-api.md`).
+`engine-liquidity-api` 1.2.0 (Contraste `docs/contracts/engine/liquidity-api.md`).
 
 ## Equations
 

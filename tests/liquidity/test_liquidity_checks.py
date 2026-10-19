@@ -66,3 +66,10 @@ def test_check_increasing_grid():
     c.check_increasing_grid(np.array([1.0, 1.5]), "g", minimum=1.0)
     with pytest.raises(ValueError, match="^g: "):
         c.check_increasing_grid(np.array([]), "g")
+
+
+def test_check_unit_share_upper_edge():
+    """F5: a value just above 1 is refused (mutation M37 survived without this)."""
+    with pytest.raises(ValueError, match="^q: "):
+        c.check_unit_share(1.0 + 1e-9, "q")
+    assert c.check_unit_share(1.0, "q").tolist() == [1.0]

@@ -5,7 +5,7 @@ survival
 period as the first day the NLP turns negative, the cliff effect `(NLP(35) - NLP(30)) / TA`), E.5 rungs 1 and 2; dossier
 01
 G.3 lines 642 and 643 (the SRP50 contractual maturity mismatch tool); the U11 research addendum L1.6. Contract
-`engine-liquidity-api` 1.0.0, module ladder.
+`engine-liquidity-api` 1.2.0, module ladder.
 
 Money is USD thousands, days are integers counted from 1 (day 1 is the first relevant day after the valuation date).
 A balance that never turns the net liquidity position negative has no survival day: `survival_period` returns

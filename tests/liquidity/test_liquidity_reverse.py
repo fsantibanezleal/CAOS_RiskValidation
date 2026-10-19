@@ -8,8 +8,11 @@ import math
 import numpy as np
 import pytest
 
+from riskvalidation.core.result import Light
+from riskvalidation.liquidity import cbc as cbc_module
 from riskvalidation.liquidity import ladder, reverse
 from riskvalidation.liquidity import scenarios as sc
+from riskvalidation.validation import liquidity as v
 
 
 def one_segment(q: float = 0.01, opening: float = 1000.0, horizon: int = 125) -> sc.Scenario:
@@ -130,3 +133,59 @@ def test_solve_multiplier_refusals():
         reverse.solve_multiplier(s, cbc, 0)
     with pytest.raises(ValueError, match="cbc"):
         reverse.solve_multiplier(s, np.full(5, 100.0), 3)
+
+
+def step_cbc_probe():
+    """The review's probe (F2): one segment of 1000 at q 0.01 and a CBC that grows with a monetisation schedule."""
+    s = one_segment(q=0.01, opening=1000.0, horizon=60)
+    return s, cbc_module.monetisation_capacity(1000.0, [(1, 0.015), (2, 1.0)], 60)
+
+
+def test_solve_multiplier_step_cbc_returns_the_threshold_multiplier():
+    """F2: the survival period is an integer day, so SP(m) steps from "survives" to day 1 and no multiplier gives 5."""
+    s, cbc = step_cbc_probe()
+    res = reverse.solve_multiplier(s, cbc, 5)
+    assert res.status == "solved" and res.reason is None
+    assert res.multiplier == 1.5 and res.survival_at_multiplier == 1  # the curve stepped past the target
+    just_below = res.survival_just_below
+    assert isinstance(just_below, ladder.SurvivalResult) and just_below.survives and just_below.day is None
+    # the threshold property, by the engine's own survival function
+    at = reverse.survival_vs_multiplier(s, cbc, np.array([res.multiplier]))[0]
+    below = reverse.survival_vs_multiplier(s, cbc, np.array([res.multiplier - 1e-6]))[0]
+    assert not at.survives and at.day <= 5
+    assert below.survives or below.day > 5
+    assert below == just_below
+    # the round trip is green with survival_just_below, red as the 1.1.0 equality, and the notes give the gap
+    green = v.reverse_stress_round_trip(res.multiplier, res.survival_at_multiplier, 5,
+                                        survival_just_below=res.survival_just_below)
+    assert green.light is Light.GREEN and green.statistic == 0.0
+    assert "gap of 4 days" in green.notes
+    red = v.reverse_stress_round_trip(res.multiplier, res.survival_at_multiplier, 5)
+    assert red.light is Light.RED and red.statistic == 4.0  # a 1.1.0 call behaves as before
+
+
+def test_solve_multiplier_non_step_case_carries_just_below_and_round_trips():
+    s = one_segment()
+    res = reverse.solve_multiplier(s, np.full(125, 100.0), 5)
+    assert res.survival_at_multiplier == 5 and res.survival_just_below.day == 6
+    r = v.reverse_stress_round_trip(res.multiplier, 5, 5, survival_just_below=res.survival_just_below)
+    assert r.light is Light.GREEN and r.statistic == 0.0 and r.notes == ""
+    assert reverse.solve_multiplier(s, np.full(125, 100.0), 11).survival_just_below is None  # a refusal
+
+
+def test_round_trip_threshold_property_detects_failures():
+    # the multiplier does not reach the target: the survival period at it is above the target
+    assert v.reverse_stress_round_trip(2.0, 7, 5, survival_just_below=9).light is Light.RED
+    assert v.reverse_stress_round_trip(2.0, 7, 5, survival_just_below=9).statistic == 2.0
+    # not the smallest multiplier: the survival period just below it is already at or under the target
+    r = v.reverse_stress_round_trip(2.0, 5, 5, survival_just_below=5)
+    assert r.light is Light.RED and r.statistic == 1.0
+    # tolerance, a number of days and "survives the horizon" as infinity or as a SurvivalResult
+    assert v.reverse_stress_round_trip(2.0, 5, 5, tol_days=1.0, survival_just_below=5).light is Light.GREEN
+    assert v.reverse_stress_round_trip(2.0, 5, 5, survival_just_below=math.inf).light is Light.GREEN
+    assert v.reverse_stress_round_trip(2.0, 5, 5, survival_just_below=ladder.SurvivalResult(True, None, 60)
+                                       ).light is Light.GREEN
+    with pytest.raises(TypeError):
+        v.reverse_stress_round_trip(2.0, 5, 5, 0.0, 6)  # keyword-only
+    # a refused solve is still not evaluated, whatever the keyword
+    assert v.reverse_stress_round_trip(None, None, 5, survival_just_below=3).light is Light.NOT_EVALUATED
