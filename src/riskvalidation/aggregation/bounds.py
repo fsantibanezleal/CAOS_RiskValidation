@@ -1,23 +1,35 @@
-"""Rung 6 of the aggregation ladder: worst-case (and best-case) VaR bounds for given marginals and an unknown dependence, by
+"""Rung 6 of the aggregation ladder: worst-case (and best-case) VaR bounds for given marginals and an unknown
+dependence, by
 the rearrangement algorithm of Embrechts, Puccetti and Ruschendorf, "Model uncertainty and VaR aggregation", Journal of
 Banking and Finance 37(8), 2750-2764, 2013, doi:10.1016/j.jbankfin.2013.03.014 (accepted manuscript
-https://people.math.ethz.ch/~embrecht/ftp/MUVaR.pdf, section 2.2, pp.8-11; transcribed in F5 of the U13 research addendum).
+https://people.math.ethz.ch/~embrecht/ftp/MUVaR.pdf, section 2.2, pp.8-11; transcribed in F5 of the U13 research
+addendum).
 
-VaR is not subadditive, so the comonotonic sum is not the worst case (dossier 05 l.366). For N x d matrices X the operators
-are s(X) = the smallest row sum and t(X) = the largest row sum. Upper VaR bound (the worst VaR, steps 1 to 7 of the paper,
-p.10): the matrices of (18), x_ij = F_j^-1(alpha + (1 - alpha)(i - 1) / N) and the same with i in place of i - 1, have their
-columns permuted at random, then each column in turn is rearranged oppositely ordered to the sum of the others, sweep after
-sweep, until s changes by less than epsilon; then s_N <= s-bar_N are the rearrangement range of the worst VaR (19). The lower
-bound (the best VaR, (20) and (21)) uses the matrices over [0, alpha], z_ij = F_j^-1(alpha (i - 1) / N), and the largest row
+VaR is not subadditive, so the comonotonic sum is not the worst case (dossier 05 l.366). For N x d matrices X the
+operators
+are s(X) = the smallest row sum and t(X) = the largest row sum. Upper VaR bound (the worst VaR, steps 1 to 7 of the
+paper,
+p.10): the matrices of (18), x_ij = F_j^-1(alpha + (1 - alpha)(i - 1) / N) and the same with i in place of i - 1, have
+their
+columns permuted at random, then each column in turn is rearranged oppositely ordered to the sum of the others, sweep
+after
+sweep, until s changes by less than epsilon; then s_N <= s-bar_N are the rearrangement range of the worst VaR (19).
+The lower
+bound (the best VaR, (20) and (21)) uses the matrices over [0, alpha], z_ij = F_j^-1(alpha (i - 1) / N), and the
+largest row
 sum t, which the loop minimises. No distribution function is inverted: the quantile functions are evaluated on the grid.
 
-Where a marginal has unbounded support the last cell of the upper matrix x-bar is F_j^-1(1) = +infinity. The engine keeps it
+Where a marginal has unbounded support the last cell of the upper matrix x-bar is F_j^-1(1) = +infinity. The engine
+keeps it
 as +infinity (the paper's text read for F5 does not say how it treats that cell: UNVERIFIED): a row that holds it has an
-infinite row sum, so it is never the smallest row and the smallest row sum stays finite. The lower matrices over [0, alpha]
+infinite row sum, so it is never the smallest row and the smallest row sum stays finite. The lower matrices over [0,
+alpha]
 never reach probability 1 and are finite.
 
-Remark 6 of the paper (p.11): there is no analytic proof that (19) and (21) hold for all starting configurations (UNVERIFIED
-as a theorem); the random permutation of step 3 is the paper's mitigation, and `converged = False` reports a run stopped by
+Remark 6 of the paper (p.11): there is no analytic proof that (19) and (21) hold for all starting configurations
+(UNVERIFIED
+as a theorem); the random permutation of step 3 is the paper's mitigation, and `converged = False` reports a run
+stopped by
 `max_sweeps`.
 
 Randomness: `numpy.random.Generator(numpy.random.PCG64(seed))`; the result is reproducible for a seed. Inputs are never
@@ -56,8 +68,10 @@ def rearrangement_algorithm(matrix: np.ndarray, objective: str, epsilon: float, 
     sweeps until the value changes by less than `epsilon` between two successive sweeps or `max_sweeps` is reached.
 
     `objective` "max-min-row-sum" maximises the smallest row sum (the upper VaR bound), "min-max-row-sum" minimises the
-    largest (the lower VaR bound); both use the same oppositely-ordered step, only the value that stops the loop differs.
-    Returns (the rearranged matrix, the value, the number of sweeps, converged). The output is a column-wise permutation of
+    largest (the lower VaR bound); both use the same oppositely-ordered step, only the value that stops the loop
+    differs.
+    Returns (the rearranged matrix, the value, the number of sweeps, converged). The output is a column-wise
+    permutation of
     the input. A +infinity entry (the last cell of an unbounded upper matrix) is kept; NaN and -infinity are refused.
     """
     m = np.array(matrix, dtype=float)
@@ -89,7 +103,8 @@ def rearrangement_algorithm(matrix: np.ndarray, objective: str, epsilon: float, 
     previous = value()
     converged = False
     sweeps = 0
-    for sweeps in range(1, sweeps_max + 1):
+    for sweep in range(1, sweeps_max + 1):
+        sweeps = sweep
         total = zeroed.sum(axis=1)
         for j in range(n_cols):
             others = np.where(inf_count - (~finite[:, j]) > 0, np.inf, total - zeroed[:, j])
@@ -113,7 +128,8 @@ def rearrangement_algorithm(matrix: np.ndarray, objective: str, epsilon: float, 
 @dataclass(frozen=True)
 class VarBounds:
     """The rearrangement ranges of the worst and the best VaR, money. `lower_range` is (t_N, t-bar_N), the best VaR (F5
-    (21)); `upper_range` is (s_N, s-bar_N), the worst VaR (F5 (19)); `sweeps` are the sweep counts of the four runs in the
+    (21)); `upper_range` is (s_N, s-bar_N), the worst VaR (F5 (19)); `sweeps` are the sweep counts of the four runs in
+    the
     order t_N, t-bar_N, s_N, s-bar_N; `converged` is True when all four stopped on `epsilon`."""
 
     alpha: float
@@ -135,7 +151,8 @@ def _grid(ppfs: Sequence[Ppf], probs: np.ndarray, name: str) -> np.ndarray:
     return np.column_stack(cols)
 
 
-def worst_var_bounds(ppfs: Sequence[Ppf], alpha: float, n: int = 100_000, epsilon: float = 1e-3, max_sweeps: int = 1_000,
+def worst_var_bounds(ppfs: Sequence[Ppf], alpha: float, n: int = 100_000, epsilon: float = 1e-3, max_sweeps: int =
+1_000,
                      seed: int = 0) -> VarBounds:
     """The best and the worst VaR of the total of the marginals `ppfs` at level `alpha` for any dependence, money.
 

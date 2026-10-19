@@ -2,7 +2,8 @@
 G.1 items 1, 2 and 4, and G.4).
 
 Capital is economic capital on the unexpected-loss basis, `EC = VaR_level(L) - EL` (dossier 04 l.652-653; BCBS 2005
-explanatory note, section 4.4). Money is a float in the caller's currency, correlations are decimals. The simple sum is the
+explanatory note, section 4.4). Money is a float in the caller's currency, correlations are decimals. The simple sum
+is the
 headline capital of the case; every other figure of the aggregation modules is information, not capital (dossier 05
 l.519). The engine computes and states no compliance claim.
 
@@ -124,8 +125,10 @@ def euler_diversification_benefit(rho_contribution: float, rho_standalone: float
 
 
 def std_contributions(cov: np.ndarray, c: float = 1.0) -> np.ndarray:
-    """The Euler contributions of the standard deviation measure, c cov[L_i, L] / sqrt(var L) (Tasche, eq. 3.4; dossier 05
-    G.4), so that the variance-covariance total allocates exactly. `cov` (K, K) the covariance of (L_1, ..., L_K) in money
+    """The Euler contributions of the standard deviation measure, c cov[L_i, L] / sqrt(var L) (Tasche, eq. 3.4;
+    dossier 05
+    G.4), so that the variance-covariance total allocates exactly. `cov` (K, K) the covariance of (L_1, ..., L_K) in
+    money
     squared. Golden: [[4, 2], [2, 9]] gives (1.4552, 2.6679), summing to sqrt(17) = 4.1231."""
     a = _matrix(cov, "cov")
     mult = float(c)
