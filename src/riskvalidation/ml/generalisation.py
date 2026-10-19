@@ -1,5 +1,6 @@
-"""The overfit gap and the weak spots (PiML "Overfit" and "WeakSpot"; dossier 06 C.7 l.1016-1018; I.1 l.1187-1188; ECB guide
-paragraph 43(a); EBA recommendation (i)). Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/generalisation.py``.
+"""The overfit gap and the weak spots (PiML "Overfit" and "WeakSpot"; dossier 06 C.7 l.1016-1018; I.1 l.1187-1188; ECB
+guide paragraph 43(a); EBA recommendation (i)). Contract: ``engine-ml-api`` 1.0.0, module
+``riskvalidation/ml/generalisation.py``.
 """
 
 from __future__ import annotations
@@ -24,10 +25,11 @@ class OverfitResult:
             raise ValueError("flag must equal (gap > tolerance)")
 
 
-def overfit_gap(metric_train: float, metric_test: float, tolerance: float,
-                higher_is_better: bool = True) -> OverfitResult:
-    """``gap = metric_train - metric_test`` when higher is better (AUC), ``metric_test - metric_train`` otherwise (Brier);
-    the flag is raised when the gap exceeds the tolerance (a gap equal to it is not flagged)."""
+def overfit_gap(
+    metric_train: float, metric_test: float, tolerance: float, higher_is_better: bool = True
+) -> OverfitResult:
+    """``gap = metric_train - metric_test`` when higher is better (AUC), ``metric_test - metric_train`` otherwise
+    (Brier); the flag is raised when the gap exceeds the tolerance (a gap equal to it is not flagged)."""
     train, test = scalar(metric_train, "metric_train"), scalar(metric_test, "metric_test")
     tol = nonneg(tolerance, "tolerance")
     gap = train - test if higher_is_better else test - train
@@ -45,9 +47,10 @@ class WeakSpot:
 
 
 def weak_spots(error: np.ndarray, bins: np.ndarray, k: float, min_n: int = 30) -> list[WeakSpot]:
-    """The slices whose mean error exceeds ``k`` times the overall mean error and that hold at least ``min_n`` rows, sorted
-    by decreasing ratio (ties by label). ``error`` is the per-row loss (Brier terms) and ``bins`` the integer slice label
-    of each row. A slice below ``min_n`` is never reported; an overall mean of zero leaves nothing to exceed."""
+    """The slices whose mean error exceeds ``k`` times the overall mean error and that hold at least ``min_n`` rows,
+    sorted by decreasing ratio (ties by label). ``error`` is the per-row loss (Brier terms) and ``bins`` the integer
+    slice label of each row. A slice below ``min_n`` is never reported; an overall mean of zero leaves nothing to
+    exceed."""
     e = vec(error, "error")
     b = np.asarray(bins)
     if b.ndim != 1 or not np.issubdtype(b.dtype, np.integer):

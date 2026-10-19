@@ -32,6 +32,7 @@ def _curve(delta: float) -> RobustnessCurve:
 
 # ---------------------------------------------------------------------------------------------- the cut points
 
+
 def test_policy_rows_are_the_contract_table():
     t = ml_thresholds()
     expect = {  # key: (kind, amber, red) with the strict rows one float above their cut
@@ -69,8 +70,9 @@ def test_ml_policy_fills_only_the_missing_keys_of_the_base_policy():
     merged = ml_policy(own)
     assert merged.thresholds["ml.shift_resilience"].amber == 0.2  # a key the base holds is kept
     assert merged.thresholds["ml.seed_stability"].amber == 0.01
-    custom = ml_policy(perturbation_tolerance=0.01, overfit_tolerance=0.1, weak_spot_multiple=3.0,
-                       additivity_tolerance=1e-6)
+    custom = ml_policy(
+        perturbation_tolerance=0.01, overfit_tolerance=0.1, weak_spot_multiple=3.0, additivity_tolerance=1e-6
+    )
     assert custom.thresholds["ml.robustness"].amber == NA(0.01, math.inf)
     assert custom.thresholds["ml.robustness"].red == NA(0.02, math.inf)
     assert custom.thresholds["ml.overfit"].amber == NA(0.1, math.inf)
@@ -80,11 +82,19 @@ def test_ml_policy_fills_only_the_missing_keys_of_the_base_policy():
 
 # ---------------------------------------------------------------------------------------------- robustness
 
+
 def test_robustness_boundaries_agree_with_the_strict_finding():
     from riskvalidation.ml.robustness import robustness_finding
 
-    cases = [(-0.02, Light.GREEN), (-0.0200001, Light.AMBER), (-0.04, Light.AMBER), (-0.0400001, Light.RED),
-             (0.0, Light.GREEN), (0.03, Light.GREEN), (-0.1, Light.RED)]
+    cases = [
+        (-0.02, Light.GREEN),
+        (-0.0200001, Light.AMBER),
+        (-0.04, Light.AMBER),
+        (-0.0400001, Light.RED),
+        (0.0, Light.GREEN),
+        (0.03, Light.GREEN),
+        (-0.1, Light.RED),
+    ]
     for delta, light in cases:
         curve = _curve(delta)
         res = v.robustness("m1", curve, 0.02, 0.5)
@@ -106,7 +116,9 @@ def test_robustness_policy_argument_tolerance_and_off_grid():
         v.robustness("m", _curve(-0.015), 0.02, 0.5, pol)  # a tolerance the policy's cut points do not state
     with pytest.raises(ValueError, match="preset_eps"):
         v.robustness("m", _curve(-0.015), 0.02, 0.75)
-    nan_curve = RobustnessCurve(grid=(0.0, 0.5), auc=(0.8, float("nan")), brier=(0.1, 0.1), auc_delta=(0.0, float("nan")))
+    nan_curve = RobustnessCurve(
+        grid=(0.0, 0.5), auc=(0.8, float("nan")), brier=(0.1, 0.1), auc_delta=(0.0, float("nan"))
+    )
     assert_not_evaluated(v.robustness("m", nan_curve, 0.02, 0.5), "ml.robustness")
     empty = Policy("p", "1", "no ml keys", {})
     assert_not_evaluated(v.robustness("m", _curve(-0.1), 0.02, 0.5, empty), "ml.robustness")
@@ -114,26 +126,47 @@ def test_robustness_policy_argument_tolerance_and_off_grid():
 
 # ---------------------------------------------------------------------------------------------- shift, seeds, codes
 
-def test_shift_resilience_lights():
-    def res(drop):
-        return v.shift_resilience("m", SubsampleResult(n=100, auc=0.8 - drop, brier=0.2, auc_full=0.8, brier_full=0.1))
 
-    for drop, light in ((0.0, Light.GREEN), (0.049, Light.GREEN), (0.05, Light.AMBER), (0.07, Light.AMBER),
-                        (0.10, Light.RED), (0.2, Light.RED), (-0.05, Light.GREEN)):
+def test_shift_resilience_lights():
+    def res(drop, policy=None):
+        return v.shift_resilience(
+            "m", SubsampleResult(n=100, auc=0.8 - drop, brier=0.2, auc_full=0.8, brier_full=0.1), policy
+        )
+
+    for drop, light in (
+        (0.0, Light.GREEN),
+        (0.049, Light.GREEN),
+        (0.051, Light.AMBER),
+        (0.07, Light.AMBER),
+        (0.101, Light.RED),
+        (0.2, Light.RED),
+        (-0.05, Light.GREEN),
+    ):
         r = res(drop)
         assert r.light is light, drop
         assert r.metric == pytest.approx(drop, abs=1e-12) and r.n == 100
         assert_row(r, "ml.shift_resilience")
+    # the inclusive cut points, on binary fractions so that the drop is exact: amber from the amber cut, red from the
+    # red cut
+    dyadic = Policy("d", "1", "x", {"ml.shift_resilience": Threshold("upper_bad", 0.0625, 0.125)})
+    exact = lambda auc: v.shift_resilience("m", SubsampleResult(10, auc, 0.2, 0.75, 0.1), dyadic)  # noqa: E731
+    assert exact(0.6875).light is Light.AMBER and exact(0.625).light is Light.RED and exact(0.6876).light is Light.GREEN
     custom = Policy("c", "1", "x", {"ml.shift_resilience": Threshold("upper_bad", 0.01, 0.02)})
-    assert v.shift_resilience("m", SubsampleResult(100, 0.78, 0.2, 0.8, 0.1), custom).light is Light.RED
+    assert res(0.03, custom).light is Light.RED
 
 
 def test_seed_stability_lights():
     def res(sd):
         return v.seed_stability("m", SeedDispersion(n_seeds=5, mean=0.7, sd=sd, minimum=0.6, maximum=0.8))
 
-    for sd, light in ((0.0, Light.GREEN), (0.0099, Light.GREEN), (0.01, Light.AMBER), (0.019, Light.AMBER),
-                      (0.02, Light.RED), (0.05, Light.RED)):
+    for sd, light in (
+        (0.0, Light.GREEN),
+        (0.0099, Light.GREEN),
+        (0.01, Light.AMBER),
+        (0.019, Light.AMBER),
+        (0.02, Light.RED),
+        (0.05, Light.RED),
+    ):
         r = res(sd)
         assert r.light is light, sd
         assert r.metric == sd and r.n == 5
@@ -144,14 +177,26 @@ def test_reason_code_stability_and_effect_agreement_lights():
     def rc(mean):
         return v.reason_code_stability("m", OverlapResult(top_k=4, n_refits=3, mean=mean, p05=mean))
 
-    for mean, light in ((1.0, Light.GREEN), (0.81, Light.GREEN), (0.80, Light.AMBER), (0.7, Light.AMBER),
-                        (0.60, Light.RED), (0.2, Light.RED)):
+    for mean, light in (
+        (1.0, Light.GREEN),
+        (0.81, Light.GREEN),
+        (0.80, Light.AMBER),
+        (0.7, Light.AMBER),
+        (0.60, Light.RED),
+        (0.2, Light.RED),
+    ):
         r = rc(mean)
         assert r.light is light, mean
         assert r.metric == mean and r.n == 3
         assert_row(r, "ml.reason_code_stability")
-    for rho, light in ((0.95, Light.GREEN), (0.71, Light.GREEN), (0.70, Light.AMBER), (0.5, Light.AMBER),
-                       (0.40, Light.RED), (-0.3, Light.RED)):
+    for rho, light in (
+        (0.95, Light.GREEN),
+        (0.71, Light.GREEN),
+        (0.70, Light.AMBER),
+        (0.5, Light.AMBER),
+        (0.40, Light.RED),
+        (-0.3, Light.RED),
+    ):
         r = v.effect_agreement("m", rho, 12)
         assert r.light is light, rho
         assert r.metric == rho and r.n == 12
@@ -160,7 +205,9 @@ def test_reason_code_stability_and_effect_agreement_lights():
     assert_not_evaluated(v.effect_agreement("m", 0.9, 1), "ml.effect_agreement")
 
 
-# ---------------------------------------------------------------------------------------------- additivity, overfit, spots
+# ---------------------------------------------------------------------------------------------- additivity, overfit,
+# spots
+
 
 def test_additivity_overfit_and_weak_spot_lights():
     for gap, light in ((0.0, Light.GREEN), (1e-9, Light.GREEN), (1.1e-9, Light.RED), (1e-3, Light.RED)):
@@ -194,12 +241,19 @@ def test_additivity_overfit_and_weak_spot_lights():
 
 # ---------------------------------------------------------------------------------------------- conformal, leakage, dq
 
+
 def test_conformal_coverage_lights():
     def res(p, cov=0.85):
         return v.conformal_coverage("m", CoverageResult(n=500, coverage=cov, target=0.9, p_value=p))
 
-    for p, light in ((0.5, Light.GREEN), (0.05, Light.GREEN), (0.0499, Light.AMBER), (0.01, Light.AMBER),
-                     (0.0099, Light.RED), (0.0, Light.RED)):
+    for p, light in (
+        (0.5, Light.GREEN),
+        (0.05, Light.GREEN),
+        (0.0499, Light.AMBER),
+        (0.01, Light.AMBER),
+        (0.0099, Light.RED),
+        (0.0, Light.RED),
+    ):
         r = res(p)
         assert r.light is light, p
         assert r.p_value == p and r.metric == 0.85 and r.n == 500
@@ -208,8 +262,12 @@ def test_conformal_coverage_lights():
 
 
 def test_leakage_screen_is_the_worst_of_the_four_screens():
-    clean = dict(temporal=0, single=SingleFeatureAuc(0.55, 1, False), overlap=0.0,
-                 resemblance=AucResult(auc=0.52, variance=1e-4, n=2000))
+    clean = dict(
+        temporal=0,
+        single=SingleFeatureAuc(0.55, 1, False),
+        overlap=0.0,
+        resemblance=AucResult(auc=0.52, variance=1e-4, n=2000),
+    )
     r = v.leakage_screen("m", **clean)
     assert r.light is Light.GREEN and r.statistic == 0.0 and r.n == 2000
     assert_row(r, "ml.leakage_screen")
@@ -224,8 +282,10 @@ def test_leakage_screen_is_the_worst_of_the_four_screens():
         assert r.light is Light.RED and r.statistic == 1.0, name
         assert r.extras["screens"][name]["light"] == "red"
         assert_row(r, "ml.leakage_screen")
-    edge = v.leakage_screen("m", **dict(clean, single=SingleFeatureAuc(0.95, 0, False),
-                                        resemblance=AucResult(auc=0.70, variance=1e-4, n=10)))
+    edge = v.leakage_screen(
+        "m",
+        **dict(clean, single=SingleFeatureAuc(0.95, 0, False), resemblance=AucResult(auc=0.70, variance=1e-4, n=10)),
+    )
     assert edge.light is Light.GREEN  # strict rows: a value equal to the cut is not a trip
     both = v.leakage_screen("m", **dict(clean, temporal=3, overlap=1.0))
     assert both.light is Light.RED and both.statistic == 2.0
@@ -234,12 +294,19 @@ def test_leakage_screen_is_the_worst_of_the_four_screens():
 
 def test_data_quality_lights_and_counts():
     def dq(*failed):
-        counts = [DataQualityCount(check=f"c{i}", n_checked=1000, n_failed=f, share_ok=1.0 - f / 1000.0)
-                  for i, f in enumerate(failed)]
+        counts = [
+            DataQualityCount(check=f"c{i}", n_checked=1000, n_failed=f, share_ok=1.0 - f / 1000.0)
+            for i, f in enumerate(failed)
+        ]
         return v.data_quality("m", counts)
 
-    for failed, light in (((0, 0), Light.GREEN), ((9, 0), Light.GREEN), ((10, 0), Light.AMBER),
-                          ((10, 49), Light.AMBER), ((0, 50), Light.RED)):
+    for failed, light in (
+        ((0, 0), Light.GREEN),
+        ((9, 0), Light.GREEN),
+        ((10, 0), Light.AMBER),
+        ((10, 49), Light.AMBER),
+        ((0, 50), Light.RED),
+    ):
         r = dq(*failed)
         assert r.light is light, failed
         assert r.metric == pytest.approx(max(failed) / 1000.0, abs=1e-15)
@@ -249,8 +316,11 @@ def test_data_quality_lights_and_counts():
 
 
 def test_cbpe_estimate_is_never_green_or_red_and_not_evaluated_with_a_label():
-    est = CbpeAuc(estimated_auc=0.71, label="estimate",
-                  assumptions=("calibrated-probabilities", "no-concept-drift", "no-extrapolation", "adequate-sample"))
+    est = CbpeAuc(
+        estimated_auc=0.71,
+        label="estimate",
+        assumptions=("calibrated-probabilities", "no-concept-drift", "no-extrapolation", "adequate-sample"),
+    )
     r = v.cbpe_estimate("m", est)
     row = assert_row(r, "ml.cbpe_estimate")
     assert r.light not in (Light.GREEN, Light.RED) and r.metric == 0.71
@@ -264,11 +334,11 @@ def test_challenger_brier_light_follows_the_paired_interval():
     def ch(diff, lo, hi):
         return v.challenger_brier("m", PairedBrier(diff=diff, lo=lo, hi=hi, n_boot=1000))
 
-    assert ch(0.01, 0.002, 0.02).light is Light.AMBER   # the interval excludes zero with the challenger worse
+    assert ch(0.01, 0.002, 0.02).light is Light.AMBER  # the interval excludes zero with the challenger worse
     assert ch(0.01, -0.002, 0.02).light is Light.GREEN  # it does not exclude zero
-    assert ch(0.0, 0.0, 0.0).light is Light.GREEN       # identical forecasts
+    assert ch(0.0, 0.0, 0.0).light is Light.GREEN  # identical forecasts
     assert ch(-0.01, -0.02, -0.002).light is Light.GREEN  # a better challenger is not a finding against the champion
-    assert ch(0.01, 0.0, 0.02).light is Light.GREEN     # an interval touching zero does not exclude it
+    assert ch(0.01, 0.0, 0.02).light is Light.GREEN  # an interval touching zero does not exclude it
     r = ch(0.01, 0.002, 0.02)
     row = assert_row(r, "ml.challenger_brier")
     assert r.statistic == r.metric == 0.01 and row["extras"]["lo"] == 0.002 and row["extras"]["hi"] == 0.02
@@ -276,6 +346,7 @@ def test_challenger_brier_light_follows_the_paired_interval():
 
 
 # ---------------------------------------------------------------------------------------------- invariants
+
 
 def test_every_function_is_pure_deterministic_and_serialises():
     calls = [
@@ -320,15 +391,20 @@ def test_not_evaluated_rows_carry_no_number_for_every_function_with_missing_data
         assert res.extras is not None
     # a policy that lacks a key: never a colour
     bare = Policy("bare", "1", "none", {})
-    for res, tid in [(v.seed_stability("m", SeedDispersion(5, 0.7, 0.05, 0.6, 0.8), bare), "ml.seed_stability"),
-                     (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, 0.5), bare), "ml.conformal_coverage"),
-                     (v.data_quality("m", [DataQualityCount("c", 10, 1, 0.9)], bare), "ml.data_quality")]:
+    for res, tid in [
+        (v.seed_stability("m", SeedDispersion(5, 0.7, 0.05, 0.6, 0.8), bare), "ml.seed_stability"),
+        (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, 0.5), bare), "ml.conformal_coverage"),
+        (v.data_quality("m", [DataQualityCount("c", 10, 1, 0.9)], bare), "ml.data_quality"),
+    ]:
         assert_not_evaluated(res, tid)
     # a leakage screen with one missing key is not evaluated as a whole
-    partial = Policy("p", "1", "x", {k: t for k, t in ml_thresholds().items()
-                                     if k != "ml.leakage_screen.entity_overlap"})
-    assert_not_evaluated(v.leakage_screen("m", 0, SingleFeatureAuc(0.6, 0, False), 0.0, AucResult(0.5, 1e-4, 10),
-                                          partial), "ml.leakage_screen")
+    partial = Policy(
+        "p", "1", "x", {k: t for k, t in ml_thresholds().items() if k != "ml.leakage_screen.entity_overlap"}
+    )
+    assert_not_evaluated(
+        v.leakage_screen("m", 0, SingleFeatureAuc(0.6, 0, False), 0.0, AucResult(0.5, 1e-4, 10), partial),
+        "ml.leakage_screen",
+    )
 
 
 def test_inputs_are_not_mutated_by_the_validation_functions():

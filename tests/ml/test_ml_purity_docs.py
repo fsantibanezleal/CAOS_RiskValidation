@@ -13,11 +13,32 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 PAGES = ROOT / "docs" / "ml"
-NAMES = ("01_robustness.md", "02_seeds-and-explanations.md", "03_effects.md", "04_generalisation.md", "05_conformal.md",
-         "06_leakage-and-data-quality.md", "07_cbpe-and-challenger.md", "08_size-and-power.md", "09_validation-tests.md")
+NAMES = (
+    "01_robustness.md",
+    "02_seeds-and-explanations.md",
+    "03_effects.md",
+    "04_generalisation.md",
+    "05_conformal.md",
+    "06_leakage-and-data-quality.md",
+    "07_cbpe-and-challenger.md",
+    "08_size-and-power.md",
+    "09_validation-tests.md",
+)
 HEAVY = ("pandas", "sklearn", "statsmodels", "torch", "lightgbm", "xgboost", "matplotlib", "shap", "mapie", "interpret")
-MODULES = ("robustness", "seeds", "explanations", "effects", "generalisation", "conformal", "leakage", "dataquality",
-           "cbpe", "challenger", "plants", "policy")
+MODULES = (
+    "robustness",
+    "seeds",
+    "explanations",
+    "effects",
+    "generalisation",
+    "conformal",
+    "leakage",
+    "dataquality",
+    "cbpe",
+    "challenger",
+    "plants",
+    "policy",
+)
 
 
 def test_modules_import_no_learning_or_dataframe_library():

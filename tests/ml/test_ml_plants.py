@@ -24,8 +24,13 @@ from riskvalidation.ml.robustness import robustness_curve, shift_score_rank
 from riskvalidation.ml.seeds import seed_auc_dispersion
 from riskvalidation.validation.discrimination import auc_with_variance
 
-ALL = (LeakPlant(500, 1.0, 1), CovariateShiftPlant(500, 1.0, [0], 1), NoiseSensitivityPlant(500, 1.0, 1),
-       SeedUnstablePlant(500, 0.5, 1), ExchangeabilityBreakPlant(500, 0.5, 1))
+ALL = (
+    LeakPlant(500, 1.0, 1),
+    CovariateShiftPlant(500, 1.0, [0], 1),
+    NoiseSensitivityPlant(500, 1.0, 1),
+    SeedUnstablePlant(500, 0.5, 1),
+    ExchangeabilityBreakPlant(500, 0.5, 1),
+)
 
 
 @pytest.mark.parametrize("plant", ALL, ids=lambda p: type(p).__name__)
@@ -115,7 +120,8 @@ def test_seed_unstable_plant_dispersion_matches_truth():
     disp = seed_auc_dispersion(plant.train, d["X"], d["y"], seeds)
     assert disp.n_seeds == 60
     # the population AUC of seed k is Phi(delta / sqrt(2 (1 + (instability xi_k)^2))); the sample AUC adds a smooth
-    # sampling deviation, so the standard deviation is compared with the exact one within 25 percent and the mean with 0.01
+    # sampling deviation, so the standard deviation is compared with the exact one within 25 percent and the mean with
+    # 0.01
     assert disp.sd == pytest.approx(t["sd_auc_across_seeds"], rel=0.25)
     assert disp.mean == pytest.approx(t["mean_auc"], abs=0.01)
     x = d["X"][:50]

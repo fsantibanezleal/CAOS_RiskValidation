@@ -1,6 +1,7 @@
 """RV-1437: the size under the null and the power against the planted defect of each `ml.` validation test, by
-`harness.run.simulate` over no fewer than 4,000 repetitions (contract engine-ml-api 1.0.0, SDD l.335). The measured rates
-are reported in `docs/ml/08_size-and-power.md`; the bounds below are design bounds of the study, stated before the run."""
+`harness.run.simulate` over no fewer than 4,000 repetitions (contract engine-ml-api 1.0.0, SDD l.335). The measured
+rates are reported in `docs/ml/08_size-and-power.md`; the bounds below are design bounds of the study, stated before the
+run."""
 
 from __future__ import annotations
 

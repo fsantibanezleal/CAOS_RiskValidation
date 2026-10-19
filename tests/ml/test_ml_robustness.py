@@ -53,14 +53,17 @@ def test_perturb_features_noise_has_sd_eps_times_sd():
         assert np.all(np.abs(noise.mean(axis=0)) <= 4.0 * target / math.sqrt(n))
 
 
-@pytest.mark.parametrize("kwargs, field", [
-    ({"X": np.zeros(5), "eps": 0.1}, "X"),
-    ({"X": np.zeros((5, 2)), "eps": -0.1}, "eps"),
-    ({"X": np.zeros((5, 2)), "eps": float("nan")}, "eps"),
-    ({"X": np.array([[1.0, np.nan]]), "eps": 0.1}, "X"),
-    ({"X": np.zeros((5, 2)), "eps": 0.1, "sd": np.ones(3)}, "sd"),
-    ({"X": np.zeros((5, 2)), "eps": 0.1, "sd": np.array([1.0, -1.0])}, "sd"),
-])
+@pytest.mark.parametrize(
+    "kwargs, field",
+    [
+        ({"X": np.zeros(5), "eps": 0.1}, "X"),
+        ({"X": np.zeros((5, 2)), "eps": -0.1}, "eps"),
+        ({"X": np.zeros((5, 2)), "eps": float("nan")}, "eps"),
+        ({"X": np.array([[1.0, np.nan]]), "eps": 0.1}, "X"),
+        ({"X": np.zeros((5, 2)), "eps": 0.1, "sd": np.ones(3)}, "sd"),
+        ({"X": np.zeros((5, 2)), "eps": 0.1, "sd": np.array([1.0, -1.0])}, "sd"),
+    ],
+)
 def test_perturb_features_refuses_invalid_input_naming_the_field(kwargs, field):
     with pytest.raises(ValueError, match=field):
         perturb_features(seed=0, **kwargs)
@@ -127,8 +130,9 @@ def test_robustness_curve_dataclass_invariants():
 
 
 def test_robustness_finding_boundary_and_grid():
-    curve = RobustnessCurve(grid=(0.0, 0.5, 1.0), auc=(0.8, 0.78, 0.7), brier=(0.1, 0.1, 0.1),
-                            auc_delta=(0.0, -0.02, -0.1))
+    curve = RobustnessCurve(
+        grid=(0.0, 0.5, 1.0), auc=(0.8, 0.78, 0.7), brier=(0.1, 0.1, 0.1), auc_delta=(0.0, -0.02, -0.1)
+    )
     assert robustness_finding(curve, 0.02, 0.5) is False  # a delta equal to the tolerance is not a finding
     assert robustness_finding(curve, 0.0199, 0.5) is True
     assert robustness_finding(curve, 0.02, 1.0) is True

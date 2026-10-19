@@ -16,8 +16,9 @@ Predict = Callable[[np.ndarray], np.ndarray]
 
 
 def ice_curves(predict: Predict, X: np.ndarray, feature: int, grid: np.ndarray) -> np.ndarray:
-    """One curve per row, shape (n, m): the prediction of row i with ``feature`` set to each value of ``grid`` and the other
-    columns at their observed values (Goldstein, Kapelner, Bleich and Pitkin 2015, doi:10.1080/10618600.2014.907095)."""
+    """One curve per row, shape (n, m): the prediction of row i with ``feature`` set to each value of ``grid`` and the
+    other columns at their observed values (Goldstein, Kapelner, Bleich and Pitkin 2015,
+    doi:10.1080/10618600.2014.907095)."""
     x = mat(X, "X")
     j = index(feature, "feature", x.shape[1])
     g = vec(grid, "grid")
@@ -35,22 +36,25 @@ def partial_dependence(predict: Predict, X: np.ndarray, feature: int, grid: np.n
     return ice_curves(predict, X, feature, grid).mean(axis=0)
 
 
-def accumulated_local_effects(predict: Predict, X: np.ndarray, feature: int,
-                              n_bins: int) -> tuple[np.ndarray, np.ndarray]:
+def accumulated_local_effects(
+    predict: Predict, X: np.ndarray, feature: int, n_bins: int
+) -> tuple[np.ndarray, np.ndarray]:
     """The Apley and Zhu (2020, doi:10.1111/rssb.12377) accumulated local effect of ``feature``, centred to mean zero.
 
-    Returns the ``n_bins + 1`` quantile bin edges (the ``inverted_cdf`` sample quantiles of the feature, so every edge is a
-    data value and every bin (z_{k-1}, z_k] holds at least one row; the first bin also holds the minimum) and the effect
-    at the upper edge of each bin: ``g_k = sum_{l <= k} mean over the rows of bin l of [f(z_l, x_-j) - f(z_{l-1}, x_-j)]``
-    minus the count-weighted mean of ``g``, so the count-weighted mean of the effect is 0 within 1e-12. A feature whose
-    quantile edges coincide (ties that would empty a bin) raises."""
+    Returns the ``n_bins + 1`` quantile bin edges (the ``inverted_cdf`` sample quantiles of the feature, so every edge
+    is a data value and every bin (z_{k-1}, z_k] holds at least one row; the first bin also holds the minimum) and the
+    effect at the upper edge of each bin: ``g_k = sum_{l <= k} mean over the rows of bin l of [f(z_l, x_-j) - f(z_{l-1},
+    x_-j)]`` minus the count-weighted mean of ``g``, so the count-weighted mean of the effect is 0 within 1e-12. A
+    feature whose quantile edges coincide (ties that would empty a bin) raises."""
     x = mat(X, "X")
     j = index(feature, "feature", x.shape[1])
     nb = index(n_bins, "n_bins", x.shape[0] + 1, lo=1)
     col = x[:, j]
     edges = np.quantile(col, np.linspace(0.0, 1.0, nb + 1), method="inverted_cdf")
     if np.any(np.diff(edges) <= 0.0):
-        raise ValueError(f"n_bins={nb} gives coinciding quantile edges for feature {j}: fewer distinct values than bins")
+        raise ValueError(
+            f"n_bins={nb} gives coinciding quantile edges for feature {j}: fewer distinct values than bins"
+        )
     which = np.searchsorted(edges[1:-1], col, side="left")
     counts = np.bincount(which, minlength=nb)
     local = np.empty(nb)

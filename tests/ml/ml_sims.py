@@ -2,10 +2,10 @@
 belongs to, by a generator with a null (no defect) and a planted defect, and `harness.run.simulate` counts how often the
 light is not green over `N_REP` seeded repetitions.
 
-The five planted-defect generators of `riskvalidation.ml.plants` serve the tests they name; the other tests are fed by the
-small array generators of this module (an attribution table, an effect range, an exact linear Shapley table, binormal
-train and test scores, a calibrated and a miscalibrated slice, a NaN rate, two forecasts). They are test fixtures of the
-size and power study, never part of the engine.
+The five planted-defect generators of `riskvalidation.ml.plants` serve the tests they name; the other tests are fed by
+the small array generators of this module (an attribution table, an effect range, an exact linear Shapley table,
+binormal train and test scores, a calibrated and a miscalibrated slice, a NaN rate, two forecasts). They are test
+fixtures of the size and power study, never part of the engine.
 """
 
 from __future__ import annotations
@@ -47,11 +47,13 @@ SEED = 20261019
 
 def study(test, generator, *, seed: int = SEED, n_rep: int = N_REP, test_kwargs=None) -> Simulation:
     """The rate at which the light is not green (an alarm), with its Monte Carlo error."""
-    return simulate(test, generator, n_rep=n_rep, seed=seed, alphas=(), rules=[light_not_green("alarm")],
-                    test_kwargs=test_kwargs)
+    return simulate(
+        test, generator, n_rep=n_rep, seed=seed, alphas=(), rules=[light_not_green("alarm")], test_kwargs=test_kwargs
+    )
 
 
 # -------------------------------------------------------------------------------------------- the pipelines
+
 
 def run_robustness(plant: NoiseSensitivityPlant, grid, tolerance: float, preset_eps: float):
     def run(X, y, seed):
@@ -183,13 +185,17 @@ class TrainTestScores(GeneratorBase):
 
     def truth(self) -> dict[str, Any]:
         auc = lambda d: float(special.ndtr(d / math.sqrt(2.0)))  # noqa: E731
-        return {"auc_train": auc(self.sep_train), "auc_test": auc(self.sep_test),
-                "gap": auc(self.sep_train) - auc(self.sep_test)}
+        return {
+            "auc_train": auc(self.sep_train),
+            "auc_test": auc(self.sep_test),
+            "gap": auc(self.sep_train) - auc(self.sep_test),
+        }
 
 
 def run_overfit(risk_train, y_train, risk_test, y_test):
-    gap = generalisation.overfit_gap(auc_with_variance(risk_train, y_train)[0],
-                                     auc_with_variance(risk_test, y_test)[0], 0.05)
+    gap = generalisation.overfit_gap(
+        auc_with_variance(risk_train, y_train)[0], auc_with_variance(risk_test, y_test)[0], 0.05
+    )
     return v.overfit("m", gap)
 
 
@@ -264,6 +270,7 @@ def run_challenger(p_champion, p_challenger, y, seed):
 
 # -------------------------------------------------------------------------------------------- the conditions
 
+
 def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
     """name: (test callable, null generator, defect generator, feed or None, description)."""
     grid = (0.0, 0.25, 0.5, 1.0)
@@ -271,31 +278,88 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
     shift_null, shift_def = CovariateShiftPlant(3000, 0.0, [0], 1), CovariateShiftPlant(3000, 2.5, [0], 1)
     seed_null, seed_def = SeedUnstablePlant(4000, 0.2, 1), SeedUnstablePlant(4000, 1.0, 1)
     return {
-        "ml.robustness": (run_robustness(noise_null, grid, 0.02, 0.5), noise_null, noise_def,
-                          run_robustness(noise_def, grid, 0.02, 0.5),
-                          {"null": "sensitivity 0.25", "defect": "sensitivity 2.5"}),
-        "ml.shift_resilience": (run_shift(shift_null, 0.25), shift_null, shift_def, run_shift(shift_def, 0.25),
-                                {"null": "shift 0", "defect": "shift 2.5 sd on feature 0"}),
-        "ml.seed_stability": (run_seeds(seed_null, 10), seed_null, seed_def, run_seeds(seed_def, 10),
-                              {"null": "instability 0.2", "defect": "instability 1.0"}),
-        "ml.reason_code_stability": (run_reason_codes, RefitAttributions(noise=0.1), RefitAttributions(noise=1.5), None,
-                                     {"null": "refit noise 0.1", "defect": "refit noise 1.5"}),
-        "ml.effect_agreement": (run_effect, ImportanceVsEffect(related=True), ImportanceVsEffect(related=False), None,
-                                {"null": "effect range follows importance", "defect": "independent"}),
-        "ml.additivity": (run_additivity, LinearShapley(tamper=0.0), LinearShapley(tamper=1e-6), None,
-                          {"null": "exact Shapley values", "defect": "first column off by 1e-6"}),
-        "ml.overfit": (run_overfit, TrainTestScores(sep_train=1.0, sep_test=1.0),
-                       TrainTestScores(sep_train=2.0, sep_test=1.0), None,
-                       {"null": "equal separation", "defect": "train separation 2, test 1"}),
-        "ml.weak_spot": (run_weak_spot, SliceErrors(defect=False), SliceErrors(defect=True), None,
-                         {"null": "calibrated slices", "defect": "slice 0 predicts 1 - p"}),
-        "ml.conformal_coverage": (run_conformal(), ExchangeabilityBreakPlant(2000, 0.0, 1),
-                                  ExchangeabilityBreakPlant(2000, 0.5, 1), None,
-                                  {"null": "drift 0", "defect": "log-odds drift 0.5"}),
-        "ml.leakage_screen": (run_leak, LeakPlant(1000, 0.0, 1), LeakPlant(1000, 4.0, 1), None,
-                              {"null": "leak strength 0", "defect": "leak strength 4"}),
-        "ml.data_quality": (run_dq, MissingCells(rate=0.002), MissingCells(rate=0.03), None,
-                            {"null": "NaN rate 0.2 percent", "defect": "NaN rate 3 percent"}),
-        "ml.challenger_brier": (run_challenger, TwoForecasts(extra=0.0), TwoForecasts(extra=0.15), None,
-                                {"null": "equal noise", "defect": "challenger noise 0.15 above"}),
+        "ml.robustness": (
+            run_robustness(noise_null, grid, 0.02, 0.5),
+            noise_null,
+            noise_def,
+            run_robustness(noise_def, grid, 0.02, 0.5),
+            {"null": "sensitivity 0.25", "defect": "sensitivity 2.5"},
+        ),
+        "ml.shift_resilience": (
+            run_shift(shift_null, 0.25),
+            shift_null,
+            shift_def,
+            run_shift(shift_def, 0.25),
+            {"null": "shift 0", "defect": "shift 2.5 sd on feature 0"},
+        ),
+        "ml.seed_stability": (
+            run_seeds(seed_null, 10),
+            seed_null,
+            seed_def,
+            run_seeds(seed_def, 10),
+            {"null": "instability 0.2", "defect": "instability 1.0"},
+        ),
+        "ml.reason_code_stability": (
+            run_reason_codes,
+            RefitAttributions(noise=0.1),
+            RefitAttributions(noise=1.5),
+            None,
+            {"null": "refit noise 0.1", "defect": "refit noise 1.5"},
+        ),
+        "ml.effect_agreement": (
+            run_effect,
+            ImportanceVsEffect(related=True),
+            ImportanceVsEffect(related=False),
+            None,
+            {"null": "effect range follows importance", "defect": "independent"},
+        ),
+        "ml.additivity": (
+            run_additivity,
+            LinearShapley(tamper=0.0),
+            LinearShapley(tamper=1e-6),
+            None,
+            {"null": "exact Shapley values", "defect": "first column off by 1e-6"},
+        ),
+        "ml.overfit": (
+            run_overfit,
+            TrainTestScores(sep_train=1.0, sep_test=1.0),
+            TrainTestScores(sep_train=2.0, sep_test=1.0),
+            None,
+            {"null": "equal separation", "defect": "train separation 2, test 1"},
+        ),
+        "ml.weak_spot": (
+            run_weak_spot,
+            SliceErrors(defect=False),
+            SliceErrors(defect=True),
+            None,
+            {"null": "calibrated slices", "defect": "slice 0 predicts 1 - p"},
+        ),
+        "ml.conformal_coverage": (
+            run_conformal(),
+            ExchangeabilityBreakPlant(2000, 0.0, 1),
+            ExchangeabilityBreakPlant(2000, 0.5, 1),
+            None,
+            {"null": "drift 0", "defect": "log-odds drift 0.5"},
+        ),
+        "ml.leakage_screen": (
+            run_leak,
+            LeakPlant(1000, 0.0, 1),
+            LeakPlant(1000, 4.0, 1),
+            None,
+            {"null": "leak strength 0", "defect": "leak strength 4"},
+        ),
+        "ml.data_quality": (
+            run_dq,
+            MissingCells(rate=0.002),
+            MissingCells(rate=0.03),
+            None,
+            {"null": "NaN rate 0.2 percent", "defect": "NaN rate 3 percent"},
+        ),
+        "ml.challenger_brier": (
+            run_challenger,
+            TwoForecasts(extra=0.0),
+            TwoForecasts(extra=0.15),
+            None,
+            {"null": "equal noise", "defect": "challenger noise 0.15 above"},
+        ),
     }

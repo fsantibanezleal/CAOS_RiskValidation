@@ -21,7 +21,11 @@ def test_cbpe_confusion_hand_computed_rows():
     assert (c.tp, c.fp, c.tn, c.fn) == pytest.approx((0.9 + 0.6, 0.1 + 0.4, 0.7 + 0.8, 0.3 + 0.2), abs=1e-15)
     assert c.tp + c.fp + c.tn + c.fn == pytest.approx(4.0, abs=1e-12)
     low = cbpe_confusion(p, 0.95)  # everything predicted 0
-    assert (low.tp, low.fp) == (0.0, 0.0) and low.tn == pytest.approx(0.1 + 0.7 + 0.4 + 0.8) and low.fn == pytest.approx(1.4)
+    assert (
+        (low.tp, low.fp) == (0.0, 0.0)
+        and low.tn == pytest.approx(0.1 + 0.7 + 0.4 + 0.8)
+        and low.fn == pytest.approx(0.9 + 0.3 + 0.6 + 0.2)
+    )
     edge = cbpe_confusion(np.array([0.5]), 0.5)  # p equal to the threshold is predicted 1
     assert edge.tp == 0.5 and edge.fp == 0.5
     for bad, field in ((np.array([1.2]), "p"), (np.array([0.5]), "threshold")):
@@ -33,13 +37,13 @@ def test_cbpe_confusion_hand_computed_rows():
 
 def test_cbpe_auc_closed_form_on_a_calibrated_uniform_sample_and_assumptions():
     n = 20_000
-    p = (np.arange(n) + 0.5) / n  # a uniform grid of calibrated probabilities: the exact AUC is 2/3
+    p = (np.arange(n) + 0.5) / n  # a uniform grid of calibrated probabilities: the exact AUC is 5/6
     est = cbpe_auc(p)
     assert est.label == "estimate"
     assert est.assumptions == ("calibrated-probabilities", "no-concept-drift", "no-extrapolation", "adequate-sample")
-    assert est.estimated_auc == pytest.approx(2.0 / 3.0, abs=2e-4)
+    assert est.estimated_auc == pytest.approx(5.0 / 6.0, abs=2e-4)
     assert isinstance(est, CbpeAuc) and 0.0 <= est.estimated_auc <= 1.0
-    assert cbpe_auc(p, n_thresholds=1001).estimated_auc == pytest.approx(2.0 / 3.0, abs=2e-5)
+    assert cbpe_auc(p, n_thresholds=1001).estimated_auc == pytest.approx(5.0 / 6.0, abs=2e-5)
 
 
 def test_cbpe_auc_of_a_calibrated_simulated_sample_matches_the_labelled_auc():

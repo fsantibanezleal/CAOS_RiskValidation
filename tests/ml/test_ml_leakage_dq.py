@@ -30,9 +30,14 @@ from riskvalidation.validation.discrimination import auc_with_variance, disc_auc
 
 def test_temporal_order_violations_counts_future_cells_and_never_nat():
     obs = np.array(["2020-01-31", "2020-02-29", "2020-03-31"], dtype="datetime64[D]")
-    feat = np.array([["2020-01-01", "2020-01-31"],      # equal to the observation date: not a violation
-                     ["2020-03-01", "NaT"],             # a planted future cell; NaT is never a violation
-                     ["2020-03-30", "2020-04-01"]], dtype="datetime64[D]")  # one future cell
+    feat = np.array(
+        [
+            ["2020-01-01", "2020-01-31"],  # equal to the observation date: not a violation
+            ["2020-03-01", "NaT"],  # a planted future cell; NaT is never a violation
+            ["2020-03-30", "2020-04-01"],
+        ],
+        dtype="datetime64[D]",
+    )  # one future cell
     assert temporal_order_violations(feat, obs) == 2
     assert temporal_order_violations(feat[:, :1], obs) == 1
     clean = np.broadcast_to(obs[:, None], (3, 2)).copy()

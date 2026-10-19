@@ -2,8 +2,8 @@
 C.7 l.990, l.1006-1008; I.1 l.1192-1193; dossier 04 J.2 l.881-883 and ladder P4 l.968).
 
 Reason-code stability (the share of the top reasons kept across bootstrap refits), the agreement of attribution ranks
-between SHAP and ALE or PDP, the Shapley additivity check ``f(x) = phi_0 + sum phi_i`` and the sign and monotonicity checks
-against the expected economic rationale (EBA recommendation 3). Contract: ``engine-ml-api`` 1.0.0, module
+between SHAP and ALE or PDP, the Shapley additivity check ``f(x) = phi_0 + sum phi_i`` and the sign and monotonicity
+checks against the expected economic rationale (EBA recommendation 3). Contract: ``engine-ml-api`` 1.0.0, module
 ``riskvalidation/ml/explanations.py``.
 """
 
@@ -20,8 +20,8 @@ from riskvalidation.ml._checks import index, nonneg, scalar, vec
 @dataclass(frozen=True)
 class OverlapResult:
     """The mean and the 5th percentile, over obligors, of the share of the ``top_k`` reasons kept between each refit and
-    the first, over ``n_refits`` refits (the first included). Shares are in [0, 1]. The 5th percentile is not forced below
-    the mean: it is not an invariant of a share distribution (finding F1 of unit U14-E1, in ``docs/ml/02``)."""
+    the first, over ``n_refits`` refits (the first included). Shares are in [0, 1]. The 5th percentile is not forced
+    below the mean: it is not an invariant of a share distribution (finding F1 of unit U14-E1, in ``docs/ml/02``)."""
 
     top_k: int
     n_refits: int
@@ -38,13 +38,13 @@ class OverlapResult:
 
 
 def reason_code_overlap(attributions_by_refit: np.ndarray, top_k: int = 4) -> OverlapResult:
-    """The mean and the 5th percentile over obligors of the share of the ``top_k`` reasons kept between each refit and the
-    first refit (dossier 04 J.2 l.881-883; ladder P4 l.968: the bootstrap top-four overlap).
+    """The mean and the 5th percentile over obligors of the share of the ``top_k`` reasons kept between each refit and
+    the first refit (dossier 04 J.2 l.881-883; ladder P4 l.968: the bootstrap top-four overlap).
 
-    ``attributions_by_refit`` has shape (n_refits, n, p), n_refits at least two. The reasons of an obligor in a refit are
-    its ``top_k`` features of largest absolute attribution, ties by column order (UNVERIFIED reading: the dossier says "the
-    top four" without a sign; the contract does not settle it, see ``docs/ml/02``). The share of an obligor is averaged
-    over the refits after the first; identical refits give 1."""
+    ``attributions_by_refit`` has shape (n_refits, n, p), n_refits at least two. The reasons of an obligor in a refit
+    are its ``top_k`` features of largest absolute attribution, ties by column order (UNVERIFIED reading: the dossier
+    says "the top four" without a sign; the contract does not settle it, see ``docs/ml/02``). The share of an obligor is
+    averaged over the refits after the first; identical refits give 1."""
     a = np.array(attributions_by_refit, dtype=float)
     if a.ndim != 3 or a.shape[0] < 2 or a.shape[1] < 1:
         raise ValueError("attributions_by_refit must have shape (n_refits, n, p) with at least two refits")
@@ -56,14 +56,16 @@ def reason_code_overlap(attributions_by_refit: np.ndarray, top_k: int = 4) -> Ov
     np.put_along_axis(kept, order, True, axis=2)
     share = (kept[1:] & kept[0]).sum(axis=2) / k  # (n_refits - 1, n)
     per_obligor = share.mean(axis=0)
-    return OverlapResult(top_k=k, n_refits=a.shape[0], mean=float(per_obligor.mean()),
-                         p05=float(np.percentile(per_obligor, 5.0)))
+    return OverlapResult(
+        top_k=k, n_refits=a.shape[0], mean=float(per_obligor.mean()), p05=float(np.percentile(per_obligor, 5.0))
+    )
 
 
 def rank_agreement(attribution_importance: np.ndarray, effect_range: np.ndarray) -> float:
     """The Spearman rho (``scipy.stats.spearmanr``), in [-1, 1], between two per-feature vectors: the mean absolute SHAP
-    per feature against the range of its ALE or PDP curve (the explainer agreement of C20, dossier 06 C.7 l.1006-1008), or
-    the mean absolute SHAP on the clean batches against the shocked ones. A constant vector has no ranks and raises."""
+    per feature against the range of its ALE or PDP curve (the explainer agreement of C20, dossier 06 C.7 l.1006-1008),
+    or the mean absolute SHAP on the clean batches against the shocked ones. A constant vector has no ranks and
+    raises."""
     a = vec(attribution_importance, "attribution_importance")
     b = vec(effect_range, "effect_range")
     if a.shape != b.shape:
@@ -72,8 +74,8 @@ def rank_agreement(attribution_importance: np.ndarray, effect_range: np.ndarray)
         raise ValueError("attribution_importance needs at least two features")
     if a.max() == a.min() or b.max() == b.min():
         raise ValueError("a constant input has no ranks: rank_agreement is undefined")
-    # the Pearson correlation of the average ranks (what scipy.stats.spearmanr computes), written as S_ab / sqrt(S_aa S_bb)
-    # so that equal vectors give exactly 1 and reversed ones exactly -1 (spearmanr returns 0.9999999999999999)
+    # the Pearson correlation of the average ranks (what scipy.stats.spearmanr computes), written as S_ab / sqrt(S_aa
+    # S_bb) so that equal vectors give exactly 1 and reversed ones exactly -1 (spearmanr returns 0.9999999999999999)
     ra, rb = stats.rankdata(a) - (a.size + 1) / 2.0, stats.rankdata(b) - (a.size + 1) / 2.0
     rho = float(np.sum(ra * rb) / np.sqrt(np.sum(ra * ra) * np.sum(rb * rb)))
     return min(1.0, max(-1.0, rho))
@@ -109,9 +111,10 @@ def sign_check(effect: np.ndarray, expected_sign: int) -> bool:
 
 
 def monotonicity_check(effect: np.ndarray, expected_sign: int, tolerance: float) -> float:
-    """The largest violation of the expected monotonicity: the largest fall of the curve below its running maximum when a
-    rise is expected (above its running minimum when a fall is expected). A violation within ``tolerance`` counts as none
-    (0 is returned); otherwise the violation itself is returned, so a planted bump of known height returns that height."""
+    """The largest violation of the expected monotonicity: the largest fall of the curve below its running maximum when
+    a rise is expected (above its running minimum when a fall is expected). A violation within ``tolerance`` counts as
+    none (0 is returned); otherwise the violation itself is returned, so a planted bump of known height returns that
+    height."""
     e = vec(effect, "effect")
     s = _sign(expected_sign)
     tol = nonneg(tolerance, "tolerance")
