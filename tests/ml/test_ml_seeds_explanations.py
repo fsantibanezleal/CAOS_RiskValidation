@@ -144,8 +144,17 @@ def test_reason_code_overlap_refusals():
         reason_code_overlap(a[:1], top_k=2)
     with pytest.raises(ValueError, match="attributions_by_refit"):
         reason_code_overlap(np.ones((2, 3)), top_k=2)
-    with pytest.raises(ValueError, match="p05"):
-        OverlapResult(top_k=4, n_refits=2, mean=0.5, p05=0.9)
+    # finding F1 of the unit: p05 <= mean is not a theorem of the shares (96 obligors at 1 and 4 at 0 give a 5th percentile
+    # of 1 above the mean 0.96), so the function reports the exact percentile and the dataclass does not enforce it
+    a1 = np.tile(np.array([5.0, 4.0, 3.0, 2.0, 1.0]), (100, 1))
+    a2 = a1.copy()
+    a2[:4] = np.array([1.0, 2.0, 3.0, 4.0, 5.0])  # reversed ranking for four obligors
+    skew = reason_code_overlap(np.stack([a1, a2]), top_k=2)
+    shares = np.where(np.arange(100) < 4, 0.0, 1.0)
+    assert skew.mean == pytest.approx(shares.mean(), abs=1e-15)
+    assert skew.p05 == pytest.approx(np.percentile(shares, 5.0), abs=1e-15) and skew.p05 > skew.mean
+    with pytest.raises(ValueError, match="top_k"):
+        OverlapResult(top_k=0, n_refits=2, mean=0.5, p05=0.4)
 
 
 def test_rank_agreement_equal_reversed_and_scipy_reference():

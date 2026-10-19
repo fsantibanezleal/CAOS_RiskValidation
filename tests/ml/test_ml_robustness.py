@@ -224,7 +224,7 @@ def test_worst_subsample_refusals():
     with pytest.raises(ValueError, match="score"):
         worst_subsample_performance(predict, x, y, np.arange(5.0), 0.5)
     with pytest.raises(ValueError, match="single class"):
-        worst_subsample_performance(predict, x, np.array([0, 0, 0, 0, 1, 1]), np.arange(6.0), 0.5)
+        worst_subsample_performance(predict, x, np.array([0, 0, 0, 1, 1, 1]), np.arange(6.0), 0.5)
     with pytest.raises(ValueError, match="n"):
         SubsampleResult(n=0, auc=0.5, brier=0.2, auc_full=0.5, brier_full=0.2)
 
