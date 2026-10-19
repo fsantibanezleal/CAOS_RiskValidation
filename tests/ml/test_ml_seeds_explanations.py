@@ -57,13 +57,13 @@ def test_seed_dispersion_statistics_match_numpy_on_the_seed_aucs():
 
 def test_seed_dispersion_refusals_and_dataclass():
     x, y = logistic_xy(100, 2, 3)
-    train = lambda seed: (lambda a: 1.0 / (1.0 + np.exp(-a[:, 0])))  # noqa: E731
+    train = lambda seed: lambda a: 1.0 / (1.0 + np.exp(-a[:, 0]))  # noqa: E731
     with pytest.raises(ValueError, match="seeds"):
         seed_auc_dispersion(train, x, y, [1])
     with pytest.raises(ValueError, match="seeds"):
         seed_auc_dispersion(train, x, y, [1, 1, 2])
     with pytest.raises(ValueError, match="predict"):
-        seed_auc_dispersion(lambda s: (lambda a: np.full(3, 0.5)), x, y, [1, 2])
+        seed_auc_dispersion(lambda s: lambda a: np.full(3, 0.5), x, y, [1, 2])
     with pytest.raises(AttributeError):
         SeedDispersion(n_seeds=2, mean=0.7, sd=0.0, minimum=0.7, maximum=0.7).sd = 1.0
     with pytest.raises(ValueError, match="sd"):
@@ -74,9 +74,7 @@ def test_seed_dispersion_refusals_and_dataclass():
 
 def test_grade_assignment_stability_hand_table_and_identity():
     edges = np.array([0.1, 0.3])  # grades 0 (< 0.1), 1 ([0.1, 0.3)), 2 (>= 0.3)
-    pd = np.array([[0.05, 0.20, 0.40, 0.09],
-                   [0.05, 0.25, 0.35, 0.12],
-                   [0.06, 0.20, 0.50, 0.31]])
+    pd = np.array([[0.05, 0.20, 0.40, 0.09], [0.05, 0.25, 0.35, 0.12], [0.06, 0.20, 0.50, 0.31]])
     # grades: seed 1 [0 1 2 0], seed 2 [0 1 2 1], seed 3 [0 1 2 2]: only the fourth obligor changes grade
     assert grade_assignment_stability(pd, edges) == 0.25
     pd2 = pd.copy()
@@ -108,7 +106,9 @@ def test_attribution_rank_stability_identity_and_scipy_reference():
     a = np.round(rng.random((5, 9)), 1)  # ties on purpose: tau-b
     taus = [stats.kendalltau(a[i], a[j]).statistic for i, j in itertools.combinations(range(5), 2)]
     out = attribution_rank_stability(a)
-    assert out.mean_tau == pytest.approx(np.mean(taus), abs=1e-15) and out.min_tau == pytest.approx(min(taus), abs=1e-15)
+    assert out.mean_tau == pytest.approx(np.mean(taus), abs=1e-15) and out.min_tau == pytest.approx(
+        min(taus), abs=1e-15
+    )
     assert out.min_tau <= out.mean_tau
     with pytest.raises(ValueError, match="attributions_by_seed"):
         attribution_rank_stability(a[:1])
@@ -124,8 +124,7 @@ def test_reason_code_overlap_identity_and_hand_computed_permutation():
     same = reason_code_overlap(np.stack([base, base, base]))
     assert same.mean == 1.0 and same.p05 == 1.0 and same.top_k == 4 and same.n_refits == 3
     # two obligors, six features; the top four by absolute attribution are columns 0 to 3 in refit 1
-    a1 = np.array([[6.0, -5.0, 4.0, 3.0, 2.0, 1.0],
-                   [6.0, -5.0, 4.0, 3.0, 2.0, 1.0]])
+    a1 = np.array([[6.0, -5.0, 4.0, 3.0, 2.0, 1.0], [6.0, -5.0, 4.0, 3.0, 2.0, 1.0]])
     a2 = a1.copy()
     a2[0, [3, 4]] = a1[0, [4, 3]]  # a planted swap of two columns for the first obligor: top four {0, 1, 2, 4}
     res = reason_code_overlap(np.stack([a1, a2]))
@@ -144,8 +143,9 @@ def test_reason_code_overlap_refusals():
         reason_code_overlap(a[:1], top_k=2)
     with pytest.raises(ValueError, match="attributions_by_refit"):
         reason_code_overlap(np.ones((2, 3)), top_k=2)
-    # finding F1 of the unit: p05 <= mean is not a theorem of the shares (96 obligors at 1 and 4 at 0 give a 5th percentile
-    # of 1 above the mean 0.96), so the function reports the exact percentile and the dataclass does not enforce it
+    # finding F1 of the unit: p05 <= mean is not a theorem of the shares (96 obligors at 1 and 4 at 0 give a 5th
+    # percentile of 1 above the mean 0.96), so the function reports the exact percentile and the dataclass does not
+    # enforce it
     a1 = np.tile(np.array([5.0, 4.0, 3.0, 2.0, 1.0]), (100, 1))
     a2 = a1.copy()
     a2[:4] = np.array([1.0, 2.0, 3.0, 4.0, 5.0])  # reversed ranking for four obligors

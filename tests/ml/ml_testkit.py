@@ -10,8 +10,26 @@ import numpy as np
 from riskvalidation.core.result import Light, TestResult
 
 # The fields and types of docs/contracts/schemas/common/test-result.schema.json (Contraste, engine-ml-api 1.0.0).
-ROW_FIELDS = ("test_id", "model_id", "segment", "statistic", "p_value", "metric", "h0", "alternative", "policy_version",
-              "alpha_amber", "alpha_red", "light", "n", "n_events", "inputs_hash", "reference", "notes", "extras")
+ROW_FIELDS = (
+    "test_id",
+    "model_id",
+    "segment",
+    "statistic",
+    "p_value",
+    "metric",
+    "h0",
+    "alternative",
+    "policy_version",
+    "alpha_amber",
+    "alpha_red",
+    "light",
+    "n",
+    "n_events",
+    "inputs_hash",
+    "reference",
+    "notes",
+    "extras",
+)
 LIGHTS = ("green", "amber", "red", "not_evaluated", "error")
 
 

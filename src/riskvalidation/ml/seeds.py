@@ -1,6 +1,6 @@
 """Seed stability: the dispersion of the AUC, of the grade assigned to each obligor and of the attribution ranks across
-retraining seeds (dossier 06 I.1 l.1191; ECB guide paragraph 43 on the randomness of the training process and paragraph 59
-on stored seeds, A.3 l.290-299 and B.9 l.647). The training function is a callable the pipeline supplies. Contract:
+retraining seeds (dossier 06 I.1 l.1191; ECB guide paragraph 43 on the randomness of the training process and paragraph
+59 on stored seeds, A.3 l.290-299 and B.9 l.647). The training function is a callable the pipeline supplies. Contract:
 ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/seeds.py``.
 """
 
@@ -37,9 +37,12 @@ class SeedDispersion:
             raise ValueError("minimum must not exceed mean, nor mean the maximum")
 
 
-def seed_auc_dispersion(train: Callable[[int], Predict], X: np.ndarray, y: np.ndarray, seeds: Sequence[int]) -> SeedDispersion:
+def seed_auc_dispersion(
+    train: Callable[[int], Predict], X: np.ndarray, y: np.ndarray, seeds: Sequence[int]
+) -> SeedDispersion:
     """Mean, sample standard deviation (ddof 1), minimum and maximum of the AUC of ``train(seed)`` on ``(X, y)`` over at
-    least two distinct seeds. Pure given ``train``; a train function that ignores its seed has a zero standard deviation."""
+    least two distinct seeds. Pure given ``train``; a train function that ignores its seed has a zero
+    standard deviation."""
     x = mat(X, "X")
     yy = binary(y, "y")
     same_rows(X=x, y=yy)
@@ -60,9 +63,9 @@ def seed_auc_dispersion(train: Callable[[int], Predict], X: np.ndarray, y: np.nd
 def grade_assignment_stability(pd_by_seed: np.ndarray, edges: np.ndarray) -> float:
     """The share of obligors whose grade differs between at least two seeds, in [0, 1].
 
-    ``pd_by_seed`` has shape (n_seeds, n) with PDs in (0, 1); ``edges`` are the g - 1 strictly increasing PD cut points. The
-    grade of a PD is the number of edges at or below it (the bins are [e_k, e_k+1): an edge value belongs to the upper
-    grade). An obligor counts once; one seed returns 0."""
+    ``pd_by_seed`` has shape (n_seeds, n) with PDs in (0, 1); ``edges`` are the g - 1 strictly increasing PD cut points.
+    The grade of a PD is the number of edges at or below it (the bins are [e_k, e_k+1): an edge value belongs to the
+    upper grade). An obligor counts once; one seed returns 0."""
     pd = np.array(pd_by_seed, dtype=float)
     if pd.ndim != 2 or pd.size == 0:
         raise ValueError("pd_by_seed must be a non-empty two-dimensional array of shape (n_seeds, n)")
@@ -89,8 +92,8 @@ class RankStability:
 
 def attribution_rank_stability(attributions_by_seed: np.ndarray) -> RankStability:
     """The mean and the minimum, over seed pairs, of ``scipy.stats.kendalltau`` (tau-b, so ties are handled) between the
-    per-feature mean absolute attributions of two seeds. ``attributions_by_seed`` has shape (n_seeds, p), n_seeds at least
-    two; a constant row has no rank and raises."""
+    per-feature mean absolute attributions of two seeds. ``attributions_by_seed`` has shape (n_seeds, p), n_seeds at
+    least two; a constant row has no rank and raises."""
     a = np.array(attributions_by_seed, dtype=float)
     if a.ndim != 2 or a.shape[0] < 2 or a.shape[1] < 2:
         raise ValueError("attributions_by_seed must have shape (n_seeds, p) with at least two seeds and two features")

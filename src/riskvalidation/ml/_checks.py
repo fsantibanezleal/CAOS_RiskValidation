@@ -1,4 +1,4 @@
-"""Input checks of the ML modules, each naming the offending field (the shared array checks are the LGD and EAD ones)."""
+"""Input checks of the ML modules, each naming the offending field (the shared array checks are the LGD ones)."""
 
 from __future__ import annotations
 
@@ -26,7 +26,9 @@ def binary(y: Any, name: str = "y", *, both: bool = True) -> np.ndarray:
     return out
 
 
-def predictions(predict: Callable[[np.ndarray], Any], x: np.ndarray, name: str = "predict", *, unit: bool = True) -> np.ndarray:
+def predictions(
+    predict: Callable[[np.ndarray], Any], x: np.ndarray, name: str = "predict", *, unit: bool = True
+) -> np.ndarray:
     """The predict callable's output on ``x``: shape (n,), finite and, for a probability, in [0, 1]."""
     out = np.array(predict(x), dtype=float)
     if out.shape != (x.shape[0],):

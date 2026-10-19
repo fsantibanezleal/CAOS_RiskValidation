@@ -1,10 +1,10 @@
 """Robustness to input perturbation and resilience to distribution shift (dossier 06 C.7 l.1009-1015; I.1 l.1189-1190).
 
-Perturbation (PiML "Robustness"; SR 11-7 sensitivity analysis): Gaussian noise of scale eps times each feature's standard
-deviation is added to the **evaluation** features only, never to the training slice, and AUC and Brier are read against
-eps. Resilience (PiML "Resilience"): performance on the worst subsample by a shift score (the worst 10 percent is the
-dossier's example) and on out-of-time windows. A model enters only as a predict callable on arrays; the engine imports no
-learning library. Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/robustness.py``.
+Perturbation (PiML "Robustness"; SR 11-7 sensitivity analysis): Gaussian noise of scale eps times each feature's
+standard deviation is added to the **evaluation** features only, never to the training slice, and AUC and Brier are read
+against eps. Resilience (PiML "Resilience"): performance on the worst subsample by a shift score (the worst 10 percent
+is the dossier's example) and on out-of-time windows. A model enters only as a predict callable on arrays; the engine
+imports no learning library. Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/robustness.py``.
 """
 
 from __future__ import annotations
@@ -25,10 +25,10 @@ Predict = Callable[[np.ndarray], np.ndarray]
 def perturb_features(X: np.ndarray, eps: float, seed: int, sd: np.ndarray | None = None) -> np.ndarray:
     """``X`` plus Gaussian noise of standard deviation ``eps * sd[j]`` in column j, a new array of shape (n, p).
 
-    ``eps`` is a multiple of each feature's standard deviation (dimensionless); ``sd`` has shape (p,) in feature units and
-    defaults to the sample standard deviation (ddof 1) of the columns of ``X``. ``eps = 0`` returns ``X`` unchanged. The
-    noise is a function of ``seed`` alone: the same seed gives the same standard normal draws at every ``eps``, so the
-    perturbed samples of a grid are nested."""
+    ``eps`` is a multiple of each feature's standard deviation (dimensionless); ``sd`` has shape (p,) in feature units
+    and defaults to the sample standard deviation (ddof 1) of the columns of ``X``. ``eps = 0`` returns ``X`` unchanged.
+    The noise is a function of ``seed`` alone: the same seed gives the same standard normal draws at every ``eps``, so
+    the perturbed samples of a grid are nested."""
     x = mat(X, "X")
     e = nonneg(eps, "eps")
     if sd is None:
@@ -51,8 +51,8 @@ def perturb_features(X: np.ndarray, eps: float, seed: int, sd: np.ndarray | None
 class RobustnessCurve:
     """AUC and Brier per noise scale and the AUC delta against scale 0 (``metric(eps) - metric(0)``).
 
-    Tuples of equal length with ``grid[0] == 0.0``; AUC and Brier in [0, 1] and ``auc_delta`` in [-1, 1]. A value that is NaN
-    (a metric that could not be computed) is carried, never replaced."""
+    Tuples of equal length with ``grid[0] == 0.0``; AUC and Brier in [0, 1] and ``auc_delta`` in [-1, 1]. A value that
+    is NaN (a metric that could not be computed) is carried, never replaced."""
 
     grid: tuple[float, ...]
     auc: tuple[float, ...]
@@ -75,13 +75,15 @@ def _metrics(p: np.ndarray, y: np.ndarray) -> tuple[float, float]:
     return auc_with_variance(p, y)[0], float(np.mean((p - y) ** 2))
 
 
-def robustness_curve(predict: Predict, X: np.ndarray, y: np.ndarray, grid: Sequence[float], seed: int) -> RobustnessCurve:
+def robustness_curve(
+    predict: Predict, X: np.ndarray, y: np.ndarray, grid: Sequence[float], seed: int
+) -> RobustnessCurve:
     """AUC and Brier of ``predict`` on ``X`` perturbed at each scale of ``grid`` (the noise of ``perturb_features`` with
     the same seed at every scale), and the AUC delta against scale 0.
 
-    The first point is always scale 0 (prepended when ``grid`` lacks it; a 0 inside ``grid`` is not repeated), so the deltas
-    are ``metric(eps) - metric(0)``. Both classes must be present, and ``predict`` must map (n, p) to probabilities of shape
-    (n,)."""
+    The first point is always scale 0 (prepended when ``grid`` lacks it; a 0 inside ``grid`` is not repeated), so the
+    deltas are ``metric(eps) - metric(0)``. Both classes must be present, and ``predict`` must map (n, p) to
+    probabilities of shape (n,)."""
     x = mat(X, "X")
     yy = binary(y, "y")
     same_rows(X=x, y=yy)
@@ -95,13 +97,14 @@ def robustness_curve(predict: Predict, X: np.ndarray, y: np.ndarray, grid: Seque
         a, b = _metrics(predictions(predict, perturb_features(x, eps, seed)), yy)
         auc.append(a)
         brier.append(b)
-    return RobustnessCurve(grid=tuple(scales), auc=tuple(auc), brier=tuple(brier),
-                           auc_delta=tuple(a - auc0 for a in auc))
+    return RobustnessCurve(
+        grid=tuple(scales), auc=tuple(auc), brier=tuple(brier), auc_delta=tuple(a - auc0 for a in auc)
+    )
 
 
 def robustness_finding(curve: RobustnessCurve, tolerance: float, preset_eps: float) -> bool:
-    """True exactly when the AUC loss ``-auc_delta`` at ``preset_eps`` exceeds ``tolerance`` (a loss equal to the tolerance
-    is not a finding). ``preset_eps`` must be a point of the grid."""
+    """True exactly when the AUC loss ``-auc_delta`` at ``preset_eps`` exceeds ``tolerance`` (a loss equal to the
+    tolerance is not a finding). ``preset_eps`` must be a point of the grid."""
     tol = nonneg(tolerance, "tolerance")
     eps = scalar(preset_eps, "preset_eps")
     hits = [i for i, g in enumerate(curve.grid) if math.isclose(g, eps, rel_tol=0.0, abs_tol=1e-12)]
@@ -111,17 +114,18 @@ def robustness_finding(curve: RobustnessCurve, tolerance: float, preset_eps: flo
 
 
 def shift_score_rank(X_dev: np.ndarray, X_eval: np.ndarray, seed: int) -> np.ndarray:
-    """The shift score of each evaluation row, shape (n_eval,) in [0, 1]: the cross-fitted probability that a resemblance
-    classifier (the engine core's ridge logistic fit, ``riskvalidation.ml._logistic``) gives to "evaluation".
+    """The shift score of each evaluation row, shape (n_eval,) in [0, 1]: the cross-fitted probability that a
+    resemblance classifier (the engine core's ridge logistic fit, ``riskvalidation.ml._logistic``) gives to
+    "evaluation".
 
-    Development rows are class 0 and evaluation rows class 1 with balanced weights, so two samples that agree score 0.5 on
-    average; the probability of each row comes from folds that did not train on it. Deterministic for a ``seed``."""
+    Development rows are class 0 and evaluation rows class 1 with balanced weights, so two samples that agree score 0.5
+    on average; the probability of each row comes from folds that did not train on it. Deterministic for a ``seed``."""
     dev, ev = mat(X_dev, "X_dev"), mat(X_eval, "X_eval")
     if dev.shape[1] != ev.shape[1]:
         raise ValueError(f"X_eval must have the {dev.shape[1]} columns of X_dev, got {ev.shape[1]}")
     if min(len(dev), len(ev)) < _logistic.FOLDS:
         raise ValueError(f"X_dev and X_eval need at least {_logistic.FOLDS} rows each")
-    return _logistic.crossfit_resemblance(dev, ev, seed)[len(dev):]
+    return _logistic.crossfit_resemblance(dev, ev, seed)[len(dev) :]
 
 
 @dataclass(frozen=True)
@@ -143,11 +147,13 @@ class SubsampleResult:
                 raise ValueError(f"{name} must lie in [0, 1]")
 
 
-def worst_subsample_performance(predict: Predict, X: np.ndarray, y: np.ndarray, score: np.ndarray,
-                                share: float) -> SubsampleResult:
-    """AUC and Brier on the ``ceil(share * n)`` rows with the highest shift ``score`` (ties broken by row order), beside the
-    full-sample metrics. The size is computed on the exact decimal ``share`` (0.1 * 30 is 3.0000000000000004 in floats).
-    ``share = 1`` returns the full-sample metrics exactly. A subsample holding a single class has no AUC: it raises."""
+def worst_subsample_performance(
+    predict: Predict, X: np.ndarray, y: np.ndarray, score: np.ndarray, share: float
+) -> SubsampleResult:
+    """AUC and Brier on the ``ceil(share * n)`` rows with the highest shift ``score`` (ties broken by row order), beside
+    the full-sample metrics. The size is computed on the exact decimal ``share`` (0.1 * 30 is 3.0000000000000004 in
+    floats). ``share = 1`` returns the full-sample metrics exactly. A subsample holding a single class has no AUC: it
+    raises."""
     x = mat(X, "X")
     yy = binary(y, "y")
     s = vec(score, "score")
@@ -169,8 +175,8 @@ def worst_subsample_performance(predict: Predict, X: np.ndarray, y: np.ndarray, 
 
 
 def oot_window_performance(predict: Predict, X: np.ndarray, y: np.ndarray, window: np.ndarray) -> dict[str, float]:
-    """The AUC of each out-of-time window, keyed by its integer label as a string, plus the key ``omitted``: the number of
-    windows left out because they hold a single class (a window with fewer than two classes never gets a number)."""
+    """The AUC of each out-of-time window, keyed by its integer label as a string, plus the key ``omitted``: the number
+    of windows left out because they hold a single class (a window with fewer than two classes never gets a number)."""
     x = mat(X, "X")
     yy = binary(y, "y", both=False)
     w = np.asarray(window)

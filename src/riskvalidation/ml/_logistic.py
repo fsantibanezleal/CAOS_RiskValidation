@@ -2,8 +2,8 @@
 
 The fit is ridge-penalised Newton on standardised features with an unpenalised intercept and balanced class weights, so
 that two samples that agree score 0.5 on average whatever their sizes. Two conventions are fixed here and recorded in
-``docs/ml/01_robustness.md``: the ridge strength ``RIDGE`` (1, the default of scikit-learn's ``C = 1``) and the number of
-cross-fitting folds ``FOLDS`` (5). Neither is a regulatory value.
+``docs/ml/01_robustness.md``: the ridge strength ``RIDGE`` (1, the default of scikit-learn's ``C = 1``) and the number
+of cross-fitting folds ``FOLDS`` (5). Neither is a regulatory value.
 """
 
 from __future__ import annotations
@@ -57,22 +57,25 @@ def predict_proba(beta: np.ndarray, x: np.ndarray) -> np.ndarray:
 def crossfit_resemblance(x_a: np.ndarray, x_b: np.ndarray, seed: int, folds: int = FOLDS) -> np.ndarray:
     """Out-of-fold probability of membership in sample ``b`` for every row of ``a`` stacked on ``b`` (length n_a + n_b).
 
-    Each class is dealt to the folds by a seeded permutation (so every fold holds both classes), the features are
-    standardised on the training folds and the classes carry the weight n / (2 n_class)."""
+    Rows with an identical feature vector form one group and a group is never split across folds: a row whose exact twin
+    sits in the other sample would otherwise be scored by a model that saw the twin with the opposite label, which
+    pushes the AUC of two identical samples below 0.5. The groups are dealt to the folds by a seeded permutation; the
+    features are standardised on the training folds and the classes carry the weight n / (2 n_class)."""
     x = np.vstack([x_a, x_b])
     y = np.r_[np.zeros(len(x_a)), np.ones(len(x_b))]
     n = len(y)
     rng = np.random.default_rng(seed)
-    fold = np.empty(n, dtype=np.int64)
-    for cls in (0.0, 1.0):
-        idx = np.flatnonzero(y == cls)
-        fold[idx[rng.permutation(len(idx))]] = np.arange(len(idx)) % folds
+    _, group = np.unique(x + 0.0, axis=0, return_inverse=True)
+    group = group.reshape(-1)
+    fold = (rng.permutation(group.max() + 1) % folds)[group]
     out = np.empty(n)
     for k in range(folds):
         tr, te = fold != k, fold == k
         mean = x[tr].mean(axis=0)
         sd = x[tr].std(axis=0)
         sd[sd == 0.0] = 1.0
+        if y[tr].min() == y[tr].max():
+            raise ValueError("a training fold holds a single class: the samples have too few distinct rows")
         w = np.where(y[tr] == 1.0, n / (2.0 * y[tr].sum()), n / (2.0 * (len(y[tr]) - y[tr].sum())))
         beta = fit_logistic((x[tr] - mean) / sd, y[tr], w)
         out[te] = predict_proba(beta, (x[te] - mean) / sd)
