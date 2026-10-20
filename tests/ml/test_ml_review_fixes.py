@@ -25,7 +25,7 @@ from riskvalidation.ml.policy import ML_KEYS, ml_policy, ml_thresholds, threshol
 from riskvalidation.ml.robustness import (
     RobustnessCurve,
     ShiftReference,
-    shift_permutation_reference,
+    shift_development_reference,
     shift_score_rank,
     worst_subsample_performance,
 )
@@ -140,28 +140,28 @@ def test_reason_code_ties_are_broken_by_column_order():
 # ------------------------------------------------------------------------------------------------ Q4 (M-3)
 
 
-def _shift_data(n: int = 240, seed: int = 3, shift: float = 0.0):
+def _shift_data(n: int = 120, n_dev: int = 360, seed: int = 3, shift: float = 0.0):
     rng = np.random.default_rng(seed)
     w = np.array([1.0, 0.5, 0.0])
-    x_dev, x_eval = rng.standard_normal((n, 3)), rng.standard_normal((n, 3))
+    x_dev, x_eval = rng.standard_normal((n_dev, 3)), rng.standard_normal((n, 3))
     x_eval[: n // 4, 0] += shift
 
     def p(x):
         return 1.0 / (1.0 + np.exp(-(-0.3 + x @ w)))
 
-    y_dev = (rng.random(n) < p(x_dev)).astype(int)
+    y_dev = (rng.random(n_dev) < p(x_dev)).astype(int)
     y_eval = (rng.random(n) < p(x_eval)).astype(int)
     return x_dev, y_dev, x_eval, y_eval, sigmoid_predict(w, -0.3)
 
 
-def test_shift_permutation_reference_formula_determinism_and_purity():
+def test_shift_development_reference_formula_determinism_and_purity():
     x_dev, y_dev, x_eval, y_eval, predict = _shift_data()
     score = shift_score_rank(x_dev, x_eval, 5)
     copy = (x_dev.copy(), y_dev.copy(), x_eval.copy(), y_eval.copy())
     args = (predict, x_dev, y_dev, x_eval, y_eval, score, 0.25)
-    ref = shift_permutation_reference(*args, shift_permutations=19, seed=7)
-    again = shift_permutation_reference(*args, shift_permutations=19, seed=7)
-    other = shift_permutation_reference(*args, shift_permutations=19, seed=8)
+    ref = shift_development_reference(*args, shift_permutations=19, seed=7)
+    again = shift_development_reference(*args, shift_permutations=19, seed=7)
+    other = shift_development_reference(*args, shift_permutations=19, seed=8)
     assert isinstance(ref, ShiftReference) and ref == again and ref.null_drops != other.null_drops
     for a, b in zip((x_dev, y_dev, x_eval, y_eval), copy, strict=True):
         np.testing.assert_array_equal(a, b)
@@ -170,25 +170,49 @@ def test_shift_permutation_reference_formula_determinism_and_purity():
     assert ref.observed_drop == obs.auc_full - obs.auc
     ge = sum(d >= ref.observed_drop for d in ref.null_drops)
     assert ref.p_value == (1 + ge) / 20  # (1 + #{null >= observed}) / (R + 1)
+    assert ref.enough_development and ref.n_undefined == 0
     assert 1 / 20 <= ref.p_value <= 1.0
 
 
-def test_shift_permutation_reference_default_is_199_and_without_development_labels_is_not_evaluated():
-    assert inspect.signature(shift_permutation_reference).parameters["shift_permutations"].default == 199
-    x_dev, _, x_eval, y_eval, predict = _shift_data(n=120)
+def test_shift_development_reference_default_is_199_and_without_development_labels_is_not_evaluated():
+    assert inspect.signature(shift_development_reference).parameters["shift_permutations"].default == 199
+    x_dev, _, x_eval, y_eval, predict = _shift_data(n=120, n_dev=240)
     score = shift_score_rank(x_dev, x_eval, 5)
-    ref = shift_permutation_reference(predict, x_dev, None, x_eval, y_eval, score, 0.25, shift_permutations=9, seed=1)
+    ref = shift_development_reference(predict, x_dev, None, x_eval, y_eval, score, 0.25, shift_permutations=9, seed=1)
     assert not ref.labelled and ref.null_drops == () and math.isnan(ref.p_value)
     obs = worst_subsample_performance(predict, x_eval, y_eval, score, 0.25)
     r = v.shift_resilience("m", obs, ref)
     assert_not_evaluated(r, "ml.shift_resilience")
     assert "development labels" in r.notes
     with pytest.raises(ValueError, match="shift_permutations"):
-        shift_permutation_reference(predict, x_dev, None, x_eval, y_eval, score, 0.25, shift_permutations=0)
+        shift_development_reference(predict, x_dev, None, x_eval, y_eval, score, 0.25, shift_permutations=0)
+
+
+def test_shift_development_reference_needs_twice_the_evaluation_rows_in_development():
+    x_dev, y_dev, x_eval, y_eval, predict = _shift_data(n=120, n_dev=200)  # 200 < 2 * 120
+    score = shift_score_rank(x_dev, x_eval, 5)
+    ref = shift_development_reference(predict, x_dev, y_dev, x_eval, y_eval, score, 0.25, shift_permutations=9)
+    assert not ref.enough_development and ref.null_drops == () and math.isnan(ref.p_value)
+    obs = worst_subsample_performance(predict, x_eval, y_eval, score, 0.25)
+    r = v.shift_resilience("m", obs, ref)
+    assert_not_evaluated(r, "ml.shift_resilience")
+    assert "twice" in r.notes
+
+
+def test_shift_development_null_holds_no_evaluation_row():
+    """The null drops come from development rows only: a development set with a huge outlier row that the evaluation
+    set lacks must still give identical results when the evaluation set changes (only its size enters)."""
+    x_dev, y_dev, x_eval, y_eval, predict = _shift_data()
+    score = shift_score_rank(x_dev, x_eval, 5)
+    a = shift_development_reference(predict, x_dev, y_dev, x_eval, y_eval, score, 0.25, shift_permutations=9, seed=2)
+    b = shift_development_reference(
+        predict, x_dev, y_dev, x_eval + 5.0, y_eval, score, 0.25, shift_permutations=9, seed=2
+    )
+    assert a.null_drops == b.null_drops
 
 
 def test_shift_resilience_light_reads_the_permutation_p_value():
-    x_dev, _, x_eval, y_eval, predict = _shift_data(n=160)
+    x_dev, _, x_eval, y_eval, predict = _shift_data(n=120)
     score = shift_score_rank(x_dev, x_eval, 5)
     obs = worst_subsample_performance(predict, x_eval, y_eval, score, 0.25)
     drop = obs.auc_full - obs.auc
@@ -260,10 +284,10 @@ def test_threshold_rows_is_the_mapping_for_default_json():
     assert Threshold(**rows["ml.overfit"]).kind == "upper_bad"
 
 
-def test_permutations_with_a_single_class_worst_subsample_are_left_out_and_counted(monkeypatch):
+def test_draws_with_a_single_class_worst_subsample_are_left_out_and_counted(monkeypatch):
     from riskvalidation.ml import robustness as rb
 
-    x_dev, y_dev, x_eval, y_eval, predict = _shift_data(n=120)
+    x_dev, y_dev, x_eval, y_eval, predict = _shift_data(n=120, n_dev=240)
     score = shift_score_rank(x_dev, x_eval, 5)
     real, calls = rb.worst_subsample_performance, {"n": 0}
 
@@ -274,7 +298,7 @@ def test_permutations_with_a_single_class_worst_subsample_are_left_out_and_count
         return real(*args, **kwargs)
 
     monkeypatch.setattr(rb, "worst_subsample_performance", flaky)
-    ref = rb.shift_permutation_reference(predict, x_dev, y_dev, x_eval, y_eval, score, 0.25, shift_permutations=10)
+    ref = rb.shift_development_reference(predict, x_dev, y_dev, x_eval, y_eval, score, 0.25, shift_permutations=10)
     assert ref.n_undefined == 5 and len(ref.null_drops) == 5 and ref.n_permutations == 10
     ge = sum(d >= ref.observed_drop for d in ref.null_drops)
     assert ref.p_value == (1 + ge) / 6

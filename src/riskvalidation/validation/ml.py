@@ -255,19 +255,19 @@ def shift_resilience(
     """Resilience to distribution shift (06 C.7 l.1013-1015), read against an exact permutation reference. statistic =
     metric = the AUC of the full sample minus the AUC of the worst subsample (AUC points; n = the subsample rows);
     p_value = ``reference.p_value``, ``(1 + #{null drops >= observed drop}) / (R + 1)`` over the drops of random
-    re-labellings of the pooled development and evaluation rows
-    (``riskvalidation.ml.robustness.shift_permutation_reference``). Under no shift the raw drop is positive (range
+    pseudo-evaluation subsets of the development rows
+    (``riskvalidation.ml.robustness.shift_development_reference``). Under no shift the raw drop is positive (range
     restriction on the worst subsample, finding F4), so the drop alone is not read against a cut point. Light
     (``ml.shift_resilience``, p_value kind): red below ``alpha_red`` (0.01), amber below ``alpha_amber`` (0.05), green
     otherwise; conventions. The null drops are summarised in ``extras`` (their mean and their 95th percentile). Without
     development labels the test is not_evaluated. ``reference.observed_drop`` must be the drop of ``result``, else it
     raises."""
     test_id = "ml.shift_resilience"
-    h0 = "the AUC drop on the worst subsample by shift score is the drop of a random re-labelling of the pooled rows"
+    h0 = "the AUC drop on the worst subsample by shift score is that of a random development subset of the same size"
     alt = "the model loses more AUC on the rows that resemble the development sample least than chance explains"
     ref = (
         f"{DOSSIER_06_C7} (C.7 l.1013-1015, I.1 l.1190); PiML resilience; SS1/23 operating boundaries; "
-        "permutation test (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585)"
+        "Monte Carlo test against development-only draws (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585)"
     )
     pol = _resolve(policy)
     drop = float(result.auc_full - result.auc)
@@ -283,6 +283,7 @@ def shift_resilience(
         reference.p_value,
         reference.n_permutations,
         reference.n_undefined,
+        reference.enough_development,
         reference.share,
     )
     extras = {
@@ -314,6 +315,19 @@ def shift_resilience(
             extras=extras,
             inputs=ins,
         )
+    if reference.labelled and not reference.enough_development:
+        return _not_evaluated(
+            test_id,
+            h0,
+            alt,
+            ref,
+            version,
+            "the development set holds fewer than twice the evaluation rows: no development-only reference",
+            n=n,
+            model_id=model_id,
+            extras=extras,
+            inputs=ins,
+        )
     if not reference.labelled:
         return _not_evaluated(
             test_id,
@@ -321,7 +335,7 @@ def shift_resilience(
             alt,
             ref,
             version,
-            "no development labels: the permutation reference pools the development and evaluation rows with labels",
+            "no development labels: the reference draws pseudo-evaluation sets from the labelled development rows",
             n=n,
             model_id=model_id,
             extras=extras,

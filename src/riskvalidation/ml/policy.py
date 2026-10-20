@@ -65,8 +65,8 @@ def ml_thresholds(
             "p_value",
             0.05,
             0.01,
-            "permutation p-value of the AUC drop on the worst subsample by shift score against the drop of random "
-            "re-labellings of the pooled development and evaluation rows (06 C.7 l.1013-1015 gives the construction "
+            "Monte Carlo p-value of the AUC drop on the worst subsample by shift score against the drop of random "
+            "development subsets of the evaluation size (06 C.7 l.1013-1015 gives the construction "
             f"only): the engine default p-value cut points (alpha_amber 0.05, alpha_red 0.01); {CONVENTION}",
         ),
         "ml.seed_stability": Threshold(
