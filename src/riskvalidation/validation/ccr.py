@@ -23,6 +23,7 @@ from scipy.stats import chi2, norm
 
 from riskvalidation.ccr import cva as _cva
 from riskvalidation.ccr import exposure as _exposure
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import mat, same_length, scalar, vec
 
@@ -114,6 +115,14 @@ def _within_se(test_id: str, h0: str, alternative: str, reference: str, actual: 
                                 if math.isinf(stat) else "")))
 
 
+@register(
+    "ccr.ee_analytic_vs_simulated",
+    family="ccr",
+    name="EE analytic vs simulated",
+    h0="the analytic and the simulated EE agree within the Monte Carlo error",
+    reference=REF_ANALYTIC,
+    decision="metric",
+)
 def ee_analytic_vs_simulated(ee_analytic: np.ndarray, ee_simulated: np.ndarray, mc_se: np.ndarray,
                              k_se: float = 3.0) -> TestResult:
     """The analytic EE of a single swap (``exposure.analytic_ee_single_swap``) against the simulated one at the reset
@@ -132,6 +141,14 @@ def ee_analytic_vs_simulated(ee_analytic: np.ndarray, ee_simulated: np.ndarray, 
                       "the simulated EE departs from the closed form", REF_ANALYTIC, an, sim, se, k)
 
 
+@register(
+    "ccr.martingale_discounted_bonds",
+    family="ccr",
+    name="Martingale discounted bonds",
+    h0="the discounted bond prices are martingales: their mean is P(0, T)",
+    reference=REF_MARTINGALE,
+    decision="metric",
+)
 def martingale_discounted_bonds(discounted_bond_means: np.ndarray, p0: np.ndarray, mc_se: np.ndarray,
                                 k_se: float = 3.0) -> TestResult:
     """The sample mean of ``exp(-integral r) P(t, T; r_t)`` against ``P(0, T)`` at each grid
@@ -165,6 +182,14 @@ def _recomputed(test_id: str, h0: str, alternative: str, reference: str, recompu
         notes="" if ok else f"the reported value departs from the recomputed one by a relative {rel:.3g}")
 
 
+@register(
+    "ccr.eepe_recomputed",
+    family="ccr",
+    name="EEPE recomputed",
+    h0="the reported EEPE equals the one recomputed from the EE profile",
+    reference=REF_EEPE,
+    decision="metric",
+)
 def eepe_recomputed(grid: np.ndarray, ee: np.ndarray, eepe_reported: float, rel_tol: float = 1e-9) -> TestResult:
     """The effective EPE recomputed from the EE profile (``exposure.effective_ee`` from a zero current exposure, then
     ``exposure.effective_epe`` over the first year) against the reported value, money.
@@ -179,6 +204,14 @@ def eepe_recomputed(grid: np.ndarray, ee: np.ndarray, eepe_reported: float, rel_
 
 
 
+@register(
+    "ccr.cva_recomputed",
+    family="ccr",
+    name="CVA recomputed",
+    h0="the reported CVA equals the one recomputed from the discounted EE",
+    reference=REF_CVA,
+    decision="metric",
+)
 def cva_recomputed(epe_discounted: np.ndarray, pd: np.ndarray, lgd: float, cva_reported: float,
                    rel_tol: float = 1e-9) -> TestResult:
     """The CVA recomputed from the discounted EE (``cva.cva``, ``sum PD LGD EPE``) against the reported
@@ -192,6 +225,14 @@ def cva_recomputed(epe_discounted: np.ndarray, pd: np.ndarray, lgd: float, cva_r
                        int(np.asarray(pd).size))
 
 
+@register(
+    "ccr.path_convergence",
+    family="ccr",
+    name="Path convergence",
+    h0="the EE profile and the CVA are converged in the number of paths",
+    reference=REF_CONVERGENCE,
+    decision="metric",
+)
 def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count: dict[int, float], *,
                      ee_se_by_path_count: dict[int, np.ndarray], cva_se_by_path_count: dict[int, float],
                      k_se: float = 3.0) -> TestResult:
@@ -252,6 +293,14 @@ def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count:
                                                "smaller path count"))
 
 
+@register(
+    "ccr.reconcile_ee_profile",
+    family="ccr",
+    name="Reconcile EE profile",
+    h0="the engine's EE profile agrees with the reference within the Monte Carlo error",
+    reference=REF_RECONCILE,
+    decision="metric",
+)
 def reconcile_ee_profile(ee: np.ndarray, mc_se: np.ndarray, reference_ee: np.ndarray, reference_se: np.ndarray,
                          k_se: float = 2.0) -> TestResult:
     """The engine's EE profile against a reference profile (ORE's, passed in as arrays) within the combined Monte Carlo
@@ -279,6 +328,14 @@ def reconcile_ee_profile(ee: np.ndarray, mc_se: np.ndarray, reference_ee: np.nda
         notes="" if ok else f"the largest difference is {stat:.4g} combined standard errors")
 
 
+@register(
+    "ccr.pfe_exceedance_backtest",
+    family="ccr",
+    name="PFE exceedance back-test",
+    h0="the PFE forecast at {q} is exceeded with frequency {1 - q}",
+    reference=REF_BACKTEST,
+    decision="p_value",
+)
 def pfe_exceedance_backtest(realised: np.ndarray, pfe_forecast: np.ndarray, quantile: float) -> TestResult:
     """The exceedances of the PFE forecast by the realised mark-to-market of the revalued book, money (N,) each.
 
@@ -417,6 +474,14 @@ def simulate_pit_critical_values(pit_sampler: Callable[[np.random.Generator], np
     return CriticalValues(p05, p01, _ESS(first, max_lag), nb, w2)
 
 
+@register(
+    "ccr.pit_exposure_backtest",
+    family="ccr",
+    name="PIT exposure back-test",
+    h0="the PITs of the realised values in the simulated distributions are uniform",
+    reference=REF_PIT,
+    decision="metric",
+)
 def pit_exposure_backtest(realised: np.ndarray, simulated: np.ndarray,
                           critical_simulated: dict[str, float] | None = None,
                           effective_sample_size: float | None = None) -> TestResult:

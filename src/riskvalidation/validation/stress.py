@@ -18,6 +18,7 @@ from typing import Any
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import mat, scalar, vec
 
@@ -105,6 +106,17 @@ def _quarter_number(iso: str, name: str) -> int:
 # The satellites
 
 
+@register(
+    "stress.satellite_backcast",
+    family="stress",
+    name="Satellite backcast",
+    h0=(
+        "satellites estimated before the episode back-cast it: the predicted loss-rate peak is within the "
+        "thresholds of the realised "
+        "peak, in size and timing"),
+    reference=DOSSIER_05_H7,
+    decision="metric",
+)
 def satellite_backcast(
     predicted: np.ndarray,
     realised: np.ndarray,
@@ -224,6 +236,14 @@ def satellite_backcast(
 SIGNS = ("positive", "negative", "none")
 
 
+@register(
+    "stress.sensitivity_monotonicity",
+    family="stress",
+    name="Sensitivity monotonicity",
+    h0="every macro sensitivity has its expected sign, so the projected loss rate is monotone in the path severity",
+    reference=DOSSIER_05_H7,
+    decision="metric",
+)
 def sensitivity_monotonicity(
     estimates: Sequence[float], expected_signs: Sequence[str], model_id: str | None = None, segment: str | None = None
 ) -> TestResult:
@@ -273,6 +293,14 @@ def sensitivity_monotonicity(
 # The balance sheet and the comparison with a challenger
 
 
+@register(
+    "stress.static_balance_sheet_rules",
+    family="stress",
+    name="Static balance sheet rules",
+    h0="the static balance sheet rules are applied: the total is constant, stage 3 never falls, no balance is negative",
+    reference=EBA_NOTE,
+    decision="metric",
+)
 def static_balance_sheet_rules(
     balances: np.ndarray, tolerance: float = 1e-9, model_id: str | None = None, segment: str | None = None
 ) -> TestResult:
@@ -319,6 +347,14 @@ def static_balance_sheet_rules(
     )
 
 
+@register(
+    "stress.bottom_up_vs_top_down",
+    family="stress",
+    name="Bottom up vs top down",
+    h0="the bottom-up stressed loss agrees with a top-down challenger within the thresholds",
+    reference=DOSSIER_05_H7,
+    decision="metric",
+)
 def bottom_up_vs_top_down(
     bottom_up: float,
     top_down: float,
@@ -371,6 +407,14 @@ def bottom_up_vs_top_down(
     )
 
 
+@register(
+    "stress.scenario_severity",
+    family="stress",
+    name="Scenario severity",
+    h0="a stress path is at least as severe as history",
+    reference=GFC_SEVERITY,
+    decision="metric",
+)
 def scenario_severity(
     path_peak: float,
     history_peak: float,
@@ -438,6 +482,14 @@ def scenario_severity(
     )
 
 
+@register(
+    "stress.reverse_solution_check",
+    family="stress",
+    name="Reverse solution check",
+    h0="the loss at the reverse stress solution equals the threshold and no start finds a closer point",
+    reference=REVERSE_CHECK,
+    decision="metric",
+)
 def reverse_solution_check(
     loss_at_x: float,
     threshold: float,
