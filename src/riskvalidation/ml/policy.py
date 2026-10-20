@@ -163,15 +163,20 @@ def threshold_rows(**parameters: float) -> dict[str, dict[str, float | str]]:
 
 
 def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
-    """``base`` (the packaged default policy when None) with the ``ml.`` rows added for every key it does not hold. The
-    keyword arguments are those of ``ml_thresholds`` (the named parameters); a row the base already holds is kept as it
-    stands."""
+    """``base`` (the packaged default policy when None) with the ``ml.`` rows of the named parameters. The keyword
+    arguments are those of ``ml_thresholds``. A row the base does not hold is added; a row the base holds at its
+    packaged default (the packaged policy carries the ``ml.`` rows, so a default row is no customisation) is replaced
+    by the parameterised one; a row the base customised is kept as it stands."""
     b = default_policy() if base is None else base
-    rows = ml_thresholds(**parameters)
-    rows.update(b.thresholds)
+    packaged = ml_thresholds()
+    rows = dict(b.thresholds)
+    for key, row in ml_thresholds(**parameters).items():
+        if key not in rows or rows[key] == packaged[key]:
+            rows[key] = row
     return Policy(
         policy_id=b.policy_id,
         version=b.version,
-        description=f"{b.description} The ml. rows are those of engine-ml-api 1.1.0 where it holds none.".strip(),
+        description=(f"{b.description} The ml. rows are those of engine-ml-api 1.1.0 where it holds none or holds the "
+                     "packaged default.").strip(),
         thresholds=rows,
     )
