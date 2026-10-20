@@ -427,8 +427,8 @@ def test_ml_policy_parameters_replace_a_packaged_default_row_and_keep_a_customis
 
 
 def test_metric_rows_carry_no_p_value_alphas_and_p_value_rows_keep_theirs():
-    """A metric test (upper_bad or lower_bad) has no p-value threshold, so its row carries null alphas with the cut points
-    in extras['thresholds'] (the web reads the alpha fields as p-value cut points; the fairness counterpart is
+    """A metric test (upper_bad or lower_bad) has no p-value threshold, so its row carries null alphas with the cut
+    points in extras['thresholds'] (the web reads the alpha fields as p-value cut points; the fairness counterpart is
     engine-fairness-api 1.2.0). The p-value tests keep 0.05 and 0.01."""
     import riskvalidation.validation.ml as v
     from riskvalidation.ml.robustness import robustness_curve
