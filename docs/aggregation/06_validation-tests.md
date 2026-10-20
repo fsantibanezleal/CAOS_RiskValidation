@@ -17,14 +17,14 @@ a green light means a statistic fell inside a gate, nothing more.
 
 | Test | Statistic (metric) | Light rule (Contraste internal gate) | Golden |
 |---|---|---|---|
-| `simple_sum_and_variance_covariance` | aggregate / variance-covariance (aggregate / simple sum) | red when aggregate > simple sum $(1+10^{-9})$; amber when $\lvert$statistic $-1\rvert>0.10$; green otherwise | EC (3, 4), $R=I$: 5.0 green (metric 0.7143), 8.0 red, 5.6 amber (1.12) |
-| `copula_choice_sensitivity` | $\max_\nu\lvert t/g-1\rvert$ (signed value at the smallest $\nu$) | green at most 0.05, amber at most 0.15, red above | Gaussian 100, t capitals (4, 107), (8, 103.5), (30, 101): 0.07 amber |
-| `worst_case_bracket` | worst $-$ lower (that over the largest row) | red when a row is outside [lower $-$ tol, worst $+$ tol] or lower > worst; green otherwise (no amber) | lower 4.0, rows (5.0, 6.0828, 7.0), worst 8.0: 4.0 green; worst 6.5 red |
-| `correlation_stress` | stressed / base $-1$ (the same) | red below $-10^{-9}$; amber above 0.10; green otherwise | 100 to 105: 0.05 green; 112 amber; 95 red |
-| `diversification_sign` | max of the factors (1 $-$ the smallest) | red when a factor exceeds $1+10^{-9}$; green otherwise | (0.87, 0.9, 0.93) green; (0.87, 1.02) red |
-| `horizon_confidence_consistency` | the count of marginals off the expected horizon (1 year) or level (0.999) | red when above 0, green otherwise | four consistent marginals: 0 green; one level 0.99: 1 red |
-| `elliptical_mc_agreement` | (MC $-$ VC) / standard error (MC / VC $-1$) | green when $\lvert$statistic$\rvert\le3$, red above; not_evaluated for a nonpositive standard error | MC 100.4, se 0.2, VC 100: 2.0 green; MC 101.0: 5.0 red |
-| `rosenberg_schuermann_reference` | simple sum / Gaussian $-1$ (the same) | always green: a reference, never a gate; the notes say inside or outside [0.30, 0.40] | the benchmark run below: 0.2403, outside |
+| `simple_sum_and_variance_covariance` (`aggregation.simple_sum_and_variance_covariance`) | aggregate / variance-covariance (aggregate / simple sum) | red when aggregate > simple sum $(1+10^{-9})$; amber when $\lvert$statistic $-1\rvert>0.10$; green otherwise | EC (3, 4), $R=I$: 5.0 green (metric 0.7143), 8.0 red, 5.6 amber (1.12) |
+| `copula_choice_sensitivity` (`aggregation.copula_choice_sensitivity`) | $\max_\nu\lvert t/g-1\rvert$ (signed value at the smallest $\nu$) | green at most 0.05, amber at most 0.15, red above | Gaussian 100, t capitals (4, 107), (8, 103.5), (30, 101): 0.07 amber |
+| `worst_case_bracket` (`aggregation.worst_case_bracket`) | worst $-$ lower (that over the largest row) | red when a row is outside [lower $-$ tol, worst $+$ tol] or lower > worst; green otherwise (no amber) | lower 4.0, rows (5.0, 6.0828, 7.0), worst 8.0: 4.0 green; worst 6.5 red |
+| `correlation_stress` (`aggregation.correlation_stress`) | stressed / base $-1$ (the same) | red below $-10^{-9}$; amber above 0.10; green otherwise | 100 to 105: 0.05 green; 112 amber; 95 red |
+| `diversification_sign` (`aggregation.diversification_sign`) | max of the factors (1 $-$ the smallest) | red when a factor exceeds $1+10^{-9}$; green otherwise | (0.87, 0.9, 0.93) green; (0.87, 1.02) red |
+| `horizon_confidence_consistency` (`aggregation.horizon_confidence_consistency`) | the count of marginals off the expected horizon (1 year) or level (0.999) | red when above 0, green otherwise | four consistent marginals: 0 green; one level 0.99: 1 red |
+| `elliptical_mc_agreement` (`aggregation.elliptical_mc_agreement`) | (MC $-$ VC) / standard error (MC / VC $-1$) | green when $\lvert$statistic$\rvert\le3$, red above; not_evaluated for a nonpositive standard error | MC 100.4, se 0.2, VC 100: 2.0 green; MC 101.0: 5.0 red |
+| `rosenberg_schuermann_reference` (`aggregation.rosenberg_schuermann_reference`) | simple sum / Gaussian $-1$ (the same) | always green: a reference, never a gate; the notes say inside or outside [0.30, 0.40] | the benchmark run below: 0.2403, outside |
 
 ## Equations
 

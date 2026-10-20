@@ -23,6 +23,7 @@ from typing import Any
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.liquidity import cbc as _cbc
 from riskvalidation.liquidity import ladder as _ladder
@@ -153,6 +154,14 @@ def _three_light_low(value: float, green: float, amber: float) -> Light:
 # The goldens and identities
 
 
+@register(
+    "liq.list_compounding_golden",
+    family="liquidity",
+    name="LiST compounding golden",
+    h0="the engine reproduces the LiST compounding golden of dossier 05 line 237 within the printed precision",
+    reference=REF_COMPOUNDING,
+    decision="metric",
+)
 def list_compounding_golden(q: float = 0.00103258, n: int = 125, expected: float = 0.121148,
                             tol: float = 5e-7) -> TestResult:
     """Reproduces the LiST compounding of dossier 05 line 237: stable retail sight deposits at `q = 0.103258`
@@ -181,6 +190,14 @@ def list_compounding_golden(q: float = 0.00103258, n: int = 125, expected: float
         inputs_hash=inputs_hash(np.array([rate, days, exp])), extras={"thresholds": {"tolerance": tolerance}})
 
 
+@register(
+    "liq.survival_monotone_in_severity",
+    family="liquidity",
+    name="Survival monotone in severity",
+    h0="the survival period does not lengthen as the scenario severity rises",
+    reference=REF_MONOTONE,
+    decision="metric",
+)
 def survival_monotone_in_severity(survival_days: Sequence[float | None], tol_days: float = 0.0) -> TestResult:
     """The survival period does not lengthen as the severity rises (dossier 05 line 480; SDD l.329).
 
@@ -224,6 +241,14 @@ _HAIRCUT_CASES: tuple[tuple[str, dict[str, Any], float, str], ...] = (
 )
 
 
+@register(
+    "liq.cbc_haircut_rules",
+    family="liquidity",
+    name="CBC haircut rules",
+    h0="the engine's haircut rules reproduce the order and values of LiST note para 74 on the nine printed cases",
+    reference=REF_HAIRCUTS,
+    decision="metric",
+)
 def cbc_haircut_rules(tol: float = 1e-12) -> TestResult:
     """Runs `cbc.haircut_rule` on the nine cases of dossier 05 line 238 (the three equity bands, non-equity HQLA
     and not,
@@ -261,6 +286,14 @@ def cbc_haircut_rules(tol: float = 1e-12) -> TestResult:
         notes="" if ok else f"{wrong_labels} wrong label(s); the largest haircut deviation is {stat}")
 
 
+@register(
+    "liq.nlp_identity",
+    family="liquidity",
+    name="NLP identity",
+    h0="the net liquidity position equals the CBC less the cumulated net outflows on every day",
+    reference=REF_NLP,
+    decision="metric",
+)
 def nlp_identity(cbc: np.ndarray, outflows: np.ndarray, inflows: np.ndarray, nlp: np.ndarray,
                  tol: float = 1e-6) -> TestResult:
     """The net liquidity position identity of dossier 05 E.1 line 234 on a ladder: `NLP(t) = CBC(t) - sum over s <= t of
@@ -284,6 +317,14 @@ def nlp_identity(cbc: np.ndarray, outflows: np.ndarray, inflows: np.ndarray, nlp
         inputs_hash=inputs_hash(c, o, i, p), extras={"thresholds": {"tolerance": tolerance}})
 
 
+@register(
+    "liq.runoff_adequacy_back_test",
+    family="liquidity",
+    name="Runoff adequacy back test",
+    h0="the modelled outflow share is at least as large as the realised one",
+    reference=REF_ADEQUACY,
+    decision="metric",
+)
 def runoff_adequacy_back_test(modelled_share: float, realised_share: float, ratio_green: float = 0.8,
                               ratio_amber: float = 0.5, compared_at: str = "event-horizon",
                               denominator: str | None = None) -> TestResult:
@@ -322,6 +363,14 @@ def runoff_adequacy_back_test(modelled_share: float, realised_share: float, rati
         extras={"thresholds": thresholds})
 
 
+@register(
+    "liq.runoff_vs_generator_truth",
+    family="liquidity",
+    name="Runoff vs generator truth",
+    h0="the run-off estimate reproduces the generator's exact truth within Monte Carlo error",
+    reference=REF_GENERATOR,
+    decision="metric",
+)
 def runoff_vs_generator_truth(estimated: np.ndarray, truth: np.ndarray, mc_se: np.ndarray, se_green: float = 2.0,
                               se_red: float = 3.0) -> TestResult:
     """The run-off estimate against the depositor generator's exact truth (dossier 08 line 698, G.4 lines 739 to 742).
@@ -354,6 +403,14 @@ def runoff_vs_generator_truth(estimated: np.ndarray, truth: np.ndarray, mc_se: n
         extras={"thresholds": {"se_green": green, "se_red": red}, "z": z.tolist()})
 
 
+@register(
+    "liq.cliff_effect_diagnostic",
+    family="liquidity",
+    name="Cliff effect diagnostic",
+    h0="the net liquidity position does not drop between the near and far day by more than the convention allows",
+    reference=REF_CLIFF,
+    decision="metric",
+)
 def cliff_effect_diagnostic(nlp: np.ndarray, total_assets: float, near: int = 30, far: int = 35, amber: float = -0.01,
                             red: float = -0.03) -> TestResult:
     """The cliff effect of dossier 05 E.1 line 236: a diagnostic of LCR window optimisation. `nlp` is `(H,)` money, the
@@ -385,6 +442,14 @@ def cliff_effect_diagnostic(nlp: np.ndarray, total_assets: float, near: int = 30
         n=int(x.size), inputs_hash=inputs_hash(x, np.array([ta, near, far])), extras={"thresholds": thresholds})
 
 
+@register(
+    "liq.htm_loss_effect",
+    family="liquidity",
+    name="HTM loss effect",
+    h0="the held-to-maturity unrealised loss does not raise the CBC and does not lengthen the survival period",
+    reference=REF_HTM,
+    decision="metric",
+)
 def htm_loss_effect(cbc_without: float, cbc_with: float, survival_without: float | None,
                     survival_with: float | None) -> TestResult:
     """The CBC and the survival period with and without the held-to-maturity unrealised loss (dossier 05 lines 263, 278
@@ -419,6 +484,14 @@ def htm_loss_effect(cbc_without: float, cbc_with: float, survival_without: float
         extras={"thresholds": thresholds, "survives_horizon": {"without": math.isinf(sw), "with": math.isinf(sl)}})
 
 
+@register(
+    "liq.uninsured_share_sensitivity",
+    family="liquidity",
+    name="Uninsured share sensitivity",
+    h0="the survival period does not lengthen as the uninsured share rises",
+    reference=REF_UNINSURED,
+    decision="metric",
+)
 def uninsured_share_sensitivity(shares: Sequence[float], survival_days: Sequence[float | None],
                                 tol_days: float = 0.0) -> TestResult:
     """The survival period does not lengthen as the uninsured share rises (dossier 05 line 278). `shares` are increasing
@@ -454,6 +527,14 @@ def uninsured_share_sensitivity(shares: Sequence[float], survival_days: Sequence
         if math.isinf(stat) else "")
 
 
+@register(
+    "liq.reverse_stress_round_trip",
+    family="liquidity",
+    name="Reverse stress round trip",
+    h0="the survival period at the solved multiplier equals the target",
+    reference=REF_REVERSE,
+    decision="metric",
+)
 def reverse_stress_round_trip(solved_multiplier: float | None, survival_at_multiplier: int | None, target_days: int,
                               tol_days: float = 0.0, *,
                               survival_just_below: SurvivalResult | float | None = None) -> TestResult:
@@ -511,6 +592,16 @@ def reverse_stress_round_trip(solved_multiplier: float | None, survival_at_multi
         extras={"thresholds": thresholds, "target_days": target}, notes=notes)
 
 
+@register(
+    "liq.htm_revaluation_vs_reported",
+    family="liquidity",
+    name="HTM revaluation vs reported",
+    h0=(
+        "the engine's revaluation of the HTM book reproduces the reported fair value within the stated share "
+        "of the loss"),
+    reference=REF_REVALUATION,
+    decision="metric",
+)
 def htm_revaluation_vs_reported(model_fair_value: float | None, reported_fair_value: float, amortised_cost: float,
                                 green: float = 0.05, amber: float = 0.15) -> TestResult:
     """The HTM book revalued from its maturity profile under the Treasury curve through the engine's `irrbb` curves

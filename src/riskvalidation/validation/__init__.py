@@ -1,6 +1,23 @@
 """Validation tests, grouped by family. Importing this package registers every test in the catalogue."""
 
-from riskvalidation.validation import calibration, discrimination, rating_system, stability, transitions
+from riskvalidation.validation import (  # noqa: F401  (each module registers its tests on import)
+    aggregation,
+    calibration,
+    ccr,
+    discrimination,
+    fairness,
+    ifrs9,
+    irrbb,
+    lgd_ead,
+    liquidity,
+    market,
+    oprisk,
+    portfolio,
+    rating_system,
+    stability,
+    stress,
+    transitions,
+)
 from riskvalidation.validation.calibration import (
     critical_default_count,
     pd_binomial,
