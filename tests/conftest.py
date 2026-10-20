@@ -4,27 +4,40 @@ from __future__ import annotations
 
 import sys
 from collections import Counter
+from functools import cache
+from pathlib import Path
 
 import pytest
 
+import riskvalidation
 from riskvalidation.core.build import make_result
 from riskvalidation.core.policy import Policy, Threshold
 from riskvalidation.core.registry import register
 from riskvalidation.core.result import TestResult
 
-# Every TestResult that a function of the engine (src/) builds during the session: (test_id, h0, reference) -> count.
+# Every TestResult that a function of the engine builds during the session: (test_id, h0, reference) -> count.
 # The session-wide check in tests/test_registry_complete.py reads it after every other test has run. Recording lives
-# in the tests only: it wraps the constructor's validation hook and never touches src/.
+# in the tests only: it wraps the constructor's validation hook and never touches src/. An engine frame is one inside
+# the imported package's folder, so the check holds on the source tree and on an installed wheel alike (the publish
+# workflow tests the built wheel).
 PRODUCED: Counter = Counter()
-_ENGINE_MARK = "riskvalidation"
+_ENGINE_DIR = Path(riskvalidation.__file__).resolve().parent.as_posix() + "/"
+_RESULT_FILE = _ENGINE_DIR + "core/result.py"
+
+
+@cache
+def _is_engine_caller(filename: str) -> bool:
+    path = Path(filename).resolve().as_posix()
+    return path.startswith(_ENGINE_DIR) and path != _RESULT_FILE
+
+
 _original_post_init = TestResult.__post_init__
 
 
 def _recording_post_init(self) -> None:
     _original_post_init(self)
     # frames: this hook, the generated __init__, the constructing caller
-    caller = sys._getframe(2).f_code.co_filename.replace("\\", "/")
-    if f"/src/{_ENGINE_MARK}/" in caller and "/core/result.py" not in caller:
+    if _is_engine_caller(sys._getframe(2).f_code.co_filename):
         PRODUCED[(self.test_id, self.h0, self.reference)] += 1
 
 

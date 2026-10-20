@@ -36,8 +36,9 @@ jobs:
           python -m twine check dist/*
       - name: Test the built wheel
         run: |
-          python -m pip install dist/*.whl pytest
-          python -m pytest tests/ -q
+          # the same extras and the same selection as ci.yml: the sizepower studies are the local release gate (ADR-0074, U14 G7)
+          python -m pip install "$(ls dist/*.whl)[dev,market]"
+          python -m pytest tests/ -q -m "not sizepower"
       - uses: actions/upload-artifact@v4
         with:
           name: dist
