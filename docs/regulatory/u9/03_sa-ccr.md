@@ -65,7 +65,10 @@ names (0.5) and indices (0.8) in one formula (CRE99 netting set 2 uses 0.5 and 0
 Table 2 factors and correlations; `commodity_addon` sums the entity aggregate over the hedging sets.
 `credit_addon_terms(entities)` and `equity_addon_terms(entities)` return `AddonTerms(systematic, idiosyncratic, addon)`: the systematic term $(\sum_e\rho_e A_e)^2$,
 the idiosyncratic term $\sum_e(1-\rho_e^2)A_e^2$ and the add-on $\sqrt{\text{systematic}+\text{idiosyncratic}}$; `credit_addon` and `equity_addon` return the `addon` field of
-these, and `entity_aggregate_terms(addons, rhos)` is the same split for explicit add-ons (so no consumer recomputes the two terms). The factors and correlations are module data
+these, and `entity_aggregate_terms(addons, rhos)` is the same split for explicit add-ons (so no consumer recomputes the two terms).
+The trade effective notionals that feed them are `credit_trade_effective_notional(delta, notional, start_years, end_years, mpor_business_days=None)`
+$=\delta\,N\,SD(S,E)\,MF(E)$ (CRE52.34, CRE52.52) and `commodity_trade_effective_notional(delta, adjusted_notional, maturity_years, mpor_business_days=None)`
+$=\delta\,N_{adj}\,MF(M)$ (CRE52.52); they refuse what `supervisory_duration` and `maturity_factor` refuse, and a non-finite delta or notional. The factors and correlations are module data
 `SUPERVISORY_PARAMETERS` (a `RegulatoryParameter` per cell with paragraph `CRE52.72`, in force 2023-01-01), compared cell by cell with the fixture's table:
 IR 0.5 percent (option volatility 50 percent); FX 4.0 percent (15 percent); credit single name AAA 0.38, AA 0.38, A 0.42, BBB 0.54, BB 1.06, B 1.6, CCC
 6.0 percent with correlation 50 percent and volatility 100 percent; credit index IG 0.38 and SG 1.06 percent with correlation 80 percent and volatility 80
