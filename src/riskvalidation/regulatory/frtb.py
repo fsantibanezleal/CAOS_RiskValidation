@@ -195,19 +195,37 @@ def bucket_charge(ws: np.ndarray, rho: np.ndarray, scenario: str = "medium") -> 
     return math.sqrt(max(0.0, radicand))
 
 
-def cross_bucket_charge(k_b: np.ndarray, s_b: np.ndarray, gamma: np.ndarray, scenario: str = "medium") -> float:
-    """MAR21.4: sqrt(sum K_b^2 + sum_{b != c} gamma_bc S_b S_c), with the MAR21.4(5)(b) replacement of S_b if it is
-    negative."""
+@dataclass(frozen=True)
+class CrossBucket:
+    """The cross-bucket charge and whether the MAR21.4(5)(b) fallback applied (the radicand with the plain S_b was
+    negative)."""
+
+    charge: float
+    fallback_used: bool
+
+
+def cross_bucket_charge_detail(
+    k_b: np.ndarray, s_b: np.ndarray, gamma: np.ndarray, scenario: str = "medium"
+) -> CrossBucket:
+    """MAR21.4: the charge of `cross_bucket_charge` and `fallback_used`, true exactly when the radicand with the plain
+    S_b is negative and S_b is replaced by max(min(S_b, K_b), -K_b) (MAR21.4(5)(b))."""
     k = _array("k_b", k_b, ndim=1)
     if np.any(k < 0.0):
         raise ValueError("k_b must be at least 0")
     s = _array("s_b", s_b, shape=k.shape)
     g = _offdiagonal(_correlation_under("gamma", _array("gamma", gamma, shape=(k.size, k.size)), scenario))
     radicand = float(k @ k + s @ g @ s)
-    if radicand < 0.0:
+    fallback = radicand < 0.0
+    if fallback:
         s = np.maximum(np.minimum(s, k), -k)
         radicand = float(k @ k + s @ g @ s)
-    return math.sqrt(max(0.0, radicand))
+    return CrossBucket(math.sqrt(max(0.0, radicand)), fallback)
+
+
+def cross_bucket_charge(k_b: np.ndarray, s_b: np.ndarray, gamma: np.ndarray, scenario: str = "medium") -> float:
+    """MAR21.4: sqrt(sum K_b^2 + sum_{b != c} gamma_bc S_b S_c), with the MAR21.4(5)(b) replacement of S_b if it is
+    negative."""
+    return cross_bucket_charge_detail(k_b, s_b, gamma, scenario).charge
 
 
 @dataclass(frozen=True, eq=False)
