@@ -27,15 +27,12 @@ _INLINE = re.compile(
 _NUMBER = re.compile(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
 
 
-def _kind(test_id: str, packaged_kind: str | None) -> tuple[str | None, str | None]:
-    """(kind, reason): the registry's decision, else the packaged threshold's, else null with the reason."""
+def _kind(test_id: str) -> tuple[str | None, str | None]:
+    """(kind, reason): the registry's decision, else null with the reason (no fallback to a threshold)."""
     try:
         return spec(test_id).decision, None
     except KeyError:
-        pass
-    if packaged_kind is not None:
-        return ("p_value" if packaged_kind == "p_value" else "metric"), None
-    return None, KIND_NOT_REGISTERED
+        return None, KIND_NOT_REGISTERED
 
 
 def _parameters(text: str) -> dict[str, float | str]:
@@ -58,7 +55,7 @@ def resolve_policy(
     text = (policy_version or "").strip()
     inline = _INLINE.fullmatch(text)
     if inline:
-        kind, kind_reason = _kind(test_id, None)
+        kind, kind_reason = _kind(test_id)
         return {
             "label": text,
             "kind": kind,
@@ -73,19 +70,27 @@ def resolve_policy(
         }, None
     packaged = _PACKAGED.fullmatch(text)
     if packaged:
-        policy = default_policy()
+        base = default_policy()
         version = packaged.group("version")
-        if packaged.group("id") != policy.policy_id or version.split("+")[0] != policy.version:
+        # a label with the +gov- suffix is the governance policy: the packaged default plus the gov. rows
+        # (until they sit in the file)
+        if "+gov-" in version:
+            from riskvalidation.validation.governance import gov_default_policy
+
+            policy = gov_default_policy()
+        else:
+            policy = base
+        if packaged.group("id") != base.policy_id or version.split("+")[0] != base.version:
             return None, (
                 f"the label {text!r} is not the packaged policy {policy.label!r}, so no threshold can be read for it "
                 f"(a packaged policy file per battery is backlog BL-085)"
             )
         threshold = policy.threshold(test_id)
-        kind, kind_reason = _kind(test_id, threshold.kind if threshold is not None else None)
+        kind, kind_reason = _kind(test_id)
         if threshold is None:
             direction, direction_reason = (
                 None,
-                f"the packaged policy {policy.label} holds no threshold for {test_id} (a descriptive test)",
+                f"the packaged policy {policy.label} holds no packaged threshold for {test_id}",
             )
         elif threshold.kind == "p_value":
             direction, direction_reason = None, "a p-value threshold has no direction"

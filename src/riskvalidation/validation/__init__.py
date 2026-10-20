@@ -1,6 +1,6 @@
 """Validation tests, grouped by family. Importing this package registers every test in the catalogue."""
 
-from riskvalidation.validation import calibration, discrimination, rating_system, stability, transitions
+from riskvalidation.validation import calibration, discrimination, governance, rating_system, stability, transitions
 from riskvalidation.validation.calibration import (
     critical_default_count,
     pd_binomial,
@@ -53,6 +53,7 @@ __all__ = [
     "disc_delong",
     "disc_ks",
     "discrimination",
+    "governance",
     "pd_binomial",
     "pd_binomial_vasicek",
     "pd_brier",

@@ -12,6 +12,7 @@ approves no model.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 from riskvalidation.governance.conventions import RECOMMENDATION_RULE
@@ -39,6 +40,8 @@ def rwea_level(rwea_share: float | None) -> int:
     """
     if rwea_share is None:
         return 0
+    if not math.isfinite(rwea_share):
+        raise ValueError(f"rwea_share must be finite, got {rwea_share}")
     if rwea_share < 0:
         raise ValueError(f"rwea_share must not be negative, got {rwea_share}")
     return 4 if rwea_share >= RWEA_LEVEL_4 else 3 if rwea_share >= RWEA_LEVEL_3 else 0

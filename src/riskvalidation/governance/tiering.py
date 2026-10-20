@@ -17,6 +17,11 @@ ROUNDINGS = ("half-up",)
 READINGS = (("A", "literal", "mean"), ("B", "graded", "mean"), ("C", "literal", "maximum"), ("D", "graded", "maximum"))
 
 
+def _filled(value: object) -> bool:
+    """A rationale or an approver is present only as a non-empty string; a null or a number is not one."""
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _score(value: int, name: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 4:
         raise ValueError(f"{name} must be an integer from 1 to 4, got {value!r}")
@@ -81,7 +86,7 @@ def apply_override(computed_tier: int, override: tuple[int, str, str] | None = N
     if override is None:
         return computed_tier
     to_tier, rationale, approver = override
-    if not str(rationale).strip() or not str(approver).strip():
+    if not _filled(rationale) or not _filled(approver):
         raise ValueError("an override needs a rationale and an approver")
     return _score(to_tier, "the override's tier")
 

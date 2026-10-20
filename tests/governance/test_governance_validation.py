@@ -197,6 +197,18 @@ def test_tier_override_documented_counts_the_overrides_without_a_rationale_or_an
     inv["entries"][1]["tier_block"]["override"] = {"to_tier": 2, "rationale": "", "approver": "CRO"}
     r = tier_override_documented(inv)
     assert (r.n, r.metric, r.light) == (2, 1, Light.RED)
+    for i, bad in enumerate(
+        (
+            {"rationale": None, "approver": None},
+            {"rationale": "r", "approver": None},
+            {"rationale": 5, "approver": "a"},
+            {},
+        )
+    ):
+        probe = copy.deepcopy(inventory_doc)
+        probe["entries"][0]["tier_block"]["override"] = {"to_tier": 1, **bad}
+        r = tier_override_documented(probe)
+        assert (r.n, r.metric, r.light) == (1, 1, Light.RED), i  # never green
     inv["entries"][2]["tier_block"]["override"] = {"to_tier": 2, "rationale": "a reason", "approver": " "}
     assert tier_override_documented(inv).metric == 2
 

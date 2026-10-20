@@ -10,7 +10,6 @@ from datetime import date
 
 import pytest
 
-from riskvalidation.core.registry import spec
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.core.suite import SuiteRun
 from riskvalidation.governance.report import build_report, executive_counts
@@ -39,29 +38,14 @@ def _build(extract, inventory_doc, findings_doc, key: str) -> dict:
     return build_report(*report_inputs(extract, inventory_doc, findings_doc, key), AS_OF)
 
 
-def _registered(test_id: str) -> bool:
-    try:
-        spec(test_id)
-        return True
-    except KeyError:
-        return False
-
-
-def _normalise(doc: dict, decisions: dict) -> dict:
+def _normalise(doc: dict) -> dict:
     """Drop what the engine does not state the way the fixture builder wrote it: the free-text lines that name the
-    batch 3 head or the IFRS 9 provision, the direction of a packaged row (the engine reads the policy file), and
-    the kind of a test the registry knows now and the fixture's registry did not."""
+    batch 3 head or the IFRS 9 provision."""
     out = copy.deepcopy(doc)
     sec = out["sections"]
     sec[5]["missing"] = "text"
     if sec[7]["status"] == "filled":
         sec[7]["blocks"] = "text"
-    for row in sec[5]["blocks"][0]["rows"]:
-        pol = row["policy"]
-        if pol["source"] == "packaged-policy":
-            pol["direction"], pol["direction_reason"] = "read", "read"
-        if decisions.get(row["test_id"]) is None and _registered(row["test_id"]):
-            pol["kind"], pol["kind_reason"] = "known", "known"
     return out
 
 
@@ -77,11 +61,11 @@ def test_executive_counts_golden_on_the_default_variant_of_c18(extract):
 def test_executive_counts_is_the_suite_counting():
     results = tuple(
         TestResult(test_id="t.a", h0="h", reference="r", policy_version="p", light=light, metric=1.0)
-        for light in (Light.GREEN, Light.RED, Light.RED, Light.AMBER, Light.NOT_EVALUATED)
+        for light in (Light.GREEN, Light.RED, Light.RED, Light.AMBER, Light.NOT_EVALUATED, Light.ERROR, Light.ERROR)
     )
     rows = [r.to_dict() for r in results]
     assert executive_counts(rows) == SuiteRun("p", results).counts()
-    assert sum(executive_counts(rows).values()) == len(rows)
+    assert sum(executive_counts(rows).values()) == len(rows) and executive_counts(rows)["error"] == 2
     assert executive_counts([]) == {"green": 0, "amber": 0, "red": 0, "not_evaluated": 0, "error": 0}
     with pytest.raises(ValueError):
         executive_counts([{"light": "purple"}])
@@ -116,10 +100,8 @@ def test_report_c07_golden(extract, inventory_doc, findings_doc):
 
 @pytest.mark.parametrize("key", KEYS)
 def test_report_reproduces_the_fixture(key, extract, inventory_doc, findings_doc, report_docs):
-    case = key.split("/")[0]
-    decisions = extract["cases"][case]["spec_decisions"]
     rep = _build(extract, inventory_doc, findings_doc, key)
-    assert _normalise(rep, decisions) == _normalise(report_docs[key], decisions)
+    assert _normalise(rep) == _normalise(report_docs[key])
 
 
 @pytest.mark.parametrize("key", KEYS)

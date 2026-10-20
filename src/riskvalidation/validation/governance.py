@@ -135,6 +135,11 @@ def gov_default_policy() -> Policy:
     )
 
 
+def _filled(value: Any) -> bool:
+    """A rationale or an approver is present only as a non-empty string; a null or a number is not one."""
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _entries(inventory: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     if not isinstance(inventory, Mapping) or not isinstance(inventory.get("entries"), Sequence):
         raise ValueError("inventory must be a mapping with an 'entries' list")
@@ -424,7 +429,7 @@ def tier_override_documented(
     overrides = [
         (e["key"], e["tier_block"]["override"]) for e in entries if e["tier_block"].get("override") is not None
     ]
-    bad = [k for k, o in overrides if not str(o.get("rationale", "")).strip() or not str(o.get("approver", "")).strip()]
+    bad = [k for k, o in overrides if not _filled(o.get("rationale")) or not _filled(o.get("approver"))]
     return _result(
         key,
         pol,
@@ -436,10 +441,7 @@ def tier_override_documented(
         n_events=len(bad),
         notes=f"{len(bad)} of {len(overrides)} tier overrides lack a rationale or an approver"
         + (f": {', '.join(bad)}" if bad else ""),
-        hash_of=[
-            (k, o.get("to_tier"), bool(str(o.get("rationale", "")).strip()), bool(str(o.get("approver", "")).strip()))
-            for k, o in overrides
-        ],
+        hash_of=[(k, o.get("to_tier"), _filled(o.get("rationale")), _filled(o.get("approver"))) for k, o in overrides],
         extras=_extras(key, undocumented=bad),
     )
 
