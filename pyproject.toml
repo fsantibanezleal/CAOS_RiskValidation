@@ -39,6 +39,9 @@ market = ["arch>=8.0,<9"]
 ml = ["fairlearn>=0.15,<0.16", "mapie>=1.5,<2"]
 # U13 stress: statsmodels is the independent reference of the VAR and the growth-at-risk regressions, in the tests only (U13 sizing R2).
 stress = ["statsmodels>=0.15,<0.16"]
+# BL-083 transitions: Open Risk's transitionMatrix (Apache-2.0) is the independent reference of the cohort estimator, in the tests only;
+# the engine core never imports it. Pinned to the version the reconciliation was measured against.
+transitions = ["transitionMatrix==0.5.1"]
 
 [project.urls]
 Homepage = "https://github.com/fsantibanezleal/CAOS_RiskValidation"
