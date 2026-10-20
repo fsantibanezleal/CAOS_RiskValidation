@@ -16,7 +16,9 @@ If the radicand of the cross-bucket sum is negative, $S_b$ is replaced by $\max\
 (MAR21.4(5)(b)). Symbols: $s_k$ the sensitivity to risk factor $k$, $RW_k$ its risk weight, $WS_k$ the weighted sensitivity, $\rho_{kl}$ the within-bucket
 correlation, $\gamma_{bc}$ the cross-bucket correlation. `bucket_charge(ws, rho, scenario)` is $K_b$ (one factor gives $|WS|$; perfectly correlated factors give
 $|\sum WS|$; never negative) and `cross_bucket_charge(k_b, s_b, gamma, scenario)` the second formula (one bucket gives its $K_b$; never negative); the diagonal of $\rho$ and
-$\gamma$ is ignored.
+$\gamma$ is ignored. `cross_bucket_charge_detail(k_b, s_b, gamma, scenario)` takes the same arguments and returns
+`CrossBucket(charge, fallback_used)`: `charge` equals `cross_bucket_charge` and `fallback_used` is true exactly when the MAR21.4(5)(b) fallback applied (the radicand with the plain
+$S_b$ was negative).
 
 ## The three correlation scenarios (MAR21.6, MAR21.7)
 
