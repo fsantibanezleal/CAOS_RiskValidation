@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from typing import Any, ClassVar
 
 import numpy as np
+import pytest
 
 from riskvalidation.fairness.conditional import fit_decision_model, protected_effect
 from riskvalidation.fairness.metrics import group_selection_rates
@@ -26,6 +27,8 @@ from riskvalidation.harness.run import light_not_green, simulate
 from riskvalidation.validation import fairness as fv
 
 N_REP = 4000
+# F6: the 4,000-repetition runs are a local release gate; the engine CI deselects them with -m "not sizepower"
+pytestmark = pytest.mark.sizepower
 OUT = os.environ.get("FAIRNESS_SIZE_POWER_OUT")
 _RECORD: dict[str, Any] = {}
 
@@ -234,17 +237,17 @@ def situation_adapter(X, group, decision):
 
 
 def test_size_and_power_situation_testing():
-    # the contract's amber cut is a share of 0.10 of the complainants significant; the rule is also read at 0.15 and
-    # 0.20 to show how its size depends on the cut (the complainants share neighbours, so the share is more
-    # variable than a binomial count)
+    # the contract's amber cut is a share of 0.20 of the complainants significant (F4, decided on the measured size);
+    # the rule is also read at the former cut 0.10 and at 0.15 to show how its size depends on the cut (the
+    # complainants share neighbours, so the share is more variable than a binomial count)
     from riskvalidation.harness.run import metric_above
 
-    rules = (light_not_green(), metric_above(0.15, "share>0.15"), metric_above(0.20, "share>0.20"))
+    rules = (light_not_green(), metric_above(0.10, "share>0.10"), metric_above(0.15, "share>0.15"))
     null = go(situation_adapter, SituationPlant(bias=0.0), 141, rules)
     alt = go(situation_adapter, SituationPlant(bias=0.4), 142, rules)
     size = record("situation_testing size", null)
     power = record("situation_testing power", alt)
-    for label in ("share>0.15", "share>0.20"):
+    for label in ("share>0.10", "share>0.15"):
         _RECORD[f"situation_testing size at {label}"] = {"rate": null.rates[label].rate, "se": null.rates[label].se,
                                                        "n_rep": N_REP, "undefined": null.rates[label].undefined}
         _RECORD[f"situation_testing power at {label}"] = {"rate": alt.rates[label].rate, "se": alt.rates[label].se,
@@ -252,8 +255,8 @@ def test_size_and_power_situation_testing():
     if OUT:
         with open(OUT, "w", encoding="utf-8") as fh:
             json.dump(_RECORD, fh, indent=1, sort_keys=True)
-    # measured, not tuned: at n = 400 and k = 30 the amber cut of 0.10 raises a false alarm on about one null draw in
-    # five (docs/fairness/04); the cut is a proposed convention for the main session's approval
-    assert size < 0.25, size
+    # measured, not tuned: at n = 400 and k = 30 the amber cut of 0.20 holds the default size bound 0.05 plus two
+    # standard errors (docs/fairness/06); the former cut 0.10 raised a false alarm on about one null draw in five
+    assert size <= 0.05 + 2 * se_of(0.05), size
     assert power > 0.95, power
-    assert null.rates["share>0.20"].rate < size
+    assert null.rates["share>0.10"].rate > size

@@ -26,7 +26,8 @@ def _sign(v: float) -> int:
 
 def replicate_effect(fit: Effect, confirm: Effect) -> Replication:
     """same_sign is the equality of the signs of the two coefficients (0 has its own sign); size_ratio is
-    confirm.coefficient / fit.coefficient, so a flip gives a negative ratio, and None when the fit coefficient is 0."""
+    confirm.coefficient / fit.coefficient, so a flip gives a negative ratio, and None when the fit coefficient is 0.
+    A fit coefficient of exactly 0 therefore gives the light `not_evaluated` in `validation.fairness.replication`."""
     for name, eff in (("fit", fit), ("confirm", confirm)):
         if not isinstance(eff, Effect) or not math.isfinite(eff.coefficient):
             raise ValueError(f"{name} must be an Effect with a finite coefficient")

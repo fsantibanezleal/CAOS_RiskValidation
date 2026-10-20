@@ -373,3 +373,60 @@ def test_situation_test_reproduces_the_published_loan_application_counts_under_s
             got = situation_test(x, group, decision, k=k, normalization="standard", comparator="mutatis-mutandis",
                                  counterfactual=rescaled)
             assert (got.n_cases, got.n_significant) == (cases, significant), k
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# F3 (1.1.0): the categorical mask of situation_test, the paper's Gower distance (equations 3 to 5)
+
+CAT_X = np.array([[0.0, 2.0], [6.0, 0.0], [9.0, 1.0], [2.0, 1.0], [7.0, 0.0], [6.0, 1.0], [1.0, 2.0]])
+CAT_GROUP = np.array([1, 1, 1, 0, 0, 0, 0])
+CAT_DECISION = np.array([1, 0, 1, 0, 0, 1, 1])
+
+
+def test_situation_test_categorical_golden_by_hand():
+    """Column 1 is categorical (overlap), column 0 continuous (Manhattan over max - min of the search space), k = 1.
+    Control scale (protected col 0) 9, test scale (others col 0) 6. By hand, distance = (md + ol) / 2:
+    P0 (0, 2): control P1 5/6 vs P2 1, nearest P1 (negative, p_c 1); test O0 2/3, O1 13/12, O2 1, O3 1/12, nearest O3
+    (favourable, p_t 0): delta 1, lower bound 1.
+    P1 (6, 0): control P0 5/6 vs P2 2/3, nearest P2 (favourable, p_c 0): delta <= 0.
+    P2 (9, 1): control P1 2/3 vs P0 1, nearest P1 (negative, p_c 1); test O2 1/4 is nearest (favourable, p_t 0):
+    delta 1. Two cases, both significant. Read as continuous the same table gives one case."""
+    cat = np.array([False, True])
+    res = situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=1, categorical=cat)
+    assert (res.n_complainants, res.n_cases, res.n_significant) == (3, 2, 2)
+    plain = situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=1)
+    assert (plain.n_cases, plain.n_significant) == (1, 1)  # md on the code: the categorical column is mismeasured
+    assert situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=1, categorical=None) == plain
+    assert situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=1, categorical=np.array([False, False])) == plain
+
+
+def test_situation_test_categorical_under_standard_uses_overlap_and_standardises_the_rest_only():
+    cat = np.array([False, True])
+    res = situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=2, categorical=cat, normalization="standard")
+    sd0 = CAT_X[:, 0].std()
+    prot, other = [0, 1, 2], [3, 4, 5, 6]
+
+    def dist(a, b):
+        return (abs(CAT_X[a, 0] - CAT_X[b, 0]) / sd0 + (CAT_X[a, 1] != CAT_X[b, 1])) / 2.0
+
+    cases = sig = 0
+    for i in prot:
+        c = sorted((j for j in prot if j != i), key=lambda j: (dist(i, j), j))[:2]
+        t = sorted(other, key=lambda j: (dist(i, j), j))[:2]
+        p_c = sum(CAT_DECISION[j] == 0 for j in c) / 2
+        p_t = sum(CAT_DECISION[j] == 0 for j in t) / 2
+        delta = p_c - p_t
+        cases += delta > 0
+        sig += delta - stats.norm.ppf(0.95) * math.sqrt((p_c * (1 - p_c) + p_t * (1 - p_t)) / 2) > 0
+    assert (res.n_cases, res.n_significant) == (cases, sig)
+
+
+def test_situation_test_categorical_refusals():
+    with pytest.raises(ValueError, match="categorical"):
+        situation_test(CAT_X, CAT_GROUP, CAT_DECISION, k=1, categorical=np.array([False, True, False]))
+    # a constant categorical column has no scale to read: it is not a zero-scale error
+    x = CAT_X.copy()
+    x[:, 1] = 1.0
+    situation_test(x, CAT_GROUP, CAT_DECISION, k=1, categorical=np.array([False, True]))
+    with pytest.raises(ValueError, match="zero scale"):
+        situation_test(x, CAT_GROUP, CAT_DECISION, k=1)

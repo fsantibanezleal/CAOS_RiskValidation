@@ -178,12 +178,16 @@ def fit_rate_spread_model(rate_spread: np.ndarray, protected: np.ndarray, contro
 
 
 def protected_effect(model: DecisionModel, index: int, level: float = 0.95) -> Effect:
-    """The coefficient at `index` of the model, its odds ratio exp(coefficient) and the Wald interval coefficient plus
-    or minus z se at `level` (z the normal quantile of 1 - (1 - level) / 2). The odds ratio is meaningful for the
-    decision model only; for the linear rate-spread model read the coefficient."""
+    """The coefficient at `index` of the model, where `index` is the position in `model.coefficients`: index 0 is the
+    intercept and is refused, protected indicator j is index 1 + j. It returns the coefficient, its odds ratio
+    exp(coefficient) and the Wald interval coefficient plus or minus z se at `level` (z the normal quantile of
+    1 - (1 - level) / 2). The odds ratio is meaningful for the decision model only; for the linear rate-spread model
+    read the coefficient."""
     k = len(model.coefficients)
-    if not isinstance(index, (int, np.integer)) or not 0 <= index < k:
-        raise ValueError(f"index must lie in [0, {k - 1}] (0 is the intercept), got {index!r}")
+    if isinstance(index, (int, np.integer)) and index == 0:
+        raise ValueError("index 0 is the intercept, not a protected indicator; indicator j is index 1 + j")
+    if not isinstance(index, (int, np.integer)) or not 1 <= index < k:
+        raise ValueError(f"index must lie in [1, {k - 1}] (indicator j is index 1 + j), got {index!r}")
     lv = unit_interval_open(level, "level")
     coef, se = model.coefficients[index], model.standard_errors[index]
     if not (math.isfinite(coef) and math.isfinite(se) and se >= 0.0):

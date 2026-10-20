@@ -46,8 +46,24 @@ deviation (ddof 0) of the attribute over all rows, so the continuous term is the
 Any other value raises `ValueError`, as does a zero scale on a continuous attribute (a constant column). Under MM the counterfactual
 is read in the same space as the factual rows (the paper's one space); the reference code instead standardizes the counterfactual
 dataset with its own scaler (finding F3 of the contract), which the caller reproduces by expressing the counterfactual through that
-scaler before the call. `situation_test` reads every attribute of `X` as continuous; categorical attributes go through
-`gower_distance` and `k_nearest`, which take an explicit mask.
+scaler before the call. The scaler that reproduces the published CST counts is the counterfactual file's own `StandardScaler`
+(population standard deviation, ddof 0), applied as `(cf - cf.mean(0)) / cf.std(0) * x.std(0) + x.mean(0)` with `x` the factual
+attributes; the engine keeps its one-space reading of the counterfactual and the gated test applies that rescaling before the call.
+
+`situation_test` takes `categorical`, a boolean mask over the columns of `X` (contract 1.1.0; `None`, the default, keeps the 1.0.0
+reading of every column as continuous). A categorical column contributes the overlap measure (1 if the two values differ, 0
+otherwise) and every other column the normalised Manhattan distance, equations 3 to 5 of the paper; the distance is their mean. Under
+`normalization='standard'` the categorical columns still use overlap, as the reference code does for nominal attributes, and the
+standardisation applies to the other columns only. A mask that is not one flag per column raises `ValueError`; the scale of a
+categorical column is never read, so a constant categorical column is not a zero-scale error. `gower_distance` and `k_nearest`
+already took the same explicit mask (a required argument), unchanged in 1.1.0.
+
+Golden (hand-computed, `test_situation_test_categorical_golden_by_hand`): seven rows `(continuous, categorical)`, protected
+`(0,2) (6,0) (9,1)` with decisions 1, 0, 1, others `(2,1) (7,0) (6,1) (1,2)` with decisions 0, 0, 1, 1, $k=1$, `range`. The distance
+is $(\mathrm{md}+\mathrm{ol})/2$ with scales 9 (control) and 6 (test). Complainant 0: control nearest is row 1 (5/6 against 1), a
+negative decision, $p_c=1$; test nearest is the last other row (1/12), favourable, $p_t=0$; $\Delta p=1$. Complainant 1: $\Delta p\le 0$.
+Complainant 2: control nearest is row 1 (2/3), $p_c=1$; test nearest is the third other row (1/4), $p_t=0$; $\Delta p=1$. Result: 3
+complainants, 2 cases, 2 significant; the same table read as continuous gives 1 case.
 
 ## Golden values
 

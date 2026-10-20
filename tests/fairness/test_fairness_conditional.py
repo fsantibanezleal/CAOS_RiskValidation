@@ -156,3 +156,15 @@ def test_fit_rate_spread_model_drops_missing_rows_and_refuses_invalid():
         fit_rate_spread_model(np.full(300, np.nan), protected, controls)
     with pytest.raises(ValueError, match="rate_spread"):
         fit_rate_spread_model(spread[:100], protected, controls)
+
+
+def test_protected_effect_refuses_the_intercept_and_reads_indicator_j_at_index_1_plus_j():
+    """F2: index is the position in `coefficients`; index 0 is the intercept, protected indicator j is index 1 + j."""
+    decision, protected, controls, _ = _data()
+    assert protected.shape[1] == 2  # two protected indicators
+    model = fit_decision_model(decision, protected, controls)
+    with pytest.raises(ValueError, match="index 0 is the intercept, not a protected indicator; indicator j is index 1"):
+        protected_effect(model, 0)
+    for j in (0, 1):
+        assert protected_effect(model, 1 + j).coefficient == model.coefficients[1 + j]
+    assert "1 + j" in (protected_effect.__doc__ or "")

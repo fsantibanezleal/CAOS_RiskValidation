@@ -83,6 +83,14 @@ def _classified(pol: Policy, test_id: str, *, p_value: float | None = None, metr
     return pol.classify(test_id, p_value=p_value, metric=metric)
 
 
+NEVER_RED_NOTE = "; never red by contract; the policy's red cut is not applied"
+
+
+def _cap_at_amber(light: Light) -> tuple[Light, str]:
+    """A 'never red' rule: a red light from any policy is amber (F1), and the notes say so."""
+    return (Light.AMBER, NEVER_RED_NOTE) if light is Light.RED else (light, "")
+
+
 def _check_text(name: str, v: Any) -> list[str]:
     if isinstance(v, (str, bytes)) or not isinstance(v, Sequence) or not all(isinstance(s, str) for s in v):
         raise ValueError(f"{name} must be a sequence of strings (not a single string), got {v!r}")
@@ -109,7 +117,8 @@ def demographic_parity(model_id: str, rates: Mapping[str, SelectionRate], refere
     """Demographic (statistical) parity as an indicator. metric = the largest absolute difference of a group's
     selection rate from the reference group's rate, computed on the counts. Light (policy key `fair.demographic_parity`,
     upper_bad, strict): green when the gap is at most the tolerance (0.05, a convention), amber above it; never red (the
-    red cut is a sentinel above the metric's range). p_value None."""
+    red cut is a sentinel above the metric's range, and a red light from a caller policy is capped at amber).
+    p_value None."""
     test_id = "fair.demographic_parity"
     h0 = "descriptive: every group's selection rate equals the reference group's rate"
     alt = "a group's selection rate differs from the reference group's rate"
@@ -127,13 +136,14 @@ def demographic_parity(model_id: str, rates: Mapping[str, SelectionRate], refere
     if th is None:
         return _not_evaluated(test_id, h0, alt, ref, version, f"policy {pol.label} holds no threshold for {test_id}",
                               model_id=model_id, extras={"thresholds": {}})
+    light, capped = _cap_at_amber(light)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
         policy_version=_version(pol, tolerance=_threshold_extras(test_id, th)["amber"]), light=light, metric=metric,
         n=sum(s.n for s in rates.values()), n_events=sum(s.favourable for s in rates.values()), model_id=model_id,
         inputs_hash=inputs_hash({g: (s.n, s.favourable) for g, s in rates.items()}, reference),
         notes=f"indicator of statistical parity against {reference!r}; the tolerance is a convention, never a "
-              f"regulatory threshold; {NO_LEGAL_CLAIM}",
+              f"regulatory threshold; {NO_LEGAL_CLAIM}{capped}",
         extras={"reference_group": reference, "rates": _rates_view(rates), "differences": diffs, "ratios": ratios,
                 "thresholds": _threshold_extras(test_id, th)})
 
@@ -470,7 +480,8 @@ def replication(model_id: str, replication: Replication) -> TestResult:
 def situation_testing(model_id: str, result: SituationResult, policy: Policy | None = None) -> TestResult:
     """Situation testing as an individual-level indicator (dossier 07 A.3 l.158-177). metric = n_significant over
     n_complainants. Light (policy key `fair.situation_testing`, upper_bad, inclusive): amber when the significant share
-    reaches the cut point (0.10, a convention); never red; no legal claim. `not_evaluated` without complainants."""
+    reaches the cut point (0.20, a convention); never red (a red
+    light from a caller policy is capped at amber); no legal claim. `not_evaluated` without complainants."""
     test_id = "fair.situation_testing"
     h0 = "descriptive: no complainant of the protected group is treated worse than a comparable one of the others"
     alt = "complainants of the protected group are treated worse than their comparators"
@@ -489,6 +500,7 @@ def situation_testing(model_id: str, result: SituationResult, policy: Policy | N
     if th is None:
         return _not_evaluated(test_id, h0, alt, ref, version, f"policy {pol.label} holds no threshold for {test_id}",
                               model_id=model_id, n=result.n_complainants, extras={**extras, "thresholds": {}})
+    light, capped = _cap_at_amber(light)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
         policy_version=_version(pol, alpha_amber=th.amber, k=result.k, tau=result.tau, alpha=result.alpha),
@@ -497,7 +509,7 @@ def situation_testing(model_id: str, result: SituationResult, policy: Policy | N
         inputs_hash=inputs_hash(result.n_complainants, result.n_cases, result.n_significant, result.k, result.tau,
                                 result.alpha),
         notes=f"individual-level indicator over the complainants of the protected group, centers excluded; the "
-              f"cut point is a convention, never a regulatory threshold; never red; {NO_LEGAL_CLAIM}",
+              f"cut point is a convention, never a regulatory threshold; never red; {NO_LEGAL_CLAIM}{capped}",
         extras={**extras, "thresholds": _threshold_extras(test_id, th)})
 
 
