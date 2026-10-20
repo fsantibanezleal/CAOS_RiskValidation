@@ -3,5 +3,5 @@
   `ml.conformal_coverage`, `ml.leakage_screen`, `ml.data_quality`, `ml.cbpe_estimate`, `ml.challenger_brier`) are
   registered in the test catalogue (family `ml`) with the `h0` and the `reference` their row carries; the two p-value
   tests (`ml.shift_resilience`, `ml.conformal_coverage`) are named to their size suite. No result changes.
-- `riskvalidation.validation.ml` registers on `import riskvalidation.validation.ml`; `import riskvalidation.validation`
-  does not import it, as before.
+- `import riskvalidation.validation` imports `validation.ml` too, so the package alone registers every validation test, the thirteen
+  `ml.` ids included (the package-alone count test counts the whole inventory again).

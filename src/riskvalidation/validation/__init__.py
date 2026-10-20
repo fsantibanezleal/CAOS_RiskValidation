@@ -11,6 +11,7 @@ from riskvalidation.validation import (  # noqa: F401  (each module registers it
     lgd_ead,
     liquidity,
     market,
+    ml,
     oprisk,
     portfolio,
     rating_system,
