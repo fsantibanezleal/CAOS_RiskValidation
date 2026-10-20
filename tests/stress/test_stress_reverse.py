@@ -128,3 +128,19 @@ def test_reverse_stress_refusals():
         r.reverse_stress(lambda x: float(1.0 - np.exp(-np.sum(x * x))), COV, 5.0, STARTS)
     with pytest.raises(ValueError, match="tolerance"):
         r.reverse_stress(_linear, COV, 5.0, STARTS, tolerance=0.0)
+
+
+def test_reverse_stress_two_solutions_returns_the_minimum_distance_with_its_plausibility():
+    """A loss that is satisfied by two disjoint regions with different distances: the nearer one must be returned."""
+
+    def loss(x):  # |x0| >= 2 with a cheap branch at x0 = +2 and an expensive one at x0 = -3 (scaled)
+        return float(max(x[0], -x[0] / 1.5))
+
+    starts = [np.array([1.0, 0.0]), np.array([-1.0, 0.0]), np.array([0.5, 0.2]), np.array([-0.5, -0.2])]
+    best, per_start = r.reverse_stress(loss, np.eye(2), 2.0, starts)
+    conv = [s for s in per_start if s.converged]
+    assert len({round(s.distance, 3) for s in conv}) == 2  # both solutions were found
+    assert best.distance == pytest.approx(2.0, abs=1e-4)
+    assert best.distance == min(s.distance for s in conv)
+    assert max(s.distance for s in conv) == pytest.approx(3.0, abs=1e-4)
+    assert r.plausibility(best.distance, 2) == pytest.approx(math.exp(-2.0), abs=1e-4)

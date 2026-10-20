@@ -59,6 +59,8 @@ def _not_evaluated(
     *,
     n: int | None = None,
     extras: Mapping[str, Any] | None = None,
+    model_id: str | None = None,
+    segment: str | None = None,
 ) -> TestResult:
     """No number is carried: the statistic is NaN (null once serialised), the metric and the p-value are None."""
     return TestResult(
@@ -70,6 +72,8 @@ def _not_evaluated(
         light=Light.NOT_EVALUATED,
         statistic=NAN,
         notes=f"not evaluated: {reason}",
+        model_id=model_id,
+        segment=segment,
         n=n,
         extras=dict(extras or {}),
     )
@@ -180,6 +184,8 @@ def satellite_backcast(
             f"the realised peak {peak_r:.6g} is not positive: no size ratio",
             n=int(pred.size),
             extras={"thresholds": thresholds},
+            model_id=model_id,
+            segment=segment,
         )
     ratio = peak_p / peak_r
     timing = q_idx[ip] - q_idx[ir]
@@ -345,6 +351,8 @@ def bottom_up_vs_top_down(
             version,
             f"top_down {td:.6g} is not positive: no ratio",
             extras={"thresholds": thresholds},
+            model_id=model_id,
+            segment=segment,
         )
     stat = bu / td - 1.0
     return TestResult(
@@ -392,7 +400,15 @@ def scenario_severity(
     thresholds = {"minimum": mn}
     if not is_stress:
         return _not_evaluated(
-            test_id, h0, alt, GFC_SEVERITY, version, "not a stress path", extras={"thresholds": thresholds}
+            test_id,
+            h0,
+            alt,
+            GFC_SEVERITY,
+            version,
+            "not a stress path",
+            extras={"thresholds": thresholds},
+            model_id=model_id,
+            segment=segment,
         )
     if hp <= 0.0:
         return _not_evaluated(
@@ -403,6 +419,8 @@ def scenario_severity(
             version,
             f"history_peak {hp:.6g} is not positive: no ratio",
             extras={"thresholds": thresholds},
+            model_id=model_id,
+            segment=segment,
         )
     stat = pp / hp
     return TestResult(
@@ -459,6 +477,8 @@ def reverse_solution_check(
             f"{starts.size} starts: at least three are required",
             n=int(starts.size),
             extras={"thresholds": thresholds},
+            model_id=model_id,
+            segment=segment,
         )
     stat = abs(loss - thr) / thr
     closest = float(np.min(starts))

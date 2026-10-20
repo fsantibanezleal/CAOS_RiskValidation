@@ -280,3 +280,18 @@ def test_non_finite_inputs_raise():
         v.reverse_solution_check(nan, 1.0, 1.0, (1.0, 1.0, 1.0))
     with pytest.raises(ValueError):
         v.reverse_solution_check(1.0, 1.0, 1.0, (1.0, inf, 1.0))
+
+
+def test_not_evaluated_rows_carry_model_id_and_segment():
+    rows = [
+        v.bottom_up_vs_top_down(1.0, 0.0, model_id="M1", segment="S1"),
+        v.scenario_severity(1.0, 1.0, is_stress=False, model_id="M1", segment="S1"),
+        v.scenario_severity(1.0, -1.0, model_id="M1", segment="S1"),
+        v.reverse_solution_check(5.0, 5.0, 2.0, (2.0,), model_id="M1", segment="S1"),
+        v.satellite_backcast(
+            np.full(8, 0.01), np.full(8, -0.01), qs(8), "2019-12-31", model_id="M1", segment="S1"
+        ),
+    ]
+    for r in rows:
+        assert r.light is Light.NOT_EVALUATED
+        assert r.model_id == "M1" and r.segment == "S1"

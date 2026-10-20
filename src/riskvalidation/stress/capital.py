@@ -168,6 +168,7 @@ class InternalTarget:
     c_ccyb: float
     c_d: float
     oi: float
+    p2r: float = 0.0  # the art. 66 quinquies requirement (Annex 3 rows 7 and 7.2), at most `c_p2`
 
 
 def internal_capital_target(
@@ -204,6 +205,7 @@ def internal_capital_target(
         c_ccyb=parts["c_ccyb"],
         c_d=parts["c_d"],
         oi=oi,
+        p2r=req,
     )
 
 
@@ -349,11 +351,12 @@ def annex3_summary(
     `capital` holds `cet1`, `at1` and `t2` in money (CLP millions in the product; the form states thousand pesos);
     `rwa_by_risk` holds `credit`, `market` and `operational`, and RWA is their sum; `internal_capital` holds one key per
     `INTERNAL_CAPITAL_KEYS` with the internal capital of the risk in money, or None for an immaterial risk (status
-    `RI`); `plan` is the `capital_plan` result (the two stress cases give rows 10.1 and 10.2). Row 7.2 is the target's
-    `c_p2` (the bank's own estimate, at least the art. 66 quinquies requirement): `InternalTarget` carries no separate
-    requirement. Row 10.1 is the largest fall of CET1/RWA from the jump-off in the stress without mitigation, row 10.2
-    the same with mitigation, `not-applicable` when `mitigation_applies` is
-    false (the form: "N/A if the stress leads to no mitigation actions")."""
+    `RI`); `plan` is the `capital_plan` result (the two stress cases give rows 10.1 and 10.2);
+    its RWA must equal the sum of `rwa_by_risk` (relative difference at most 1e-9), else `ValueError` naming both
+    values. Rows 7, 7.2 and 8 read the target's `p2r` (the art. 66 quinquies requirement), never `c_p2` (the bank's own
+    estimate, which only enters the OI of row 5). Row 10.1 is the largest fall of CET1/RWA from the jump-off in the
+    stress without mitigation, row 10.2 the same with mitigation, `not-applicable` when `mitigation_applies` is false
+    (the form: "N/A if the stress leads to no mitigation actions")."""
     cet1 = _share(_need(capital, "cet1", "capital"), "capital['cet1']")
     at1 = _share(_need(capital, "at1", "capital"), "capital['at1']")
     t2 = _share(_need(capital, "t2", "capital"), "capital['t2']")
@@ -378,6 +381,12 @@ def annex3_summary(
         if not years:
             raise ValueError(f"plan[{case!r}] has no years")
         plans[case] = years
+    for case, years in plans.items():
+        plan_rwa = years[0].rwa
+        if abs(plan_rwa - rwa) > 1e-9 * max(abs(plan_rwa), abs(rwa)):
+            raise ValueError(
+                f"the RWA of rwa_by_risk ({rwa!r}) differs from the RWA of plan[{case!r}] ({plan_rwa!r})"
+            )
     cet1_ratio = cet1 / rwa
     pe = cet1 + at1 + t2
     legal = {
@@ -391,7 +400,7 @@ def annex3_summary(
 
     quantified = [v for k, v in internal.items() if k != "credit" and v is not None]
     row6 = float(sum(quantified))
-    row7a = target.min_pe + target.c_dsib + target.c_p2
+    row7a = target.min_pe + target.c_dsib + target.p2r
     cells: dict[str, tuple[dict, dict, dict, dict]] = {
         "1": (_NA, _NA, _NA, _NA),
         "1.1": (_v(pe / rwa), _v(pe), _NA, _NA),
@@ -420,8 +429,8 @@ def annex3_summary(
         "6": (_v(row6 / rwa), _v(row6), _NA, _NA),
         "7": (_v(row7a), _v(row7a * rwa), _NA, _NA),
         "7.1": (_v(target.c_dsib), _v(target.c_dsib * rwa), _NA, _NA),
-        "7.2": (_v(target.c_p2), _v(target.c_p2 * rwa), _NA, _NA),
-        "8": (_v(row6 / rwa - target.c_p2), _v(row6 - target.c_p2 * rwa), _NA, _NA),
+        "7.2": (_v(target.p2r), _v(target.p2r * rwa), _NA, _NA),
+        "8": (_v(row6 / rwa - target.p2r), _v(row6 - target.p2r * rwa), _NA, _NA),
         "9": (_v(target.c_ccob + target.c_ccyb), _v((target.c_ccob + target.c_ccyb) * rwa), _NA, _NA),
         "11": (_v(target.c_d), _v(target.c_d * rwa), _NA, _NA),
         "12": (_v(pe / rwa - target.oi), _v(pe - target.oi * rwa), _NA, _NA),
