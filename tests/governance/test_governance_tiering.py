@@ -155,6 +155,9 @@ def test_apply_override_goldens_and_refusals():
     for bad in ((1, "", "Chief Risk Officer"), (1, "a rationale", ""), (1, "  ", "x"), (1, "x", "  ")):
         with pytest.raises(ValueError, match="an override needs a rationale and an approver"):
             apply_override(2, bad)
+    for bad in ((1, None, "Chief Risk Officer"), (1, "a rationale", None), (1, None, None), (1, 5, "x"), (1, "x", 7)):
+        with pytest.raises(ValueError, match="an override needs a rationale and an approver"):
+            apply_override(2, bad)  # a null or non-string value is not a rationale or an approver
     with pytest.raises(ValueError):
         apply_override(5, None)
     with pytest.raises(ValueError):

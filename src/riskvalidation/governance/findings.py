@@ -73,6 +73,8 @@ class Finding:
             raise ValueError(f"{self.key}: a finding needs evidence")
         if isinstance(self.tier, bool) or not isinstance(self.tier, int) or not 1 <= self.tier <= 4:
             raise ValueError(f"{self.key}: tier must be 1 to 4, got {self.tier!r}")
+        if self.rwea_share is not None and not math.isfinite(self.rwea_share):
+            raise ValueError(f"{self.key}: rwea_share must be finite")
         if self.rwea_share is not None and self.rwea_share < 0:
             raise ValueError(f"{self.key}: rwea_share must not be negative")
 
@@ -182,6 +184,7 @@ def anchor_from_test_row(
                 "unit": unit,
                 "basis": f"{document}#/tests/{i}/{name}",
             }, None
+        return None, NO_VALUE_IN_ROW  # the first matching row holds no value: no second try on another segment
     return None, NO_VALUE_IN_ROW
 
 
@@ -198,14 +201,14 @@ def rwea_share_of_anchor(
         return None, NOT_RWEA
     unit, value = anchor.get("unit"), anchor.get("value")
     if unit == "share-of-rwea":
-        if value is None or float(value) < 0:  # type: ignore[arg-type]
-            raise ValueError(f"a share of RWEA must not be negative, got {value!r}")
+        if value is None or not math.isfinite(float(value)) or float(value) < 0:  # type: ignore[arg-type]
+            raise ValueError(f"a share of RWEA must be finite and not negative, got {value!r}")
         return float(value), None  # type: ignore[arg-type]
     if unit == "rwea-amount":
-        if rwea_total is None or not rwea_total > 0:
-            raise ValueError("an rwea-amount anchor needs a positive RWEA total")
-        if value is None or float(value) < 0:  # type: ignore[arg-type]
-            raise ValueError(f"an RWEA amount must not be negative, got {value!r}")
+        if rwea_total is None or not math.isfinite(rwea_total) or not rwea_total > 0:
+            raise ValueError("an rwea-amount anchor needs a finite, positive RWEA total")
+        if value is None or not math.isfinite(float(value)) or float(value) < 0:  # type: ignore[arg-type]
+            raise ValueError(f"an RWEA amount must be finite and not negative, got {value!r}")
         return float(value) / float(rwea_total), None  # type: ignore[arg-type]
     return None, NOT_RWEA
 
