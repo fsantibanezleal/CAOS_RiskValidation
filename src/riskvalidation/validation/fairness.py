@@ -414,7 +414,7 @@ def _interval_test(test_id: str, model_id: str, effect: Effect | None, controls:
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
         policy_version=_version(pol, interval_level=effect.level),
         light=Light.AMBER if excludes else Light.GREEN, statistic=z, p_value=float(2.0 * stats.norm.sf(abs(z))),
-        metric=metric_of(effect), alpha_amber=1.0 - effect.level, model_id=model_id,
+        metric=metric_of(effect), model_id=model_id,
         inputs_hash=inputs_hash(vals, ctrl, miss),
         notes=f"an approximation of comparative evidence controlling for {', '.join(ctrl) or 'no stated control'}; "
               f"missing controls: {miss_text}, so the estimate may be confounded by them; never a finding of a "
@@ -504,12 +504,13 @@ def situation_testing(model_id: str, result: SituationResult, policy: Policy | N
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
         policy_version=_version(pol, alpha_amber=th.amber, k=result.k, tau=result.tau, alpha=result.alpha),
-        light=light, metric=metric, alpha_amber=th.amber, alpha_red=th.red, n=result.n_complainants,
+        light=light, metric=metric, n=result.n_complainants,
         n_events=result.n_significant, model_id=model_id,
         inputs_hash=inputs_hash(result.n_complainants, result.n_cases, result.n_significant, result.k, result.tau,
                                 result.alpha),
         notes=f"individual-level indicator over the complainants of the protected group, centers excluded; the "
-              f"cut point is a convention, never a regulatory threshold; never red; {NO_LEGAL_CLAIM}{capped}",
+              f"cut point is a convention, never a regulatory threshold, and sits in extras.thresholds, not in the "
+              f"p-value alphas; never red; {NO_LEGAL_CLAIM}{capped}",
         extras={**extras, "thresholds": _threshold_extras(test_id, th)})
 
 
