@@ -7,7 +7,9 @@ comparators, and the planted-bias generators that measure the size and power of 
 returns each as a `TestResult` with a traffic light. The engine states **no legal claim**: the four-fifths line is an
 employment benchmark (29 CFR 1607.4(D)) and never a credit-law threshold, and a controlled disparity is an approximation of
 comparative evidence with its missing controls named, never a finding of a violation. The contract is `engine-fairness-api`
-1.0.0 (Contraste `docs/contracts/engine/fairness-api.md`).
+1.0.0 (Contraste `docs/contracts/engine/fairness-api.md`), amended to 1.1.0 after the Opus review of the engine: red capped at
+amber on the two 'never red' lights, `protected_effect` refusing the intercept, the `categorical` keyword of `situation_test`, the
+situation-testing amber cut 0.20.
 
 Conventions of every page:
 

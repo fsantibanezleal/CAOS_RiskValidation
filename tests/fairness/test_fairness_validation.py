@@ -266,7 +266,8 @@ def test_situation_testing_result():
     res = lambda sig, n=100: SituationResult(n, n, sig, 30, 0.0, 0.05)  # noqa: E731
     low = fv.situation_testing("m", res(9))
     assert low.test_id == "fair.situation_testing" and low.light is Light.GREEN and low.metric == 0.09
-    assert fv.situation_testing("m", res(10)).light is Light.AMBER  # inclusive at the cut point
+    assert fv.situation_testing("m", res(19)).light is Light.GREEN
+    assert fv.situation_testing("m", res(20)).light is Light.AMBER  # inclusive at the cut point 0.20 (F4)
     allsig = fv.situation_testing("m", res(100))
     assert allsig.light is Light.AMBER and allsig.metric == 1.0  # never red
     assert (allsig.n, allsig.n_events) == (100, 100)
@@ -380,3 +381,24 @@ def test_invalid_inputs_raise_with_the_field_named():
     for call, field in cases:
         with pytest.raises(ValueError, match=field):
             call()
+
+
+def test_demographic_parity_is_never_red_under_a_caller_policy():
+    """F1: a caller policy whose red cut is 0.10 never makes the parity indicator red: red is capped at amber."""
+    from riskvalidation.core.policy import Policy, Threshold
+
+    caller = Policy("caller", "1", "red cut 0.10", {"fair.demographic_parity": Threshold("upper_bad", 0.05, 0.10)})
+    r = fv.demographic_parity("m", rates_for(a=(100, 100), b=(0, 100)), "a", policy=caller)
+    assert r.metric == 1.0 and r.light is Light.AMBER
+    assert "never red by contract; the policy's red cut is not applied" in r.notes
+    assert fv.demographic_parity("m", rates_for(a=(70, 100), b=(60, 100)), "a", policy=caller).light is Light.AMBER
+
+
+def test_situation_testing_is_never_red_under_a_caller_policy():
+    """F1: a caller policy whose red cut is 0.10 never makes situation testing red: red is capped at amber."""
+    from riskvalidation.core.policy import Policy, Threshold
+
+    caller = Policy("caller", "1", "red cut 0.10", {"fair.situation_testing": Threshold("upper_bad", 0.05, 0.10)})
+    r = fv.situation_testing("m", SituationResult(100, 100, 100, 30, 0.0, 0.05), policy=caller)
+    assert r.metric == 1.0 and r.light is Light.AMBER
+    assert "never red by contract; the policy's red cut is not applied" in r.notes

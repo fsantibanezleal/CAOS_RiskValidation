@@ -35,7 +35,7 @@ $$\text{light}=\begin{cases}\text{red}& p<\alpha_{red}\\ \text{amber}& p<\alpha_
 | `fair.conditional_disparity` | `conditional_disparity(model_id, effect, controls, missing_controls)` | odds ratio (statistic: Wald z, p-value) | amber when the 95 percent interval excludes 0, never red; no policy row | convention |
 | `fair.rate_spread_disparity` | `rate_spread_disparity(model_id, effect, controls, missing_controls)` | coefficient in percentage points (statistic: Wald z, p-value) | same rule; no policy row | convention |
 | `fair.replication` | `replication(model_id, replication)` | size ratio, confirm over fit | amber when the sign differs between year t and t+1; no policy row | rule: sign and size |
-| `fair.situation_testing` | `situation_testing(model_id, result, policy)` | significant share of the complainants | `upper_bad`, amber 0.10, red 2.0, inclusive: amber at the cut, never red | convention |
+| `fair.situation_testing` | `situation_testing(model_id, result, policy)` | significant share of the complainants | `upper_bad`, amber 0.20, red 2.0, inclusive: amber at the cut, never red | convention |
 
 The rows are `FAIR_ROWS` of `riskvalidation.fairness.policy`; `fairness_default_policy()` is the packaged default policy with them added
 where it holds none, and a `policy` argument of None means it. A policy a caller supplies is used as given: a policy that lacks the key
@@ -47,8 +47,10 @@ they are an approximation of comparative evidence and never a finding of a viola
 highest-rate group; the parity ratios to the chosen reference group are in `extras["parity_ratio_to_reference"]`.
 
 Golden values: the four-fifths pair 60 of 100 against 75 of 100 is green and 5999 of 10000 is amber; 55 of 100 against 50 of 100 is a
-demographic-parity gap of exactly 0.05 and is green; a gap of 0.10 is amber and a gap of 1.0 is still amber; a share of 9 of 100
-significant complainants is green, 10 of 100 amber and 100 of 100 amber. The gate is `tests/fairness/test_fairness_validation.py` and
+demographic-parity gap of exactly 0.05 and is green; a gap of 0.10 is amber and a gap of 1.0 is still amber; a share of 19 of 100
+significant complainants is green, 20 of 100 amber and 100 of 100 amber (the amber cut is 0.20). A 'never red' light
+(`fair.demographic_parity`, `fair.situation_testing`) is capped at amber whatever the policy: a caller policy whose red cut is 0.10
+gives amber, and the notes say "never red by contract; the policy's red cut is not applied". The gate is `tests/fairness/test_fairness_validation.py` and
 `tests/fairness/test_fairness_policy.py`.
 
 ## Size and power
@@ -72,17 +74,20 @@ are the ones the test reproduces (it asserts them with margins, and `FAIRNESS_SI
 | `fair.conditional_disparity` | 0.048 (se 0.003), proxy plant strength 0, n 3,000; 0.052 with the proxy controlled at strength 0.7 | proxy strength 0.7, proxy not controlled | 1.000 |
 | `fair.rate_spread_disparity` | 0.052 (se 0.004), proxy plant strength 0 | proxy strength 0.7 | 1.000 |
 | `fair.replication` | false alarm 0.000 on a stable effect (strength 0.7) | the second year recoded in reverse | 1.000 |
-| `fair.situation_testing` | 0.194 (se 0.006) at the amber cut 0.10; 0.088 at a cut of 0.15; 0.039 at 0.20; n 400, k 30, no bias | negative-decision bias 0.4 | 1.000 at every cut |
+| `fair.situation_testing` | 0.0395 (se 0.0031) at the amber cut 0.20 (4,000 repetitions, n 400, k 30, no bias); at the former cut 0.10 0.194 (U14-E2), 0.191 for a share strictly above 0.10 and 0.088 above 0.15 (this round) | negative-decision bias 0.4 | 1.000 at every cut |
 
 What the figures say. The z-test holds its 5 percent level within Monte Carlo error and Fisher's exact test is conservative, as an
 exact test is. The two interval tests hold the 5 percent level of a 95 percent interval; the conditional disparity falls to that level
 once the proxy is a control. Equal opportunity reads only the true positive rate, which label noise of 0.25 moves by about 0.06 (the
 flipped defaults enter the positive class), so its power against label noise is weak (0.52) while equalized odds, which also reads the
 false positive rate, detects it every time. The replication rule has no size to speak of when there is no true effect: the sign is a
-coin flip (amber rate 0.495 at strength 0); it is a stability rule for an effect that exists. **The situation-testing amber cut of 0.10
-raises a false alarm on about one null draw in five at n 400 and k 30**: the complainants share neighbours, so the significant share is
-more variable than a binomial count; raising the cut to 0.15 or 0.20 brings the false-alarm rate to 0.09 and 0.04 at the same power.
-The cut is a proposed convention for the main session's approval, and this measured size is the evidence for that decision.
+coin flip (amber rate 0.495 at strength 0); it is a stability rule for an effect that exists. **The situation-testing amber cut is 0.20 (the main
+session's decision, 2026-10-19; it was 0.10)**: at 0.10 the rule raised a false alarm on about one null draw in five at n 400 and
+k 30, because the complainants share neighbours and the significant share is more variable than a binomial count; at 0.20 the
+false-alarm rate is 0.0395 (se 0.0031), inside the default size bound 0.05 plus two standard errors, at power 1.000. The cut is a
+convention, and this measured size is the evidence for it. The size and power module carries the pytest marker `sizepower`
+(about 208 s per Python version): the engine CI deselects it with `-m "not sizepower"` and the local release gate runs it
+(`python -m pytest -m sizepower`).
 
 Limits: every figure is for its planted bias at its sample size; a different sample, base rate or correlation structure gives different
 rates, and the plants are idealisations. The cut points are conventions, never regulatory thresholds. A green light is not a finding of

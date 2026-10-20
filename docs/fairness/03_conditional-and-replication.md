@@ -47,7 +47,9 @@ level)`:
 
 $$\hat\beta\ \pm\ z_{1-(1-\ell)/2}\ \widehat{\operatorname{se}}(\hat\beta),\qquad \text{odds ratio}=e^{\hat\beta}$$
 
-`index` is the position in `coefficients` (0 is the intercept; the protected indicators follow). The interval equals the coefficient
+`index` is the position in `coefficients`: protected indicator $j$ is index $1+j$, and index 0, the intercept, is refused with
+`ValueError("index 0 is the intercept, not a protected indicator; indicator j is index 1 + j")` (contract 1.1.0; in 1.0.0 it was
+returned as if it were an effect). The interval equals the coefficient
 plus or minus $z\,\text{se}$ (identity) and always satisfies lo <= coefficient <= hi; an index outside the coefficients, a level
 outside $(0, 1)$ and a model whose standard error is not finite raise `ValueError`. The odds ratio is meaningful for the decision
 model; for the linear model read the coefficient. The level 0.95 is a convention.

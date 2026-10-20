@@ -2,7 +2,7 @@
 l.158-177), transcribed from the companion paper, Alvarez and Ruggieri, "Counterfactual Situation Testing: From Single
 to Multidimensional Discrimination", arXiv:2502.01267v2 = JAIR 82 (doi:10.1613/jair.1.17935), Section 4 and equations
 3 to 10, and the main paper, arXiv:2405.13693v4 (doi:10.1111/coin.70238), for the comparators (contract
-`engine-fairness-api` 1.0.0; research addendum 7.2 to 7.6).
+`engine-fairness-api` 1.0.0, `categorical` keyword of `situation_test` 1.1.0; research addendum 7.2 to 7.6).
 
 Setting: the group indicator is 1 for the protected group (the control search space `D_c`) and 0 for the others (the
 test search space `D_t`); the decision 0 is the negative one. For every complainant `c` of the protected group the
@@ -188,12 +188,15 @@ def bonferroni_alpha(alpha: float, q: int) -> float:
     return a / int(q)
 
 
-def _scales(x: np.ndarray, protected: np.ndarray, others: np.ndarray, normalization: str):
+def _scales(x: np.ndarray, protected: np.ndarray, others: np.ndarray, normalization: str, cat: np.ndarray):
+    """The scale of each continuous attribute; a categorical attribute's scale is not read (overlap distance), so it
+    is set to 1 and never raises for being constant."""
     if normalization == "range":
         ctrl = np.ptp(x[protected], axis=0)
         test = np.ptp(x[others], axis=0)
     else:
         ctrl = test = x.std(axis=0)
+    ctrl, test = np.where(cat, 1.0, ctrl), np.where(cat, 1.0, test)
     for name, sc in (("control", ctrl), ("test", test)):
         bad = np.flatnonzero(~(sc > 0.0))
         if bad.size:
@@ -214,11 +217,15 @@ def situation_test(
     comparator: str = "ceteris-paribus",
     counterfactual: np.ndarray | None = None,
     normalization: str = "range",
+    categorical: np.ndarray | None = None,
 ) -> SituationResult:
     """Runs the test for every complainant of the protected group (group 1), regardless of the complainant's own
-    decision. `X` holds the non-protected attributes (all continuous: the attributes enter as |difference| over the
-    scale of the normalization; categorical attributes go through `gower_distance` and `k_nearest`), `group` is 1 for
-    the protected group and 0 for the others, `decision` is 1 favourable and 0 negative.
+    decision. `X` holds the non-protected attributes, `group` is 1 for the protected group and 0 for the others,
+    `decision` is 1 favourable and 0 negative. `categorical` (1.1.0) is a boolean mask over the columns of `X`: a
+    categorical column contributes the overlap measure (1 if the values differ, 0 otherwise), every other column the
+    normalised Manhattan distance, as in equations 3 to 5 of the paper, and the distance is their mean over the columns;
+    under `normalization="standard"` the categorical columns still use overlap and the standardisation applies to the
+    other columns only. `None` (the 1.0.0 behaviour) treats every column as continuous.
 
     comparator 'ceteris-paribus': the test group is built around the complainant. 'mutatis-mutandis': around the row of
     `counterfactual` aligned with the complainant (the algorithm supplies none; it must have the shape of `X`). Under
@@ -228,7 +235,8 @@ def situation_test(
 
     n_cases counts the complainants with delta p > tau; n_significant those whose lower bound of equation 10 exceeds
     tau. Raises `ValueError` naming the field for unknown comparators and normalizations, 'mutatis-mutandis' without a
-    counterfactual, malformed inputs, k beyond the search spaces and a zero scale."""
+    counterfactual, malformed inputs (a `categorical` mask that is not one flag per column of `X` included), k beyond
+    the search spaces and a zero scale of a continuous column."""
     if comparator not in COMPARATORS:
         raise ValueError(f"comparator must be one of {COMPARATORS}, got {comparator!r}")
     _normalization(normalization)
@@ -261,8 +269,14 @@ def situation_test(
         raise ValueError(f"k = {k} exceeds the {prot_idx.size - 1} other complainants of the control search space")
     if k > other_idx.size:
         raise ValueError(f"k = {k} exceeds the {other_idx.size} rows of the test search space")
-    ctrl_scale, test_scale = _scales(x, prot_idx, other_idx, normalization)
-    cat = np.zeros(x.shape[1], dtype=bool)
+    if categorical is None:
+        cat = np.zeros(x.shape[1], dtype=bool)
+    else:
+        cat = np.asarray(categorical)
+        if cat.shape != (x.shape[1],):
+            raise ValueError(f"categorical must have one flag per column of X ({x.shape[1]}), got shape {cat.shape}")
+        cat = cat.astype(bool)
+    ctrl_scale, test_scale = _scales(x, prot_idx, other_idx, normalization, cat)
     xp, xo = x[prot_idx], x[other_idx]
     neg_p, neg_o = d[prot_idx] == 0, d[other_idx] == 0
     z = _z(a)

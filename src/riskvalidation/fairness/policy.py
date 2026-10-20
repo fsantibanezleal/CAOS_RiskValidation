@@ -8,8 +8,8 @@ float above the tolerance (`math.nextafter`), so a metric equal to the tolerance
 is at most 1: that light is never red.
 
 `fairness_default_policy()` is the packaged default policy with these rows added where it holds none; once the rows
-sit in `policies/default.json` the two are the same. A policy a caller supplies is used as given: a policy that lacks a
-key gives the `not_evaluated` light, never a colour.
+sit in `policies/default.json` the two are the same object. A policy a caller supplies is used as given: a policy that
+lacks a key gives the `not_evaluated` light, never a colour.
 """
 
 from __future__ import annotations
@@ -60,9 +60,10 @@ FAIR_ROWS: dict[str, FairRow] = {
         "upper_bad", 0.05, 0.10, False,
         "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"),
     "fair.situation_testing": FairRow(
-        "upper_bad", 0.10, NEVER_RED, False,
-        "convention: the amber share 0.10 of significant complainants is proposed, no source value; red 2.0 is a "
-        "sentinel above the metric's range: never red"),
+        "upper_bad", 0.20, NEVER_RED, False,
+        "convention: the amber share 0.20 of significant complainants, set on the measured size 0.039 and power 1.000 "
+        "at n 400 and k 30 (docs/fairness/06), no source value; red 2.0 is a sentinel above the metric's range: "
+        "never red"),
 }
 FAIR_KEYS = tuple(FAIR_ROWS)
 
@@ -76,8 +77,11 @@ def fair_threshold(key: str) -> Threshold:
 
 @lru_cache(maxsize=1)
 def fairness_default_policy() -> Policy:
-    """The packaged default policy with the `fair.` rows added where it holds none."""
+    """The packaged default policy with the `fair.` rows added where it holds none; the default policy itself,
+    label unchanged, when it already holds every `fair.` key."""
     base = default_policy()
+    if all(key in base.thresholds for key in FAIR_KEYS):
+        return base
     thresholds = dict(base.thresholds)
     for key in FAIR_KEYS:
         thresholds.setdefault(key, fair_threshold(key))

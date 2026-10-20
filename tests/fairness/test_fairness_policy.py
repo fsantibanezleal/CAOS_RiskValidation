@@ -21,7 +21,7 @@ CONTRACT = {
     "fair.equal_opportunity": ("upper_bad", 0.05, 0.10, False),
     "fair.calibration_within_groups": ("upper_bad", 0.05, 0.10, False),
     "fair.auc_by_group": ("upper_bad", 0.05, 0.10, False),
-    "fair.situation_testing": ("upper_bad", 0.10, 2.0, False),
+    "fair.situation_testing": ("upper_bad", 0.20, 2.0, False),
 }
 NO_ROW = ("fair.adverse_impact", "fair.conditional_disparity", "fair.rate_spread_disparity", "fair.replication")
 
@@ -82,3 +82,29 @@ def test_explicit_policy_without_the_key_is_not_evaluated():
     # a supplied policy that carries the key is used as given
     custom = Policy("c", "9", "strict", {"fair.two_proportion_z": Threshold("p_value", 0.5, 0.1)})
     assert fv.two_proportion_z("m", 5, 10, 8, 10, policy=custom).light is Light.AMBER
+
+
+def test_fairness_default_policy_returns_the_default_policy_when_it_holds_every_fair_key():
+    """F5: once the integrator copies the rows into default.json, every `fair.` row carries the default policy's own
+    label (no `+fair-1.0.0` suffix); a policy that lacks any key still gets the rows and the suffix."""
+    import riskvalidation.fairness.policy as fp
+
+    base = default_policy()
+    full = Policy(base.policy_id, base.version, base.description,
+                  {**base.thresholds, **{key: fp.fair_threshold(key) for key in FAIR_KEYS}})
+    fp.fairness_default_policy.cache_clear()
+    original = fp.default_policy
+    fp.default_policy = lambda: full
+    try:
+        got = fp.fairness_default_policy()
+    finally:
+        fp.default_policy = original
+        fp.fairness_default_policy.cache_clear()
+    assert got is full and got.label == full.label and "fair-1.0.0" not in got.label
+    assert "fair-1.0.0" in fairness_default_policy().label  # the packaged policy has no `fair.` rows yet
+
+
+def test_situation_testing_amber_cut_is_0_20():
+    """F4: the amber cut of `fair.situation_testing` is 0.20 (measured size 0.039 at n 400, k 30; docs/fairness/06)."""
+    th = fairness_default_policy().threshold("fair.situation_testing")
+    assert th.amber == 0.20 and th.classify(0.19) is Light.GREEN and th.classify(0.20) is Light.AMBER
