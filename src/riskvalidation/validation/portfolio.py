@@ -22,6 +22,7 @@ import numpy as np
 from scipy import stats
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.engines.vasicek import lhp_quantile
 from riskvalidation.portfolio.portfolio import check_level, float_vector
@@ -73,6 +74,14 @@ def _p_light(p: float, alpha_amber: float, alpha_red: float) -> Light:
     return Light.AMBER if p >= alpha_red else Light.RED
 
 
+@register(
+    "portfolio.tail_backtest",
+    family="portfolio",
+    name="Tail backtest",
+    h0="the number of evaluation years above the fitted q-quantile is Binomial(n, 1 - q)",
+    reference=f"{BINOMIAL}; {G5}",
+    decision="p_value",
+)
 def tail_backtest(realised: np.ndarray, pd: float, rho: float, levels: Sequence[float] = (0.95, 0.99, 0.999),
                   primary_level: float = 0.99, model_id: str | None = None, segment: str | None = None,
                   alpha_amber: float = 0.05, alpha_red: float = 0.01) -> TestResult:
@@ -136,6 +145,14 @@ def tail_backtest(realised: np.ndarray, pd: float, rho: float, levels: Sequence[
     )
 
 
+@register(
+    "portfolio.mc_convergence",
+    family="portfolio",
+    name="MC convergence",
+    h0="the Monte Carlo estimate equals the analytic anchor",
+    reference=f"{G5}; dossier 04 ladder rung C2 (the Monte Carlo quantile converges to C1 within its interval)",
+    decision="p_value",
+)
 def mc_convergence(estimate: float, se: float, anchor: float, quantity: str = "var", model_id: str | None = None,
                    segment: str | None = None, alpha_amber: float = 0.05, alpha_red: float = 0.01) -> TestResult:
     """A Monte Carlo estimate against the analytic anchor (the LHP quantile of rung C1, or the CreditRisk+ recursion).
@@ -171,6 +188,14 @@ def mc_convergence(estimate: float, se: float, anchor: float, quantity: str = "v
                       inputs_hash=inputs_hash(est, s, anc, quantity), extras=extras, **kw)
 
 
+@register(
+    "portfolio.euler_additivity",
+    family="portfolio",
+    name="Euler additivity",
+    h0="the Euler contributions add up to the total",
+    reference=f"{TASCHE_2008} (full allocation); {G5}",
+    decision="metric",
+)
 def euler_additivity(contributions: np.ndarray, total: float, tolerance: float = 1e-6, model_id: str | None = None,
                      segment: str | None = None) -> TestResult:
     """The Euler contributions add up to the total (dossier 05 G.4 and G.5: check the allocation sums to the total).
@@ -204,6 +229,14 @@ def euler_additivity(contributions: np.ndarray, total: float, tolerance: float =
                       inputs_hash=inputs_hash(c, tot), extras=extras, **kw)
 
 
+@register(
+    "portfolio.crp_recursion_vs_mc",
+    family="portfolio",
+    name="CreditRisk+ recursion against Monte Carlo",
+    h0="the recursion's distribution is the Monte Carlo sample's distribution",
+    reference=f"{HRS_2004}; {KOLMOGOROV}; {G5}; dossier 04 ladder rung C4",
+    decision="p_value",
+)
 def crp_recursion_vs_mc(pmf: np.ndarray, mc_units: np.ndarray, model_id: str | None = None, segment: str | None = None,
                         alpha_amber: float = 0.05, alpha_red: float = 0.01) -> TestResult:
     """The CreditRisk+ recursion's distribution against a Monte Carlo sample of the same Poisson-Gamma model (rung C4's
@@ -253,6 +286,14 @@ def crp_recursion_vs_mc(pmf: np.ndarray, mc_units: np.ndarray, model_id: str | N
                       extras=extras, **kw)
 
 
+@register(
+    "portfolio.correlation_size_power",
+    family="portfolio",
+    name="Correlation size power",
+    h0="at the null correlation the rejection rate equals alpha (the size); elsewhere the rate is the power",
+    reference=f"{WILSON_1927}; {G5}; dossier 04 C.4 (the Vasicek correlation) on a simulator with a known truth",
+    decision="metric",
+)
 def correlation_size_power(rejected: np.ndarray, known_rho: float, null_rho: float, alpha: float = 0.05,
                            estimator: str | None = None, model_id: str | None = None, segment: str | None = None,
                            alpha_amber: float = 0.05, alpha_red: float = 0.01, power_green: float = 0.80,

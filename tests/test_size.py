@@ -93,9 +93,89 @@ DOCUMENTED_SIZE = {tid: MARKOV_PAGE for tid in ("rating.time_homogeneity", "rati
                                                 "rating.matrix_reference", "rating.momentum")}
 
 
+# registered p-value tests whose size is measured in a named suite instead of NULL_SCENARIOS (a `sizepower` study, or a
+# size test of the CI suite such as the market backtests'): test id -> "tests/<path>.py::<test function>"; the suite's
+# test must exist and name the test (by its id or by its function name, which is how the fairness suite labels its rows)
+_FAIRNESS_SIZE = "tests/fairness/test_fairness_size_power.py::test_size_and_power_two_proportion_z_and_fisher"
+_MARKET_SIZE = "tests/validation_market/test_market_size.py::"
+SIZE_SUITES = {
+    "fair.two_proportion_z": _FAIRNESS_SIZE,
+    "fair.fisher_exact": _FAIRNESS_SIZE,
+    "market.kupiec_pof": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.christoffersen_independence": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.christoffersen_conditional_coverage": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.duration_test": _MARKET_SIZE + "test_size_of_the_duration_test",
+    "market.acerbi_szekely": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.du_escanciano_unconditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.du_escanciano_conditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.dynamic_quantile_test": _MARKET_SIZE + "test_size_of_the_dq_test_at_production_configurations",
+}
+# registered p-value tests whose size has no measurement in either place yet. Each is a finding, not a pass: the list
+# is pinned (a test below fails when an entry is measured, so it leaves the list, and when a new p-value test is
+# registered without a measurement), and the reason says where a measurement is or what is missing
+SIZE_GAPS = {
+    "ccr.pfe_exceedance_backtest": "no size study: the Kupiec likelihood ratio of the PFE exceedances is not simulated",
+    "ifrs9.stage_migration_backtest": "no size study of the Anderson-Goodman chi-square on stage transitions",
+    "lgd_ead.lgd_calibration_by_segment": "no size study of the paired t-test of mean LGD",
+    "lgd_ead.lgd_calibration_over_time": "no size study of the Bonferroni-adjusted per-period t-tests",
+    "lgd_ead.downturn_coverage": "no size study of the one-sided downturn t-test",
+    "market.mcneil_frey_residual_test": "no size study of the bootstrap residual test",
+    "portfolio.tail_backtest": "no size study of the binomial exceedance count",
+    "portfolio.mc_convergence": "no size study of the Monte Carlo z-test against the anchor",
+    "portfolio.crp_recursion_vs_mc": "no size study of the Kolmogorov distance test",
+}
+
+
+def _p_value_tests() -> set[str]:
+    import riskvalidation.validation.aggregation  # noqa: F401  (registers the families of batch 3 and U5 to U12)
+    import riskvalidation.validation.ccr  # noqa: F401
+    import riskvalidation.validation.fairness  # noqa: F401
+    import riskvalidation.validation.ifrs9  # noqa: F401
+    import riskvalidation.validation.irrbb  # noqa: F401
+    import riskvalidation.validation.lgd_ead  # noqa: F401
+    import riskvalidation.validation.liquidity  # noqa: F401
+    import riskvalidation.validation.market  # noqa: F401
+    import riskvalidation.validation.oprisk  # noqa: F401
+    import riskvalidation.validation.portfolio  # noqa: F401
+    import riskvalidation.validation.stress  # noqa: F401
+
+    return {s.test_id for s in catalogue() if s.decision == "p_value" and s.family != "selftest"}
+
+
+def test_every_registered_p_value_test_has_its_size_measured_or_named_as_a_gap():
+    """A registered p-value test is measured in NULL_SCENARIOS, in a named sizepower suite, or listed in SIZE_GAPS
+    with its reason; a test in none of the three fails here with its id, never skipped."""
+    p_value_tests = _p_value_tests()
+    covered = set(NULL_SCENARIOS) | set(SIZE_SUITES) | set(SIZE_GAPS)
+    assert not p_value_tests - covered, f"p-value tests with no size measurement: {sorted(p_value_tests - covered)}"
+    assert covered <= p_value_tests, f"entries that are not registered p-value tests: {sorted(covered - p_value_tests)}"
+    assert not set(NULL_SCENARIOS) & (set(SIZE_SUITES) | set(SIZE_GAPS))
+    assert not set(SIZE_SUITES) & set(SIZE_GAPS), "a measured test is no gap"
+
+
+def test_every_size_suite_exists_and_names_its_test():
+    """Read from the source, not imported: the suite is a size study (a 4,000-repetition `sizepower` study or a CI size
+    test) that is not executed here."""
+    import ast
+
+    registered = {s.test_id: s for s in catalogue()}
+    for tid, target in sorted(SIZE_SUITES.items()):
+        path, _, name = target.partition("::")
+        file = ROOT / path
+        assert file.is_file(), (tid, path)
+        text = file.read_text(encoding="utf-8")
+        tree = ast.parse(text)
+        funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+        assert name in funcs, (tid, target, "no such test")
+        source = ast.get_source_segment(text, funcs[name])
+        assert tid in source or registered[tid].func.__name__ in source, (tid, target, "does not name the test")
+
+
 def test_size_of_every_p_value_test():
     p_value_tests = {s.test_id for s in catalogue() if s.decision == "p_value" and s.family != "selftest"}
-    assert p_value_tests == set(NULL_SCENARIOS) == set(SEEDS), p_value_tests ^ set(NULL_SCENARIOS)
+    # the null scenarios of the older families; the p-value tests measured elsewhere are SIZE_SUITES and SIZE_GAPS
+    assert set(NULL_SCENARIOS) <= p_value_tests, set(NULL_SCENARIOS) - p_value_tests
+    assert set(NULL_SCENARIOS) == set(SEEDS), set(NULL_SCENARIOS) ^ set(SEEDS)
     assert len(set(SEEDS.values())) == len(SEEDS)
     measured = {}
     for tid, (gen, feed, kw) in sorted(NULL_SCENARIOS.items()):
