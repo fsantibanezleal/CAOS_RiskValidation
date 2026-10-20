@@ -117,14 +117,33 @@ def reverse_stress(
     sd = np.sqrt(np.diag(c))
     results = []
     for x0 in x0s:
-        res = optimize.minimize(
-            lambda x: float(x @ prec @ x),
-            x0,
-            jac=lambda x: 2.0 * prec @ x,
-            method="SLSQP",
-            constraints=[{"type": "ineq", "fun": lambda x: float(loss_fn(np.array(x))) / thr - 1.0}],
-            options={"ftol": 1e-14, "maxiter": 1000},
-        )
+        def con(x: np.ndarray) -> float:
+            return float(loss_fn(np.array(x, dtype=float))) / thr - 1.0
+
+        def con_jac(x: np.ndarray) -> np.ndarray:
+            """Central differences: more accurate than SLSQP's forward differences, which stall on some SciPy versions."""
+            g = np.empty(k)
+            for j in range(k):
+                h = 1e-6 * max(1.0, abs(x[j]))
+                e = np.zeros(k)
+                e[j] = h
+                g[j] = (con(x + e) - con(x - e)) / (2.0 * h)
+            return g
+
+        res = None
+        start = x0
+        for _ in range(4):  # warm restarts from the last point: a fresh quasi-Newton model
+            res = optimize.minimize(
+                lambda x: float(x @ prec @ x),
+                start,
+                jac=lambda x: 2.0 * prec @ x,
+                method="SLSQP",
+                constraints=[{"type": "ineq", "fun": con, "jac": con_jac}],
+                options={"ftol": 1e-14, "maxiter": 1000},
+            )
+            start = np.array(res.x, dtype=float)
+            if res.success and abs(con(start)) <= tol:
+                break
         x = np.array(res.x, dtype=float)
         loss = float(loss_fn(x.copy()))
         ok = bool(res.success) and np.all(np.isfinite(x)) and np.isfinite(loss) and abs(loss - thr) / thr <= tol
