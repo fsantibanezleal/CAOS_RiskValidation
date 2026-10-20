@@ -18,7 +18,7 @@ serialised, never a number.
 | Test id | Metric read | Kind | Amber | Red | Boundary |
 |---|---|---|---|---|---|
 | `ml.robustness` | AUC degradation at the preset scale, $-\Delta_{\mathrm{AUC}}$ | upper_bad | 0.02 (`perturbation_tolerance`) | 0.04 (twice it) | strict |
-| `ml.shift_resilience` | permutation p-value of the AUC drop on the worst subsample (statistic: the drop) | p_value | 0.05 | 0.01 | inclusive |
+| `ml.shift_resilience` | development-only Monte Carlo p-value of the AUC drop on the worst subsample (statistic: the drop) | p_value | 0.05 | 0.01 | inclusive |
 | `ml.seed_stability` | standard deviation of the AUC across seeds | upper_bad | 0.01 | 0.02 | inclusive |
 | `ml.reason_code_stability` | mean top-four reason overlap across refits | lower_bad | 0.80 | 0.60 | inclusive |
 | `ml.effect_agreement` | Spearman rho of mean absolute SHAP against the ALE range | lower_bad | 0.70 | 0.40 | inclusive |
@@ -49,9 +49,9 @@ Light rules (each in the function's docstring):
 
 - `robustness`: green when the AUC degradation at the preset scale is at most the tolerance, amber above it up to twice it, red
   above; statistic and metric are the degradation.
-- `shift_resilience`: the permutation p-value of `shift_permutation_reference` (page 01) against the p-value cut points; statistic and
+- `shift_resilience`: the p-value of `shift_development_reference` (page 01) against the p-value cut points; statistic and
   metric are the observed drop, `extras` holds `null_mean`, `null_p95` and `shift_permutations`; `not_evaluated` without development
-  labels; `n` is the subsample rows.
+  labels or with fewer than twice as many development rows as evaluation rows; `n` is the subsample rows.
 - `seed_stability`, `reason_code_stability`, `effect_agreement`: the metric against its row; `n` is the seeds, the refits and the
   features.
 - `additivity` (red when the gap exceeds the numeric tolerance 1e-9, never amber), `overfit` (red when the gap exceeds the

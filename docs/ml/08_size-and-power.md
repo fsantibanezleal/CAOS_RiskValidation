@@ -38,9 +38,10 @@ the first run, were a size of at most 0.05 and a power of at least 0.90, with tw
 most 0.10) and the worst-subsample test (size at most 0.15). **History, stated plainly.** The 0.10 and 0.15 bounds were not stated
 before the run: the first design measured a size of 0.0620 for the conformal test and 0.1055 for the worst-subsample test (finding
 F4), and the bounds were set after those runs. The review of the unit (majors M-2 and M-3) refused them, and the designs were
-replaced, not the bounds: the Beta-Binomial null (page 05) and the exact permutation reference (page 01). Every test now answers to
+replaced, not the bounds: the Beta-Binomial null (page 05) and the development-only reference (page 01). Every test now answers to
 the default bound, a size of at most 0.05 plus two Monte Carlo standard errors (0.0569 at 4,000 repetitions), and a power of at least
-0.90, with one exception that is stated after its measurement (the shift resilience power, below).
+0.90, with no exception. A first pooled-permutation reference for the shift test had a power of 0.28 and a power floor of 0.15 was set after that
+measurement; the main session replaced the reference (decision after the first return) and the floor was removed: the pre-stated 0.90 applies.
 
 ## Measured size and power (4,000 repetitions per condition, seed 20261019 for the null and 20261020 for the defect)
 
@@ -49,7 +50,7 @@ Engine 1.1.0, run by `pytest tests/ml/test_ml_size_power.py -s` (marker `sizepow
 | Test | Null | Size | se | Wilson 95% | Defect | Power | se | Wilson 95% |
 |---|---|---|---|---|---|---|---|---|
 | `ml.robustness` | sensitivity 0.25 | 0.0278 | 0.0026 | [0.0230, 0.0333] | sensitivity 2.5 | 1.0000 | 0.0000 | [0.9990, 1.0000] |
-| `ml.shift_resilience` (n = 300, R = 99, share 0.25) | shift 0 | 0.0432 | 0.0032 | [0.0373, 0.0500] | a quarter of the rows shifted 3 sd on feature 0 | 0.2820 | 0.0071 | [0.2682, 0.2961] |
+| `ml.shift_resilience` (development 2,000, evaluation 1,000, R = 99, share 0.25) | shift 0 | 0.0418 | 0.0032 | [0.0359, 0.0484] | a quarter of the rows shifted 3 sd on feature 0 | 0.9720 | 0.0026 | [0.9664, 0.9766] |
 | `ml.seed_stability` | instability 0.2 | 0.0000 | 0.0000 | [0.0000, 0.0009] | instability 1.0 | 1.0000 | 0.0000 | [0.9990, 1.0000] |
 | `ml.reason_code_stability` | refit noise 0.1 | 0.0000 | 0.0000 | [0.0000, 0.0009] | refit noise 1.5 | 1.0000 | 0.0000 | [0.9990, 1.0000] |
 | `ml.effect_agreement` | effect range follows importance | 0.0135 | 0.0018 | [0.0103, 0.0175] | independent | 0.9870 | 0.0018 | [0.9829, 0.9900] |
@@ -63,29 +64,23 @@ Engine 1.1.0, run by `pytest tests/ml/test_ml_size_power.py -s` (marker `sizepow
 | `ml.data_quality` | NaN rate 0.2 percent | 0.0000 | 0.0000 | [0.0000, 0.0009] | NaN rate 3 percent | 1.0000 | 0.0000 | [0.9990, 1.0000] |
 | `ml.challenger_brier` | equal noise | 0.0302 | 0.0027 | [0.0254, 0.0360] | challenger noise 0.15 above | 0.9952 | 0.0011 | [0.9925, 0.9969] |
 
-Run time (default device, three other sessions loading the CPU): the module took about 6,230 s (the sum of its test durations), of which `ml.shift_resilience` 5,791 s
-(about 0.7 s per repetition at n = 300 and R = 99; 1.2 s at n = 500, 2.1 s at n = 1,000), the next two 108 s and 103 s.
+Run time (default device, other sessions loading the CPU): `ml.shift_resilience` 17,495 s (about 2.2 s per repetition at 2,000 development rows, 1,000 evaluation rows and R = 99; the 4,000-repetition studies of the null and the defect), the next two 98 s and 89 s.
 
 Reading the table:
 
 - Several nulls give size 0 and several defects give power 1: the null and the defect of those studies are far apart (for example the
   seed plant at instability 0.2 against 1.0, the additivity gap 0 against 1e-6), so the study shows the light can tell them apart, not
   where its boundary sits.
-- **Finding F4, the worst-subsample test, closed by the permutation reference.** The first design read the raw drop against fixed cut
-  points and had a size of 0.1055 under no shift (it did not fall with the sample size): the worst subsample by shift score is a region
-  of the feature space (a half-space in a random direction) on which the model's AUC is lower by range restriction (by 0.013 to 0.020
-  on average, spread 0.027 to 0.036), so the amber cut point 0.05 was within reach of chance. The light now reads the observed drop
-  against the drops of random re-labellings of the pooled rows (page 01) and its size is 0.0432 (se 0.0032), below 0.05. The size
-  study uses R = 99 (the engine default is 199) and the smallest sizes that worked: n = 100 gave worst subsamples of a single class in
-  the permuted samples, n = 300 development and 300 evaluation rows is the first size where that is rare (permutations without an AUC
-  are left out and counted, `n_undefined`); the exact test is valid at any n.
-- **The power of the shift resilience test is low against this plant: 0.282.** Measured at 100 repetitions before the 4,000-repetition
-  run: 0.24 (n = 300), 0.38 (n = 500), 0.37 (n = 1,000) and 0.43 (n = 2,000, 60 repetitions), so it does not grow with n. The cause is
-  the reference itself: the pooled rows contain the shifted rows, so a permutation that puts them among the worst subsample has a
-  large drop too (the null drops have a standard deviation of 0.08 to 0.09 against 0.03 without shift, and their 95th percentile
-  reaches 0.1 to 0.23 against an observed drop of 0.12 to 0.22). The first design had a power of 1.0 only because it could not tell
-  chance from shift. The test is floored at a power of 0.15 and above its size (`POWER_MIN_BY_TEST`), a floor set after this
-  measurement; a reference that is not contaminated by the shifted rows is a design question for the main session.
+- **Finding F4, the worst-subsample test, closed by the development-only reference.** The first design read the raw drop against fixed
+  cut points and had a size of 0.1055 under no shift: the worst subsample by shift score is a region of the feature space on which the
+  model's AUC is lower by range restriction, so the amber cut point 0.05 was within reach of chance. A second design, a permutation of
+  the domain labels of the pooled rows, was exact in size (0.0432) but had a power of 0.28 at any sample size, because the pooled null
+  contained the shifted rows. The light now reads the observed drop against the drops of random development subsets of the evaluation
+  size (page 01): size 0.0418 (se 0.0032), power 0.9720 (se 0.0026).
+- **Sample sizes of the shift study.** The reference needs at least twice as many development rows as evaluation rows. The plant draws
+  `n` rows for each sample and the pipeline keeps the first `n / 2` evaluation rows. Exploratory power at 40 to 60 repetitions
+  (UNVERIFIED as tests, not kept): 0.70 at 600 development and 300 evaluation rows, 0.90 at 1,000 and 500, 0.975 at 2,000 and 1,000;
+  the study uses 2,000 and 1,000, the smallest size that left a margin over the 0.90 design power.
 - The conformal coverage test is exact under exchangeability at the three split ratios (sizes 0.0475, 0.0493 and 0.0522 against the
   bound 0.0569). For comparison the dossier's binomial p-value, kept in `p_value_binomial`, has sizes 0.062, 0.1625 and 0.380 at the
   same ratios (4,000 repetitions, the same draws; one-off study, not a test): the oversizing the review found, which the

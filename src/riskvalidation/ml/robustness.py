@@ -182,12 +182,13 @@ def worst_subsample_performance(
 
 @dataclass(frozen=True)
 class ShiftReference:
-    """The permutation reference of the worst-subsample AUC drop: the drop observed on the evaluation rows, the drops of
-    ``n_permutations`` random re-labellings of the pooled rows as development and evaluation (``null_drops``, empty
-    without development labels), the one-sided p-value ``(1 + #{null >= observed}) / (len(null_drops) + 1)``
-    (NaN without development labels or when no permutation has a drop), the ``share`` of the worst subsample and the
-    number of permutations left out because their worst subsample held a single class and has no AUC (``n_undefined``;
-    ``len(null_drops) + n_undefined = n_permutations``)."""
+    """The development-only reference of the worst-subsample AUC drop: the drop observed on the evaluation rows, the
+    drops of ``n_permutations`` pseudo-evaluation subsets drawn from the development rows (``null_drops``; empty
+    when the reference could not be built), the one-sided p-value ``(1 + #{null >= observed}) / (len(null_drops) +
+    1)`` (NaN when it could not be built), the ``share`` of the worst subsample, whether development labels were
+    given (``labelled``), the number of draws left out because their worst subsample held a single class
+    (``n_undefined``) and whether the development set holds at least twice the evaluation rows
+    (``enough_development``)."""
 
     observed_drop: float
     null_drops: tuple[float, ...]
@@ -196,9 +197,10 @@ class ShiftReference:
     share: float
     labelled: bool
     n_undefined: int = 0
+    enough_development: bool = True
 
 
-def shift_permutation_reference(
+def shift_development_reference(
     predict: Predict,
     X_dev: np.ndarray,
     y_dev: np.ndarray | None,
@@ -209,22 +211,22 @@ def shift_permutation_reference(
     shift_permutations: int = 199,
     seed: int = 0,
 ) -> ShiftReference:
-    """An exact permutation reference for the drop ``auc_full - auc_worst`` of ``worst_subsample_performance``.
+    """The development-only reference for the drop ``auc_full - auc_worst`` of ``worst_subsample_performance``.
 
-    Under no shift the evaluation rows with the highest shift score are a region of the feature space on which the AUC
-    is lower by range restriction, so the raw drop is positive under the null (finding F4 of unit U14-E1, size 0.1055).
-    The reference pools the development rows ``(X_dev, y_dev)`` and the evaluation rows ``(X_eval, y_eval)`` and
-    repeats ``shift_permutations`` times (R, default 199, a convention): permute the domain labels keeping the two group
-    sizes, refit the shift score exactly as ``shift_score_rank`` does (cross-fitted, the permuted "development" rows
-    class 0, the permuted "evaluation" rows class 1), and compute the drop on the permuted evaluation rows with
-    ``worst_subsample_performance`` at the same ``share``. ``score`` is the shift score of the observed evaluation rows
-    (``shift_score_rank``); the observed drop is that of ``worst_subsample_performance(predict, X_eval, y_eval, score,
-    share)``. The p-value is ``(1 + #{null drops >= observed drop}) / (R + 1)``. A permutation whose worst subsample
-    holds a single class has no AUC and is left out (counted in ``n_undefined``; R is then the number of drops that
-    exist, a conditional permutation test: the observed subsample has an AUC, or the function raises). Deterministic for
-    a ``seed``.
+    Under no shift the evaluation rows with the highest shift score are a region of the feature space on which the
+    AUC is lower by range restriction, so the raw drop is positive under the null (finding F4 of unit U14-E1, size
+    0.1055). ``shift_permutations`` times (R, default 199, a convention) a random subset of the development rows of
+    the evaluation set's size is drawn without replacement as the pseudo-evaluation set and the other development
+    rows are the pseudo-development set; the shift score is refit exactly as ``shift_score_rank`` does (cross-
+    fitted, pseudo-development class 0, pseudo-evaluation class 1) and the drop is computed on the pseudo-evaluation
+    rows with ``worst_subsample_performance`` at the same ``share``. ``score`` is the shift score of the observed
+    evaluation rows (``shift_score_rank``). The p-value is ``(1 + #{null drops >= observed drop}) / (R + 1)``. Under
+    no shift the evaluation rows are exchangeable with the development rows, so the null is valid and holds no
+    shifted row. A draw whose worst subsample holds a single class has no AUC and is left out (``n_undefined``).
+    Deterministic for a ``seed``.
 
-    ``y_dev=None`` (no development labels) returns an unlabelled reference: no null drops and a NaN p-value."""
+    ``y_dev=None`` (no development labels) or fewer than twice as many development rows as evaluation rows return a
+    reference with no null drops and a NaN p-value (``labelled`` or ``enough_development`` false)."""
     dev, ev = mat(X_dev, "X_dev"), mat(X_eval, "X_eval")
     if dev.shape[1] != ev.shape[1]:
         raise ValueError(f"X_eval must have the {dev.shape[1]} columns of X_dev, got {ev.shape[1]}")
@@ -241,24 +243,25 @@ def shift_permutation_reference(
         return ShiftReference(observed, (), math.nan, r, sh, False)
     y_dv = binary(y_dev, "y_dev", both=False)
     same_rows(X_dev=dev, y_dev=y_dv)
-    pooled, y_pool = np.vstack([dev, ev]), np.concatenate([y_dv, y_ev])
-    n_dev, n = len(dev), len(dev) + len(ev)
+    n_dev, n_ev = len(dev), len(ev)
+    if n_dev < 2 * n_ev:
+        return ShiftReference(observed, (), math.nan, r, sh, True, 0, False)
     rng = np.random.default_rng(seed)
     nulls: list[float] = []
     undefined = 0
     for _ in range(r):
-        perm = rng.permutation(n)
-        i_dev, i_ev = perm[:n_dev], perm[n_dev:]
+        perm = rng.permutation(n_dev)
+        i_ev, i_dev = perm[:n_ev], perm[n_ev:]
         sub_seed = int(rng.integers(0, 2**63 - 1))
-        sc = _logistic.crossfit_resemblance(pooled[i_dev], pooled[i_ev], sub_seed)[n_dev:]
+        sc = _logistic.crossfit_resemblance(dev[i_dev], dev[i_ev], sub_seed)[len(i_dev) :]
         try:
-            res = worst_subsample_performance(predict, pooled[i_ev], y_pool[i_ev], sc, sh)
+            res = worst_subsample_performance(predict, dev[i_ev], y_dv[i_ev], sc, sh)
         except SingleClassSubsampleError:
             undefined += 1
             continue
         nulls.append(float(res.auc_full - res.auc))
     p = (1 + sum(d >= observed for d in nulls)) / (len(nulls) + 1) if nulls else math.nan
-    return ShiftReference(observed, tuple(nulls), float(p), r, sh, True, undefined)
+    return ShiftReference(observed, tuple(nulls), float(p), r, sh, True, undefined, True)
 
 
 def oot_window_performance(predict: Predict, X: np.ndarray, y: np.ndarray, window: np.ndarray) -> dict[str, float]:

@@ -44,7 +44,7 @@ from riskvalidation.validation.discrimination import auc_with_variance
 N_REP = 4000  # no fewer than 4,000 repetitions (contract engine-ml-api 1.0.0, SDD l.335)
 SEED = 20261019
 SHIFT_PERMUTATIONS = 99  # R of the size study (the engine default is 199)
-SHIFT_N = 300  # development and evaluation rows of the shift plant (see docs/ml/08)
+SHIFT_N = 2000  # development rows of the shift plant; the evaluation set is its first SHIFT_N // 2 rows (docs/ml/08)
 
 
 def study(test, generator, *, seed: int = SEED, n_rep: int = N_REP, test_kwargs=None) -> Simulation:
@@ -67,9 +67,10 @@ def run_robustness(plant: NoiseSensitivityPlant, grid, tolerance: float, preset_
 
 def run_shift(plant: CovariateShiftPlant, share: float, shift_permutations: int = SHIFT_PERMUTATIONS):
     def run(X_dev, y_dev, X_eval, y_eval, seed):
+        X_eval, y_eval = X_eval[: len(X_dev) // 2], y_eval[: len(X_dev) // 2]  # dev >= 2 x eval
         score = robustness.shift_score_rank(X_dev, X_eval, seed)
         res = robustness.worst_subsample_performance(plant.predict, X_eval, y_eval, score, share)
-        ref = robustness.shift_permutation_reference(
+        ref = robustness.shift_development_reference(
             plant.predict, X_dev, y_dev, X_eval, y_eval, score, share, shift_permutations, seed
         )
         return v.shift_resilience("m", res, ref)

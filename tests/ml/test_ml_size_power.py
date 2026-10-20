@@ -26,11 +26,6 @@ pytestmark = pytest.mark.sizepower
 
 COND = conditions()
 POWER_MIN = 0.90
-# The power of the exact permutation reference against the covariate-shift plant is limited by the null: the pooled
-# rows hold the shifted rows, so a permutation that puts them in the worst subsample has a large drop too. Measured at
-# 100 repetitions, n = 300 to 2,000: 0.24 to 0.43, not growing with n. This floor (power at least 0.15 and above the
-# size) was set AFTER that measurement, for the design the main session decided; docs/ml/08 reports the figure.
-POWER_MIN_BY_TEST = {"ml.shift_resilience": 0.15}
 
 
 def test_at_least_4000_repetitions():
@@ -51,9 +46,7 @@ def test_size_under_the_null_and_power_against_the_planted_defect(test_id):
     assert null.rates["alarm"].undefined == 0 and defect.rates["alarm"].undefined == 0  # never an unevaluated light
     bound = size_bound(0.05, null.n_rep, z=2.0)  # 0.05 plus two Monte Carlo standard errors, for every test
     assert size.rate <= bound, f"size {size.rate:.4f} above {bound:.4f} (se {size.se:.4f})"
-    floor = POWER_MIN_BY_TEST.get(test_id, POWER_MIN)
-    assert power.rate >= floor, f"power {power.rate:.4f} below {floor} (se {power.se:.4f})"
-    assert power.rate > size.rate
+    assert power.rate >= POWER_MIN, f"power {power.rate:.4f} below {POWER_MIN} (se {power.se:.4f})"
 
 
 def test_cbpe_estimate_tracks_the_labelled_auc_when_calibrated_and_not_when_it_is_not():

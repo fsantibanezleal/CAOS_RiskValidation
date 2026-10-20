@@ -57,25 +57,28 @@ single class has no AUC: the function raises.
 the key `omitted`: the number of windows left out because they hold a single class (a window with fewer than two classes never
 gets a number).
 
-## The permutation reference of the shift test
+## The development-only reference of the shift test
 
 Under no shift the evaluation rows with the highest shift score are a region of the feature space on which the model's AUC is lower
-by range restriction, so the raw drop $	ext{AUC}_{	ext{full}}-	ext{AUC}_{	ext{worst}}$ is positive under the null (finding F4:
-the first design, a drop against fixed cut points, had a size of 0.1055). The light reads the observed drop against its own
-permutation null (`shift_permutation_reference`, a convention: R = `shift_permutations`, default 199):
+by range restriction, so the raw drop $\text{AUC}_{\text{full}}-\text{AUC}_{\text{worst}}$ is positive under the null (finding F4:
+the first design, a drop against fixed cut points, had a size of 0.1055). A pooled-permutation reference was tried next and
+rejected: it put the shifted evaluation rows into its own null and its power against the covariate-shift plant stayed at 0.28 at any
+sample size. The light now reads the observed drop against a development-only reference (`shift_development_reference`, decision G4
+of unit U14 as amended; a convention: R = `shift_permutations`, default 199):
 
-1. pool the development rows $(X_{dev},y_{dev})$ and the evaluation rows $(X_{eval},y_{eval})$;
-2. R times, with a seeded generator, permute the domain labels keeping the two group sizes, refit the shift score exactly as
-   `shift_score_rank` does (cross-fitted, the permuted "development" rows class 0, the permuted "evaluation" rows class 1) and compute
-   the drop on the permuted evaluation rows with `worst_subsample_performance` at the same share;
-3. $p=\dfrac{1+\#\{	ext{null drops}\ge	ext{observed drop}\}}{R+1}$.
+1. R times, draw without replacement a random subset of the development rows of the evaluation set's size as the pseudo-evaluation
+   set and take the other development rows as the pseudo-development set;
+2. refit the shift score exactly as `shift_score_rank` does (cross-fitted, pseudo-development class 0, pseudo-evaluation class 1) and
+   compute the drop on the pseudo-evaluation rows with `worst_subsample_performance` at the same share (this needs the development
+   labels);
+3. $p=\dfrac{1+\#\{\text{null drops}\ge\text{observed drop}\}}{R+1}$.
 
-The pooled rows are exchangeable under no shift, so the p-value is exact (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585). A
-permutation whose worst subsample holds a single class has no AUC and is left out (`n_undefined`; a conditional permutation test, R
-is then the number of drops that exist); the observed subsample must have an AUC or the function raises. Without development labels
-(`y_dev=None`) the reference is unlabelled and the validation test is `not_evaluated`. The light (`ml.shift_resilience`) reads the
-p-value with the p-value cut points 0.05 and 0.01; the observed drop is the statistic and the null drops are summarised in `extras`
-(`null_mean`, `null_p95`). Deterministic for a seed.
+Under no shift the evaluation rows are exchangeable with the development rows, so the null is valid and holds no shifted row
+(Phipson and Smyth 2010, doi:10.2202/1544-6115.1585). A draw whose worst subsample holds a single class has no AUC and is left out
+(`n_undefined`); the observed subsample must have an AUC or the function raises. When the development set has fewer than twice the
+evaluation rows, or without development labels (`y_dev=None`), the reference carries no null drops and the validation test is
+`not_evaluated` with that reason. The light (`ml.shift_resilience`) reads the p-value with the p-value cut points 0.05 and 0.01; the
+observed drop is the statistic and the null drops are summarised in `extras` (`null_mean`, `null_p95`). Deterministic for a seed.
 
 ## What these checks do not claim
 
@@ -84,7 +87,7 @@ p-value with the p-value cut points 0.05 and 0.01; the observed drop is the stat
   AUC points, decision V6 of unit U14).
 - The worst subsample by shift score is a region of the feature space, not a random subsample: a model is judged on a narrower
   range of its own score there, so even without any shift its AUC there is lower than on the whole sample (page 08, finding F4);
-  the permutation reference above is what the light reads, not the raw drop.
+  the development-only reference above is what the light reads, not the raw drop.
 - The shift score ranks rows by how far they sit from the development sample; it does not state that the shift matters.
 - The engine computes and makes no compliance claim.
 
