@@ -25,15 +25,18 @@ constant row has no rank and raises.
 
 `reason_code_overlap(attributions_by_refit, top_k=4)`: the attributions are an array of shape `(n_refits, n, p)` computed in the
 pipeline by the pinned `shap` (the engine imports no learning library). The reasons of an obligor in a refit are its `top_k`
-features of largest **absolute** attribution (ties by column order). For each obligor the share of the reasons kept between each
-later refit and the first is averaged over the later refits; the result carries the mean and the 5th percentile over obligors
-(`numpy.percentile`, linear). Identical refits give 1; a planted swap of two columns gives the hand-computed share (a swap of the
+features of largest **signed** contribution toward the event, in descending order (ties by column order). The attributions are on
+the log-odds of the event (the default); a positive attribution pushes toward default, and a large negative attribution is never a
+reason. For each obligor the share of the reasons kept between each later refit and the first is averaged over the later refits;
+the result carries the mean and the 5th percentile **over obligors** (after the share is averaged over the refits, not over
+(refit, obligor) pairs; `numpy.percentile`, linear). Identical refits give 1; a planted swap of two columns gives the hand-computed share (a swap of the
 fourth and fifth feature for one of two obligors gives a mean of 0.875 and a 5th percentile of 0.7625).
 
-- **UNVERIFIED reading (absolute attribution).** The dossier says "bootstrap rank stability of the top four" (04 J.2 l.881-883)
-  without a sign, and the contract does not settle it. A Reg B reason is usually the feature that pushes the score towards denial
-  (the largest positive attribution on the PD scale); the engine ranks by magnitude because the function cannot know which sign is
-  adverse. The signed variant is one `np.abs` away and needs a contract decision.
+- **Signed attribution (decision of the main session after the review, Q3).** Dossier 04 J.2 l.878-883 ties the top-four reasons to
+  the Regulation B adverse-action reasons ("SHAP shortfalls play the role of Delta_j", comment 9(b)(2)-5), which are the factors
+  that pushed the score toward the adverse outcome: the largest signed contributions toward default on the log-odds scale. The
+  first design ranked by absolute value (an UNVERIFIED reading); a large negative attribution, a push away from default, is not a
+  reason and is not ranked first any more (tested with an obligor whose largest absolute attribution is negative).
 - **Finding F1.** The contract states "`p05 <= mean`" as an invariant. It is not a property of a share distribution: 96 obligors at
   share 1 and 4 at share 0 have a 5th percentile of 1 above the mean 0.96 (a test plants it). The function reports the exact
   percentile and `OverlapResult` does not enforce the inequality.

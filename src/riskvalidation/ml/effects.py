@@ -1,7 +1,7 @@
 """Partial dependence (Friedman 2001), individual conditional expectation (Goldstein et al. 2015) and accumulated local
 effects (Apley and Zhu 2020, the estimator centred to mean zero) on a predict callable (dossier 06 C.7 l.994-1003).
 
-Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/effects.py``.
+Contract: ``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/effects.py``.
 """
 
 from __future__ import annotations

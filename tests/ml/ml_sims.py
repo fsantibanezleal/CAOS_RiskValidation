@@ -43,6 +43,8 @@ from riskvalidation.validation.discrimination import auc_with_variance
 
 N_REP = 4000  # no fewer than 4,000 repetitions (contract engine-ml-api 1.0.0, SDD l.335)
 SEED = 20261019
+SHIFT_PERMUTATIONS = 99  # R of the size study (the engine default is 199)
+SHIFT_N = 300  # development and evaluation rows of the shift plant (see docs/ml/08)
 
 
 def study(test, generator, *, seed: int = SEED, n_rep: int = N_REP, test_kwargs=None) -> Simulation:
@@ -63,11 +65,14 @@ def run_robustness(plant: NoiseSensitivityPlant, grid, tolerance: float, preset_
     return run
 
 
-def run_shift(plant: CovariateShiftPlant, share: float):
-    def run(X_dev, X_eval, y_eval, seed):
+def run_shift(plant: CovariateShiftPlant, share: float, shift_permutations: int = SHIFT_PERMUTATIONS):
+    def run(X_dev, y_dev, X_eval, y_eval, seed):
         score = robustness.shift_score_rank(X_dev, X_eval, seed)
         res = robustness.worst_subsample_performance(plant.predict, X_eval, y_eval, score, share)
-        return v.shift_resilience("m", res)
+        ref = robustness.shift_permutation_reference(
+            plant.predict, X_dev, y_dev, X_eval, y_eval, score, share, shift_permutations, seed
+        )
+        return v.shift_resilience("m", res, ref)
 
     return run
 
@@ -85,11 +90,16 @@ def run_leak(X, y):
     return v.leakage_screen("m", 0, leakage.single_feature_auc(X, y), 0.0, res)
 
 
-def run_conformal(n_alpha: float = 0.10):
+def run_conformal(n_alpha: float = 0.10, n_cal: int | None = None):
+    """The pipeline of the conformal coverage test; `n_cal` keeps only the first `n_cal` calibration points (the plant
+    draws ten times the test window), so the three split ratios of the size study share one generator."""
+
     def run(p_cal, y_cal, p_test, y_test):
+        if n_cal is not None:
+            p_cal, y_cal = p_cal[:n_cal], y_cal[:n_cal]
         scores = np.where(y_cal == 1, 1.0 - p_cal, p_cal)
         q = conformal.split_conformal_quantile(scores, n_alpha)
-        cov = conformal.conformal_coverage(conformal.conformal_sets(p_test, q), y_test, n_alpha)
+        cov = conformal.conformal_coverage(conformal.conformal_sets(p_test, q), y_test, n_alpha, n_cal=len(p_cal))
         return v.conformal_coverage("m", cov)
 
     return run
@@ -275,7 +285,7 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
     """name: (test callable, null generator, defect generator, feed or None, description)."""
     grid = (0.0, 0.25, 0.5, 1.0)
     noise_null, noise_def = NoiseSensitivityPlant(2000, 0.25, 1), NoiseSensitivityPlant(2000, 2.5, 1)
-    shift_null, shift_def = CovariateShiftPlant(3000, 0.0, [0], 1), CovariateShiftPlant(3000, 3.0, [0], 1)
+    shift_null, shift_def = CovariateShiftPlant(SHIFT_N, 0.0, [0], 1), CovariateShiftPlant(SHIFT_N, 3.0, [0], 1)
     seed_null, seed_def = SeedUnstablePlant(4000, 0.2, 1), SeedUnstablePlant(4000, 1.0, 1)
     return {
         "ml.robustness": (
@@ -340,6 +350,20 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
             ExchangeabilityBreakPlant(2000, 0.5, 1),
             None,
             {"null": "drift 0", "defect": "log-odds drift 0.5"},
+        ),
+        "ml.conformal_coverage (n_cal 2000, m 2000)": (
+            run_conformal(n_cal=2000),
+            ExchangeabilityBreakPlant(2000, 0.0, 1),
+            ExchangeabilityBreakPlant(2000, 0.5, 1),
+            None,
+            {"null": "drift 0, n_cal = m = 2000", "defect": "log-odds drift 0.5, n_cal = m = 2000"},
+        ),
+        "ml.conformal_coverage (n_cal 1000, m 4000)": (
+            run_conformal(n_cal=1000),
+            ExchangeabilityBreakPlant(4000, 0.0, 1),
+            ExchangeabilityBreakPlant(4000, 0.5, 1),
+            None,
+            {"null": "drift 0, n_cal 1000, m 4000", "defect": "log-odds drift 0.5, n_cal 1000, m 4000"},
         ),
         "ml.leakage_screen": (
             run_leak,

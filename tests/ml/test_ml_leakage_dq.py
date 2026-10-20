@@ -87,6 +87,8 @@ def test_entity_overlap():
     assert entity_overlap(["a", "b", "c"], ["a", "b", "c"]) == 1.0
     assert entity_overlap([1, 2, 3], ["2", "3", "4"]) == pytest.approx(2.0 / 3.0)  # compared as strings
     assert entity_overlap(["a"], ["a", "a", "b", "b"]) == 0.5  # a test entity counts once
+    # review minor m1 (mutant M17): the share is over the test entities, whichever slice is larger
+    assert entity_overlap(["a", "b", "c", "d"], ["a", "e"]) == 0.5
     with pytest.raises(ValueError, match="test_ids"):
         entity_overlap(["a"], [])
 

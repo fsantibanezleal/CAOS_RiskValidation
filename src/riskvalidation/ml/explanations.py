@@ -3,7 +3,7 @@ C.7 l.990, l.1006-1008; I.1 l.1192-1193; dossier 04 J.2 l.881-883 and ladder P4 
 
 Reason-code stability (the share of the top reasons kept across bootstrap refits), the agreement of attribution ranks
 between SHAP and ALE or PDP, the Shapley additivity check ``f(x) = phi_0 + sum phi_i`` and the sign and monotonicity
-checks against the expected economic rationale (EBA recommendation 3). Contract: ``engine-ml-api`` 1.0.0, module
+checks against the expected economic rationale (EBA recommendation 3). Contract: ``engine-ml-api`` 1.1.0, module
 ``riskvalidation/ml/explanations.py``.
 """
 
@@ -41,17 +41,19 @@ def reason_code_overlap(attributions_by_refit: np.ndarray, top_k: int = 4) -> Ov
     """The mean and the 5th percentile over obligors of the share of the ``top_k`` reasons kept between each refit and
     the first refit (dossier 04 J.2 l.881-883; ladder P4 l.968: the bootstrap top-four overlap).
 
-    ``attributions_by_refit`` has shape (n_refits, n, p), n_refits at least two. The reasons of an obligor in a refit
-    are its ``top_k`` features of largest absolute attribution, ties by column order (UNVERIFIED reading: the dossier
-    says "the top four" without a sign; the contract does not settle it, see ``docs/ml/02``). The share of an obligor is
-    averaged over the refits after the first; identical refits give 1."""
+    ``attributions_by_refit`` has shape (n_refits, n, p), n_refits at least two, on the log-odds of the event (the
+    default). Sign convention: a positive attribution pushes toward default. The reasons of an obligor in a refit are
+    its ``top_k`` largest signed contributions toward the event, in descending order, ties by column order (dossier 04
+    J.2 l.878-883: "SHAP shortfalls play the role of Delta_j", Regulation B comment 9(b)(2)-5); a large negative
+    attribution is never a reason. The share of an obligor is averaged over the refits after the first, and the mean
+    and the 5th percentile are then taken over obligors (not over (refit, obligor) pairs); identical refits give 1."""
     a = np.array(attributions_by_refit, dtype=float)
     if a.ndim != 3 or a.shape[0] < 2 or a.shape[1] < 1:
         raise ValueError("attributions_by_refit must have shape (n_refits, n, p) with at least two refits")
     if not np.all(np.isfinite(a)):
         raise ValueError("attributions_by_refit contains non-finite values")
     k = index(top_k, "top_k", a.shape[2] + 1, lo=1)
-    order = np.argsort(-np.abs(a), axis=2, kind="stable")[:, :, :k]
+    order = np.argsort(-a, axis=2, kind="stable")[:, :, :k]
     kept = np.zeros(a.shape, dtype=bool)
     np.put_along_axis(kept, order, True, axis=2)
     share = (kept[1:] & kept[0]).sum(axis=2) / k  # (n_refits - 1, n)

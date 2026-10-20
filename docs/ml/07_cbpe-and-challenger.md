@@ -46,8 +46,9 @@ differ by at least `notches`, symmetric in the two vectors; 2 notches is a conve
 
 ## What these checks do not claim
 
-- A CBPE value is an estimate under four assumptions, never evidence of the model's performance: when a label is supplied the
-  labelled AUC is read instead (page 09).
+- A CBPE value is an estimate under four assumptions, never evidence of the model's performance: the validation row `ml.cbpe_estimate`
+  is always `not_evaluated` ("an estimate, not a test"), carries the estimate in `extras["estimate"]` and the four assumptions in
+  its notes, and so never changes `SuiteRun.worst()`; when a label is supplied the labelled AUC is read instead (page 09).
 - A Brier interval that includes zero does not show the two forecasts are equally good; it shows this sample cannot tell them apart.
 - The engine computes and makes no compliance claim.
 

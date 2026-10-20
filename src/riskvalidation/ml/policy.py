@@ -1,4 +1,4 @@
-"""The cut points of the ``ml.`` lights: the "Policy thresholds" table of the contract ``engine-ml-api`` 1.0.0, as
+"""The cut points of the ``ml.`` lights: the "Policy thresholds" table of the contract ``engine-ml-api`` 1.1.0, as
 entries of the engine's ``Policy`` (``Threshold(kind, amber, red)`` keyed by test id).
 
 ``Threshold.classify`` is inclusive at its cut points (``upper_bad``: amber at or above ``amber``, red at or above
@@ -17,8 +17,8 @@ import math
 
 from riskvalidation.core.policy import Policy, Threshold, default_policy
 
-CONVENTION = "convention (engine-ml-api 1.0.0, Policy thresholds)"
-RULE = "rule, not a convention (engine-ml-api 1.0.0, Policy thresholds)"
+CONVENTION = "convention (engine-ml-api 1.1.0, Policy thresholds)"
+RULE = "rule, not a convention (engine-ml-api 1.1.0, Policy thresholds)"
 
 ML_KEYS = (
     "ml.robustness",
@@ -62,11 +62,12 @@ def ml_thresholds(
             f"twice it, a delta equal to the tolerance green; {CONVENTION}",
         ),
         "ml.shift_resilience": Threshold(
-            "upper_bad",
+            "p_value",
             0.05,
-            0.10,
-            "AUC of the full sample minus AUC of the worst subsample: proposed, no dossier value "
-            f"(06 C.7 l.1013-1015 gives the construction only); {CONVENTION}",
+            0.01,
+            "permutation p-value of the AUC drop on the worst subsample by shift score against the drop of random "
+            "re-labellings of the pooled development and evaluation rows (06 C.7 l.1013-1015 gives the construction "
+            f"only): the engine default p-value cut points (alpha_amber 0.05, alpha_red 0.01); {CONVENTION}",
         ),
         "ml.seed_stability": Threshold(
             "upper_bad",
@@ -111,8 +112,8 @@ def ml_thresholds(
             "p_value",
             0.05,
             0.01,
-            "binomial p-value of the coverage against 1 - alpha: the engine default p-value "
-            f"cut points (alpha_amber 0.05, alpha_red 0.01); {CONVENTION}",
+            "Beta-Binomial p-value of the coverage against 1 - alpha given the calibration size: the engine default "
+            f"p-value cut points (alpha_amber 0.05, alpha_red 0.01); {CONVENTION}",
         ),
         "ml.leakage_screen.single_feature_auc": Threshold(
             "upper_bad",
@@ -151,6 +152,16 @@ def ml_thresholds(
     }
 
 
+def threshold_rows(**parameters: float) -> dict[str, dict[str, float | str]]:
+    """The ``ml.`` rows of ``ml_thresholds`` as plain mappings (``kind``, ``amber``, ``red``, ``source``), the form the
+    integrator writes into ``policies/default.json`` as it stands: the strict rows hold their ``nextafter`` floats. The
+    keyword arguments are those of ``ml_thresholds``."""
+    return {
+        key: {"kind": t.kind, "amber": float(t.amber), "red": float(t.red), "source": t.source}
+        for key, t in ml_thresholds(**parameters).items()
+    }
+
+
 def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
     """``base`` (the packaged default policy when None) with the ``ml.`` rows added for every key it does not hold. The
     keyword arguments are those of ``ml_thresholds`` (the named parameters); a row the base already holds is kept as it
@@ -161,6 +172,6 @@ def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
     return Policy(
         policy_id=b.policy_id,
         version=b.version,
-        description=f"{b.description} The ml. rows are those of engine-ml-api 1.0.0 where it holds none.".strip(),
+        description=f"{b.description} The ml. rows are those of engine-ml-api 1.1.0 where it holds none.".strip(),
         thresholds=rows,
     )

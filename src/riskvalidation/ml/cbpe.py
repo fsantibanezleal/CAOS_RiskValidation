@@ -5,7 +5,7 @@ expected true positives and true negatives are summed over observations, and the
 confusion over thresholds (https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html).
 Assumptions: well-calibrated probabilities, no concept drift, no extrapolation into unseen regions, adequate sample
 size. An early-warning estimate of the AUC while defaults mature: it complements, never replaces, back-testing, and it
-is always flagged as an estimate. Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/cbpe.py``.
+is always flagged as an estimate. Contract: ``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/cbpe.py``.
 """
 
 from __future__ import annotations

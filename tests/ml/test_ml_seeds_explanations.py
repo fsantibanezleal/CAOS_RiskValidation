@@ -123,8 +123,8 @@ def test_reason_code_overlap_identity_and_hand_computed_permutation():
     base = rng.standard_normal((40, 8))
     same = reason_code_overlap(np.stack([base, base, base]))
     assert same.mean == 1.0 and same.p05 == 1.0 and same.top_k == 4 and same.n_refits == 3
-    # two obligors, six features; the top four by absolute attribution are columns 0 to 3 in refit 1
-    a1 = np.array([[6.0, -5.0, 4.0, 3.0, 2.0, 1.0], [6.0, -5.0, 4.0, 3.0, 2.0, 1.0]])
+    # two obligors, six features; the top four by signed attribution are columns 0 to 3 in refit 1
+    a1 = np.array([[6.0, 5.0, 4.0, 3.0, 2.0, 1.0], [6.0, 5.0, 4.0, 3.0, 2.0, 1.0]])
     a2 = a1.copy()
     a2[0, [3, 4]] = a1[0, [4, 3]]  # a planted swap of two columns for the first obligor: top four {0, 1, 2, 4}
     res = reason_code_overlap(np.stack([a1, a2]))

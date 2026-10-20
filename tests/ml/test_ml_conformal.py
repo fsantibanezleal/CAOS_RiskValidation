@@ -79,23 +79,40 @@ def test_conformal_sets_hand_table_and_infinite_quantile():
         conformal_sets(p1, float("nan"))
 
 
-def test_conformal_coverage_matches_the_binomial_test():
+def test_conformal_coverage_keeps_the_binomial_value_beside_the_beta_binomial_p_value():
     sets = np.array([[True, False]] * 6 + [[False, True]] * 3 + [[False, False]] * 1)
     y = np.array([0] * 6 + [1] * 2 + [0] + [1])
-    res = conformal_coverage(sets, y, 0.1)
-    assert res == CoverageResult(n=10, coverage=0.8, target=0.9, p_value=res.p_value)
-    assert res.p_value == stats.binomtest(8, 10, 0.9, alternative="two-sided").pvalue
-    full = conformal_coverage(np.ones((50, 2), dtype=bool), np.zeros(50, dtype=int), 0.1)
+    res = conformal_coverage(sets, y, 0.1, n_cal=99)
+    k = math.ceil(100 * 0.9)  # 90
+    assert res == CoverageResult(
+        n=10, coverage=0.8, target=0.9, p_value=res.p_value, n_cal=99, k=k, p_value_binomial=res.p_value_binomial
+    )
+    assert res.p_value_binomial == stats.binomtest(8, 10, 0.9, alternative="two-sided").pvalue
+    pmf = stats.betabinom.pmf(np.arange(11), 10, k, 99 + 1 - k)
+    assert res.p_value == pytest.approx(float(pmf[pmf <= pmf[8] * (1.0 + 1e-7)].sum()), abs=1e-12)
+    full = conformal_coverage(np.ones((50, 2), dtype=bool), np.zeros(50, dtype=int), 0.1, n_cal=99)
     assert full.coverage == 1.0 and full.target == 0.9
     assert 0.0 <= full.p_value <= 1.0
     with pytest.raises(ValueError, match="sets"):
-        conformal_coverage(np.ones((3, 3), dtype=bool), np.zeros(3, dtype=int), 0.1)
+        conformal_coverage(np.ones((3, 3), dtype=bool), np.zeros(3, dtype=int), 0.1, n_cal=9)
     with pytest.raises(ValueError, match="y"):
-        conformal_coverage(np.ones((3, 2), dtype=bool), np.array([0, 1, 2]), 0.1)
+        conformal_coverage(np.ones((3, 2), dtype=bool), np.array([0, 1, 2]), 0.1, n_cal=9)
     with pytest.raises(ValueError, match="alpha"):
-        conformal_coverage(np.ones((3, 2), dtype=bool), np.zeros(3, dtype=int), 1.0)
+        conformal_coverage(np.ones((3, 2), dtype=bool), np.zeros(3, dtype=int), 1.0, n_cal=9)
     with pytest.raises(AttributeError):
         res.n = 3  # frozen
+
+
+def test_conformal_coverage_is_two_sided_on_a_coverage_above_target():
+    """Review minor m1 (mutant M4): every row covered at alpha 0.5 is above the target; the binomial value beside the
+    light is two-sided, not the one-sided `greater`."""
+    sets, y = np.array([[True, False]] * 10), np.zeros(10, dtype=int)
+    res = conformal_coverage(sets, y, 0.5, n_cal=19)
+    assert res.k == 10 and res.coverage == 1.0
+    assert res.p_value_binomial == stats.binomtest(10, 10, 0.5, alternative="two-sided").pvalue
+    assert res.p_value_binomial > stats.binomtest(10, 10, 0.5, alternative="greater").pvalue
+    pmf = stats.betabinom.pmf(np.arange(11), 10, 10, 10)
+    assert res.p_value == pytest.approx(float(pmf[pmf <= pmf[10] * (1.0 + 1e-7)].sum()), abs=1e-12)
 
 
 def test_split_conformal_guarantee_holds_under_exchangeability():
@@ -109,7 +126,7 @@ def test_split_conformal_guarantee_holds_under_exchangeability():
         scores = np.where(y[:n_cal] == 1, 1.0 - p[:n_cal], p[:n_cal])
         q = split_conformal_quantile(scores, alpha)
         sets = conformal_sets(p[n_cal:], q)
-        cover.append(conformal_coverage(sets, y[n_cal:], alpha).coverage)
+        cover.append(conformal_coverage(sets, y[n_cal:], alpha, n_cal=n_cal).coverage)
     m, se = float(np.mean(cover)), float(np.std(cover, ddof=1) / math.sqrt(reps))
     assert m >= 1.0 - alpha - 4.0 * se
 
@@ -190,4 +207,7 @@ def test_mapie_split_conformal_classifier_sets_contain_ours():
     ours = conformal_sets(p[n_cal:], split_conformal_quantile(scores, alpha))
     assert np.all(theirs | ~ours)  # ours is inside theirs
     yt = y[n_cal:]
-    assert conformal_coverage(ours, yt, alpha).coverage <= conformal_coverage(theirs, yt, alpha).coverage
+    assert (
+        conformal_coverage(ours, yt, alpha, n_cal=n_cal).coverage
+        <= conformal_coverage(theirs, yt, alpha, n_cal=n_cal).coverage
+    )

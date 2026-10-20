@@ -19,7 +19,7 @@ from riskvalidation.ml.explanations import OverlapResult
 from riskvalidation.ml.generalisation import OverfitResult, WeakSpot
 from riskvalidation.ml.leakage import AucResult, SingleFeatureAuc
 from riskvalidation.ml.policy import ML_KEYS, ml_policy, ml_thresholds
-from riskvalidation.ml.robustness import RobustnessCurve, SubsampleResult
+from riskvalidation.ml.robustness import RobustnessCurve, ShiftReference, SubsampleResult
 from riskvalidation.ml.seeds import SeedDispersion
 from riskvalidation.validation import ml as v
 
@@ -37,7 +37,7 @@ def test_policy_rows_are_the_contract_table():
     t = ml_thresholds()
     expect = {  # key: (kind, amber, red) with the strict rows one float above their cut
         "ml.robustness": ("upper_bad", NA(0.02, math.inf), NA(0.04, math.inf)),
-        "ml.shift_resilience": ("upper_bad", 0.05, 0.10),
+        "ml.shift_resilience": ("p_value", 0.05, 0.01),
         "ml.seed_stability": ("upper_bad", 0.01, 0.02),
         "ml.reason_code_stability": ("lower_bad", 0.80, 0.60),
         "ml.effect_agreement": ("lower_bad", 0.70, 0.40),
@@ -128,31 +128,23 @@ def test_robustness_policy_argument_tolerance_and_off_grid():
 
 
 def test_shift_resilience_lights():
-    def res(drop, policy=None):
-        return v.shift_resilience(
-            "m", SubsampleResult(n=100, auc=0.8 - drop, brier=0.2, auc_full=0.8, brier_full=0.1), policy
+    """The light reads the permutation p-value (docs/ml/01); the observed drop is the statistic. The full lights and the
+    reference are tested in test_ml_review_fixes.py."""
+    obs = SubsampleResult(n=100, auc=0.7, brier=0.2, auc_full=0.8, brier_full=0.1)
+
+    def ref(p):
+        return ShiftReference(
+            observed_drop=0.8 - 0.7, null_drops=(0.01, 0.02), p_value=p, n_permutations=2, share=0.25, labelled=True
         )
 
-    for drop, light in (
-        (0.0, Light.GREEN),
-        (0.049, Light.GREEN),
-        (0.051, Light.AMBER),
-        (0.07, Light.AMBER),
-        (0.101, Light.RED),
-        (0.2, Light.RED),
-        (-0.05, Light.GREEN),
-    ):
-        r = res(drop)
-        assert r.light is light, drop
-        assert r.metric == pytest.approx(drop, abs=1e-12) and r.n == 100
+    for p, light in ((0.5, Light.GREEN), (0.05, Light.GREEN), (0.049, Light.AMBER), (0.0099, Light.RED)):
+        r = v.shift_resilience("m", obs, ref(p))
+        assert r.light is light, p
+        assert r.statistic == pytest.approx(0.1, abs=1e-12) and r.n == 100 and r.p_value == p
         assert_row(r, "ml.shift_resilience")
-    # the inclusive cut points, on binary fractions so that the drop is exact: amber from the amber cut, red from the
-    # red cut
-    dyadic = Policy("d", "1", "x", {"ml.shift_resilience": Threshold("upper_bad", 0.0625, 0.125)})
-    exact = lambda auc: v.shift_resilience("m", SubsampleResult(10, auc, 0.2, 0.75, 0.1), dyadic)  # noqa: E731
-    assert exact(0.6875).light is Light.AMBER and exact(0.625).light is Light.RED and exact(0.6876).light is Light.GREEN
-    custom = Policy("c", "1", "x", {"ml.shift_resilience": Threshold("upper_bad", 0.01, 0.02)})
-    assert res(0.03, custom).light is Light.RED
+    custom = Policy("c", "1", "x", {"ml.shift_resilience": Threshold("p_value", 0.2, 0.1)})
+    assert v.shift_resilience("m", obs, ref(0.15), custom).light is Light.AMBER
+    assert v.shift_resilience("m", obs, ref(0.05), custom).light is Light.RED
 
 
 def test_seed_stability_lights():
@@ -244,7 +236,9 @@ def test_additivity_overfit_and_weak_spot_lights():
 
 def test_conformal_coverage_lights():
     def res(p, cov=0.85):
-        return v.conformal_coverage("m", CoverageResult(n=500, coverage=cov, target=0.9, p_value=p))
+        return v.conformal_coverage(
+            "m", CoverageResult(n=500, coverage=cov, target=0.9, p_value=p, n_cal=5000, k=4501, p_value_binomial=0.5)
+        )
 
     for p, light in (
         (0.5, Light.GREEN),
@@ -257,6 +251,7 @@ def test_conformal_coverage_lights():
         r = res(p)
         assert r.light is light, p
         assert r.p_value == p and r.metric == 0.85 and r.n == 500
+        assert r.statistic == pytest.approx(0.85 - 0.9, abs=1e-15)  # review minor m1 (mutant M26): coverage - target
         row = assert_row(r, "ml.conformal_coverage")
         assert row["alpha_amber"] == 0.05 and row["alpha_red"] == 0.01
 
@@ -315,21 +310,6 @@ def test_data_quality_lights_and_counts():
     assert_not_evaluated(v.data_quality("m", []), "ml.data_quality")
 
 
-def test_cbpe_estimate_is_never_green_or_red_and_not_evaluated_with_a_label():
-    est = CbpeAuc(
-        estimated_auc=0.71,
-        label="estimate",
-        assumptions=("calibrated-probabilities", "no-concept-drift", "no-extrapolation", "adequate-sample"),
-    )
-    r = v.cbpe_estimate("m", est)
-    row = assert_row(r, "ml.cbpe_estimate")
-    assert r.light not in (Light.GREEN, Light.RED) and r.metric == 0.71
-    assert row["extras"]["label"] == "estimate" and len(row["extras"]["assumptions"]) == 4
-    assert "estimate" in row["notes"]
-    labelled = v.cbpe_estimate("m", est, labels_supplied=True)
-    assert_not_evaluated(labelled, "ml.cbpe_estimate")
-
-
 def test_challenger_brier_light_follows_the_paired_interval():
     def ch(diff, lo, hi):
         return v.challenger_brier("m", PairedBrier(diff=diff, lo=lo, hi=hi, n_boot=1000))
@@ -348,17 +328,23 @@ def test_challenger_brier_light_follows_the_paired_interval():
 # ---------------------------------------------------------------------------------------------- invariants
 
 
+def _ref(drop: float, p: float) -> ShiftReference:
+    return ShiftReference(
+        observed_drop=drop, null_drops=(0.01, 0.02), p_value=p, n_permutations=2, share=0.25, labelled=True
+    )
+
+
 def test_every_function_is_pure_deterministic_and_serialises():
     calls = [
         lambda: v.robustness("m", _curve(-0.03), 0.02, 0.5),
-        lambda: v.shift_resilience("m", SubsampleResult(100, 0.7, 0.2, 0.8, 0.1)),
+        lambda: v.shift_resilience("m", SubsampleResult(100, 0.7, 0.2, 0.8, 0.1), _ref(0.1, 0.03)),
         lambda: v.seed_stability("m", SeedDispersion(5, 0.7, 0.015, 0.6, 0.8)),
         lambda: v.reason_code_stability("m", OverlapResult(4, 3, 0.7, 0.5)),
         lambda: v.effect_agreement("m", 0.6, 9),
         lambda: v.additivity("m", 1e-12),
         lambda: v.overfit("m", OverfitResult(0.1, 0.05, True)),
         lambda: v.weak_spot("m", [WeakSpot(1, 40, 3.0, 2.5)], 2.0, 4),
-        lambda: v.conformal_coverage("m", CoverageResult(100, 0.85, 0.9, 0.03)),
+        lambda: v.conformal_coverage("m", CoverageResult(100, 0.85, 0.9, 0.03, 999, 900, 0.02)),
         lambda: v.leakage_screen("m", 0, SingleFeatureAuc(0.6, 0, False), 0.0, AucResult(0.5, 1e-4, 100)),
         lambda: v.data_quality("m", [DataQualityCount("completeness", 10, 1, 0.9)]),
         lambda: v.cbpe_estimate("m", CbpeAuc(0.7, "estimate", ("a", "b", "c", "d"))),
@@ -366,7 +352,7 @@ def test_every_function_is_pure_deterministic_and_serialises():
     ]
     for call in calls:
         a, b = call(), call()
-        assert a == b and a.to_dict() == b.to_dict()
+        assert a.to_dict() == b.to_dict() and a.light is b.light  # (a == b is False for a NaN statistic)
         assert a.test_id.startswith("ml.") and a.h0 and a.alternative and a.reference
         assert a.inputs_hash and len(a.inputs_hash) == 64
         assert_row(a, a.test_id)
@@ -378,11 +364,11 @@ def test_not_evaluated_rows_carry_no_number_for_every_function_with_missing_data
     nan = float("nan")
     rows = [
         (v.seed_stability("m", SeedDispersion(2, 0.7, nan, 0.6, 0.8)), "ml.seed_stability"),
-        (v.shift_resilience("m", SubsampleResult(10, nan, 0.2, 0.8, 0.1)), "ml.shift_resilience"),
+        (v.shift_resilience("m", SubsampleResult(10, 0.0, 0.2, 0.8, 0.1), _ref(0.8, nan)), "ml.shift_resilience"),
         (v.reason_code_stability("m", OverlapResult(4, 3, nan, nan)), "ml.reason_code_stability"),
         (v.additivity("m", nan), "ml.additivity"),
         (v.overfit("m", OverfitResult(nan, 0.05, False)), "ml.overfit"),
-        (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, nan)), "ml.conformal_coverage"),
+        (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, nan, 99, 90, nan)), "ml.conformal_coverage"),
         (v.leakage_screen("m", 0, SingleFeatureAuc(0.6, 0, False), 0.0, AucResult(nan, 0.0, 10)), "ml.leakage_screen"),
         (v.challenger_brier("m", PairedBrier(nan, nan, nan, 10)), "ml.challenger_brier"),
     ]
@@ -393,7 +379,7 @@ def test_not_evaluated_rows_carry_no_number_for_every_function_with_missing_data
     bare = Policy("bare", "1", "none", {})
     for res, tid in [
         (v.seed_stability("m", SeedDispersion(5, 0.7, 0.05, 0.6, 0.8), bare), "ml.seed_stability"),
-        (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, 0.5), bare), "ml.conformal_coverage"),
+        (v.conformal_coverage("m", CoverageResult(10, 0.9, 0.9, 0.5, 99, 90, 0.5), bare), "ml.conformal_coverage"),
         (v.data_quality("m", [DataQualityCount("c", 10, 1, 0.9)], bare), "ml.data_quality"),
     ]:
         assert_not_evaluated(res, tid)

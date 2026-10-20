@@ -25,7 +25,8 @@ tolerance in AUC points; $\epsilon^*$ the preset scale, a point of the grid.
   in [0, 1]; both classes must be present. A constant predictor has AUC 0.5 at every scale; a predictor that ignores its input has
   a zero delta (identities tested).
 - `robustness_finding(curve, tolerance, preset_eps)` is true exactly when the loss exceeds the tolerance; a loss equal to the
-  tolerance is not a finding. `preset_eps` must be a grid point.
+  tolerance is not a finding; the loss is rounded to 12 decimals first, so a loss that is the tolerance in decimals (0.80 - 0.78
+  is `0.020000000000000018` in floats) is green. `preset_eps` must be a grid point.
 
 ## The shift score
 
@@ -56,13 +57,34 @@ single class has no AUC: the function raises.
 the key `omitted`: the number of windows left out because they hold a single class (a window with fewer than two classes never
 gets a number).
 
+## The permutation reference of the shift test
+
+Under no shift the evaluation rows with the highest shift score are a region of the feature space on which the model's AUC is lower
+by range restriction, so the raw drop $	ext{AUC}_{	ext{full}}-	ext{AUC}_{	ext{worst}}$ is positive under the null (finding F4:
+the first design, a drop against fixed cut points, had a size of 0.1055). The light reads the observed drop against its own
+permutation null (`shift_permutation_reference`, a convention: R = `shift_permutations`, default 199):
+
+1. pool the development rows $(X_{dev},y_{dev})$ and the evaluation rows $(X_{eval},y_{eval})$;
+2. R times, with a seeded generator, permute the domain labels keeping the two group sizes, refit the shift score exactly as
+   `shift_score_rank` does (cross-fitted, the permuted "development" rows class 0, the permuted "evaluation" rows class 1) and compute
+   the drop on the permuted evaluation rows with `worst_subsample_performance` at the same share;
+3. $p=\dfrac{1+\#\{	ext{null drops}\ge	ext{observed drop}\}}{R+1}$.
+
+The pooled rows are exchangeable under no shift, so the p-value is exact (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585). A
+permutation whose worst subsample holds a single class has no AUC and is left out (`n_undefined`; a conditional permutation test, R
+is then the number of drops that exist); the observed subsample must have an AUC or the function raises. Without development labels
+(`y_dev=None`) the reference is unlabelled and the validation test is `not_evaluated`. The light (`ml.shift_resilience`) reads the
+p-value with the p-value cut points 0.05 and 0.01; the observed drop is the statistic and the null drops are summarised in `extras`
+(`null_mean`, `null_p95`). Deterministic for a seed.
+
 ## What these checks do not claim
 
 - A robustness curve says how this predictor reacts to noise proportional to the column spread; it does not say the inputs carry
   that noise in production. The tolerance and the preset scale are conventions (the named parameter `perturbation_tolerance`, 0.02
   AUC points, decision V6 of unit U14).
 - The worst subsample by shift score is a region of the feature space, not a random subsample: a model is judged on a narrower
-  range of its own score there, so even without any shift its AUC there is lower than on the whole sample (page 08, finding F4).
+  range of its own score there, so even without any shift its AUC there is lower than on the whole sample (page 08, finding F4);
+  the permutation reference above is what the light reads, not the raw drop.
 - The shift score ranks rows by how far they sit from the development sample; it does not state that the shift matters.
 - The engine computes and makes no compliance claim.
 

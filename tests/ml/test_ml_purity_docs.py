@@ -51,6 +51,12 @@ def test_modules_import_no_learning_or_dataframe_library():
     assert out.returncode == 0, f"heavy modules imported: {out.stdout.strip()} {out.stderr}"
 
 
+def _coverage(sets, y, alpha):
+    from riskvalidation.ml import conformal
+
+    return conformal.conformal_coverage(sets, y, alpha, n_cal=99)
+
+
 def _calls():
     from riskvalidation.ml import (
         cbpe,
@@ -101,7 +107,7 @@ def _calls():
         (generalisation.weak_spots, (rng.random(200), np.arange(200) % 4, 1.2)),
         (conformal.split_conformal_quantile, (rng.random(99), 0.1)),
         (conformal.conformal_sets, (p, 0.5)),
-        (conformal.conformal_coverage, (conformal.conformal_sets(p, 0.5), y, 0.1)),
+        (_coverage, (conformal.conformal_sets(p, 0.5), y, 0.1)),
         (leakage.temporal_order_violations, (np.repeat(dates[:, None], 2, axis=1), dates)),
         (leakage.single_feature_auc, (x, y)),
         (leakage.entity_overlap, (["a", "b"], ["b", "c"])),

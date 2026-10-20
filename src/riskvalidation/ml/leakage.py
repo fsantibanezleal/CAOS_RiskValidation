@@ -2,7 +2,7 @@
 development and out-of-time samples (dossier 06 C.7 l.1048-1051; I.1 l.1197; dossier 07 D pattern 3, l.597-600).
 
 These are conventions: no regulatory text prescribes them (06 C.7). The AUC is the engine's own (``disc_auc`` and
-``auc_with_variance``). Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/leakage.py``.
+``auc_with_variance``). Contract: ``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/leakage.py``.
 """
 
 from __future__ import annotations
