@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.irrbb import behavioural as _behavioural
 from riskvalidation.irrbb import eve_nii as _eve_nii
@@ -77,6 +78,14 @@ def _check_gates(low: float, high: float, low_name: str, high_name: str) -> None
 # The goldens
 
 
+@register(
+    "irrbb.srp31_92_goldens",
+    family="irrbb",
+    name="SRP31.92 worked example goldens",
+    h0="the engine reproduces the SRP31.92 worked example within the printed precision",
+    reference=SRP31_92,
+    decision="metric",
+)
 def srp31_92_goldens(tolerance_scalar: float = 5e-4, tolerance_bp: float = 5e-2) -> TestResult:
     """Reproduces the SRP31.92 worked example (dossier 01 H.2): at t = 3.5 years alpha_short = 0.417, a 100 bp short
     shock +41.7 bp, the steepener +25.4 bp and the flattener -1.6 bp (with the short and long sizes both 100 bp).
@@ -111,6 +120,14 @@ def srp31_92_goldens(tolerance_scalar: float = 5e-4, tolerance_bp: float = 5e-2)
         notes="" if ok else "a value departs from the printed SRP31.92 precision")
 
 
+@register(
+    "irrbb.cmf_annex1_goldens",
+    family="irrbb",
+    name="CMF RAN 21-13 Annex 1 goldens",
+    h0="the engine reproduces the RAN 21-13 Annex 1 formulas and table exactly",
+    reference=RAN_21_13,
+    decision="metric",
+)
 def cmf_annex1_goldens() -> TestResult:
     """Reproduces the Annex 1 formulas (dossier 03 F.2): the `cmf_pair` table on both signs (8 cases), the Hoja 9
     table through `shock_table("cmf-annex1")` (5 rows), the indexation charge (`indexation_charge(-200) = 5`) and the
@@ -169,6 +186,14 @@ def cmf_annex1_goldens() -> TestResult:
 # Reconciliation and stability
 
 
+@register(
+    "irrbb.eve_sum_of_parts",
+    family="irrbb",
+    name="EVE sum of parts",
+    h0="the EVE of the balance sheet equals the sum of the EVEs of its items",
+    reference=SRP31_82,
+    decision="metric",
+)
 def eve_sum_of_parts(item_flows: np.ndarray, rates: np.ndarray, midpoints: np.ndarray, whole_eve: float,
                      rel_tol: float = 1e-9) -> TestResult:
     """The EVE of a balance sheet equals the sum of the EVEs of its items: `sum_i eve(item_i) = whole_eve`, where
@@ -200,6 +225,14 @@ def eve_sum_of_parts(item_flows: np.ndarray, rates: np.ndarray, midpoints: np.nd
                                                               "whole_eve": whole})
 
 
+@register(
+    "irrbb.nmd_parameter_stability",
+    family="irrbb",
+    name="NMD parameter stability",
+    h0="the replicating-portfolio weights are stable across estimation windows",
+    reference=BCBS_368,
+    decision="metric",
+)
 def nmd_parameter_stability(window_weights: np.ndarray, maturities: np.ndarray, gap_amber: float = 0.10,
                             gap_red: float = 0.25) -> TestResult:
     """The stability of the replicating-portfolio weights re-estimated on W estimation windows (dossier 05 D.3).
@@ -231,6 +264,14 @@ def nmd_parameter_stability(window_weights: np.ndarray, maturities: np.ndarray, 
         extras={"thresholds": thresholds, "distances": dist.tolist(), "weighted_average_maturity": wam.tolist()})
 
 
+@register(
+    "irrbb.eve_with_without_behavioural",
+    family="irrbb",
+    name="EVE with without behavioural",
+    h0="the behavioural assumptions do not change the EVE risk measure materially and hide no breach",
+    reference=SRP31_82,
+    decision="metric",
+)
 def eve_with_without_behavioural(measure_behavioural: float, measure_contractual: float, tier1: float,
                                  diff_amber: float = 0.05, diff_red: float = 0.15,
                                  threshold: float = 0.15) -> TestResult:
@@ -264,6 +305,14 @@ def eve_with_without_behavioural(measure_behavioural: float, measure_contractual
         notes="the behavioural assumptions hide an outlier breach" if hidden else "")
 
 
+@register(
+    "irrbb.behavioural_change_at_breach",
+    family="irrbb",
+    name="Behavioural change at breach",
+    h0="no change of a behavioural parameter coincides with a limit breach",
+    reference=DOSSIER_05_D7,
+    decision="metric",
+)
 def behavioural_change_at_breach(values: np.ndarray, dates: np.ndarray, breach: np.ndarray) -> TestResult:
     """Flags any change of a behavioural parameter (a core share, a core maturity, a beta) that coincides with a limit
     breach (dossier 05 D.7). `values` (T,), `dates` (T,) `datetime64[D]` strictly increasing, `breach` (T,) booleans,
@@ -300,6 +349,14 @@ def behavioural_change_at_breach(values: np.ndarray, dates: np.ndarray, breach: 
         notes=f"{count} change(s) coincide with a breach" if count else "")
 
 
+@register(
+    "irrbb.nii_out_of_sample",
+    family="irrbb",
+    name="NII out of sample",
+    h0="the projected change of NII matches the realised change",
+    reference=DOSSIER_05_OOS,
+    decision="metric",
+)
 def nii_out_of_sample(projected_delta_nii: float, realised_delta_nii: float | None, err_green: float = 0.10,
                       err_amber: float = 0.25) -> TestResult:
     """The projected change of NII under the scenario against the realised change over the 2022 hiking cycle (dossier

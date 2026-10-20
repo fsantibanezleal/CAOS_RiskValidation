@@ -128,6 +128,138 @@
       "amber": 0.05,
       "red": 0.01,
       "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
+    },
+    "fair.demographic_parity": {
+      "kind": "upper_bad",
+      "amber": 0.05000000000000001,
+      "red": 2.0,
+      "source": "convention: the amber tolerance 0.05 on the largest absolute selection-rate gap is proposed, no dossier value; strict (a gap equal to the tolerance is green); red 2.0 is a sentinel above the metric's range: never red"
+    },
+    "fair.two_proportion_z": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+    },
+    "fair.fisher_exact": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+    },
+    "fair.equalized_odds": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+    },
+    "fair.equal_opportunity": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+    },
+    "fair.calibration_within_groups": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+    },
+    "fair.auc_by_group": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+    },
+    "fair.situation_testing": {
+      "kind": "upper_bad",
+      "amber": 0.2,
+      "red": 2.0,
+      "source": "convention: the amber share 0.20 of significant complainants, set on the measured size 0.039 and power 1.000 at n 400 and k 30 (docs/fairness/06), no source value; red 2.0 is a sentinel above the metric's range: never red"
+    },
+    "ml.robustness": {
+      "kind": "upper_bad",
+      "amber": 0.020000000000000004,
+      "red": 0.04000000000000001,
+      "source": "AUC degradation at the preset scale: amber above perturbation_tolerance (0.02), red above twice it, a delta equal to the tolerance green; convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.shift_resilience": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "Monte Carlo p-value of the AUC drop on the worst subsample by shift score against the drop of random development subsets of the evaluation size (06 C.7 l.1013-1015 gives the construction only): the engine default p-value cut points (alpha_amber 0.05, alpha_red 0.01); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.seed_stability": {
+      "kind": "upper_bad",
+      "amber": 0.01,
+      "red": 0.02,
+      "source": "standard deviation of the AUC across seeds: proposed, about the sampling standard error of a Taiwan holdout AUC (0.008); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.reason_code_stability": {
+      "kind": "lower_bad",
+      "amber": 0.8,
+      "red": 0.6,
+      "source": "mean top-four reason overlap across refits: proposed, no dossier value (04 J.2 l.881-883); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.effect_agreement": {
+      "kind": "lower_bad",
+      "amber": 0.7,
+      "red": 0.4,
+      "source": "Spearman rho of mean absolute SHAP against the range of the ALE curve: proposed, no dossier value (06 C.7 l.1006-1008); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.additivity": {
+      "kind": "upper_bad",
+      "amber": 1.0000000000000003e-09,
+      "red": 1.0000000000000003e-09,
+      "source": "maximum Shapley additivity gap: red above the numeric tolerance (1e-09); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.overfit": {
+      "kind": "upper_bad",
+      "amber": 0.05000000000000001,
+      "red": 0.05000000000000001,
+      "source": "train minus holdout AUC gap: red above overfit_tolerance (0.05); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.weak_spot": {
+      "kind": "upper_bad",
+      "amber": 2.0000000000000004,
+      "red": 1000000000000.0001,
+      "source": "error ratio of the worst slice to the average error: amber above weak_spot_multiple (2.0); red 1e12 is a sentinel no ratio reaches, so never red; convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.conformal_coverage": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "Beta-Binomial p-value of the coverage against 1 - alpha given the calibration size: the engine default p-value cut points (alpha_amber 0.05, alpha_red 0.01); convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.leakage_screen.single_feature_auc": {
+      "kind": "upper_bad",
+      "amber": 0.9500000000000001,
+      "red": 0.9500000000000001,
+      "source": "largest single-feature max(AUC, 1 - AUC): near-perfect above 0.95, no dossier value; convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.leakage_screen.resemblance_auc": {
+      "kind": "upper_bad",
+      "amber": 0.7000000000000001,
+      "red": 0.7000000000000001,
+      "source": "cross-fitted development against out-of-time AUC: proposed, no dossier value; convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.leakage_screen.temporal_order": {
+      "kind": "upper_bad",
+      "amber": 1.0,
+      "red": 1.0,
+      "source": "feature values dated after the observation date: one is a leak by definition (06 C.7 l.1048-1051); rule, not a convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.leakage_screen.entity_overlap": {
+      "kind": "upper_bad",
+      "amber": 1.0,
+      "red": 1.0,
+      "source": "any test entity present in training (the indicator 1 when the overlap share is above 0): a leak by definition; rule, not a convention (engine-ml-api 2.0.0, Policy thresholds)"
+    },
+    "ml.data_quality": {
+      "kind": "upper_bad",
+      "amber": 0.01,
+      "red": 0.05,
+      "source": "largest share of failed checks over the dq_ counts: proposed, no dossier value (06 C.7 l.1045-1047); convention (engine-ml-api 2.0.0, Policy thresholds)"
     }
   },
   "descriptive_without_thresholds": [

@@ -4,6 +4,199 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.08.000] - 2026-10-20
+
+Liquidity, aggregation and stress testing, the regulatory calculators and counterparty credit risk, machine-learning model validation and fair lending (Contraste wave 2 batch 3: units U11, U13, U9 and U14).
+
+- **New packages:** `riskvalidation.liquidity`, `riskvalidation.aggregation`, `riskvalidation.stress`, `riskvalidation.regulatory`, `riskvalidation.ccr`, `riskvalidation.ml` and `riskvalidation.fairness`, each with its validation module.
+- **Contracts:** each package reproduces the golden values of its Contraste contract: `engine-liquidity-api` 1.2.0, `engine-aggregation-api` 1.1.0, `engine-stress-api` 2.0.0, `engine-regulatory-api` 2.2.0, `engine-ccr-api` 2.0.0, `engine-ml-api` 2.0.0 and `engine-fairness-api` 1.2.0. Each was reviewed by Opus, with its fixes applied.
+- **Test catalogue:** it lists every validation test, with the size coverage of each p-value test stated (BL-088).
+- **Reconciliation and Monte Carlo error:** the cohort estimator is reconciled with `transitionMatrix` (BL-083), and the IRRBB Monte Carlo error takes antithetic batches (BL-074).
+- **Packaged policy:** it gains the `fair.` and `ml.` rows. No existing row changes, so its label stays 2026.10.1.
+
+No existing engine result changes.
+
+- `simulation.ear_evar_mc_error` takes an optional `antithetic=False`. With `antithetic=True` the batches are unions of
+  whole mirror pairs of an antithetic path set (as `hw1f_scenarios` returns): no batch holds a path whose mirror sits in
+  another batch, so the batches are independent, as the batch-means error assumes. `P` must be even and
+  `P / 2 >= n_batches`. The result for `antithetic=False` is unchanged (BL-074).
+- Measured on a Hull-White NII proxy (the 99 percent quantile, 20 batches, against its spread over independent seeds), the
+  two batchings agree within noise: 0.961 and 0.951 of the truth at 10 000 paths, 1.04 and 1.07 at 40 000. At 2 000
+  paths both sit near 0.78, a small-batch effect of the estimator. The C15 review measured a larger gap on its own paths
+  (25.5 against 33.7); the C14 and C15 re-bakes show each case's effect.
+- The cohort estimator is reconciled with the open-source `transitionMatrix` 0.5.1 (Apache-2.0), the optional extra
+  `transitions`, in the tests only (`tests/test_transitions_reconciliation.py`, RV-415, BL-083): `pooled_cohort` and `cohort`
+  equal the package's `CohortEstimator` element-wise (largest difference 0.0, tolerance 1e-12) on a seeded panel with
+  withdrawals, for the `state` treatment directly and the `exclude` treatment through the package's renormalised matrix.
+  No engine result changes.
+- Findings pinned with both values: the package double counts the last record of its last entity (up to 1.6e-3 on the test
+  panel), fills an empty row with zeros (the engine: NaN, listed), keeps a reinstated default as a migration (the engine:
+  absorbing), has no maximum likelihood generator from paths, and divides the Aalen-Johansen increment by the risk set
+  after the exits (1/3 where the engine and the textbook give 1/4).
+- The thirteen `ml.` validation tests (`ml.robustness`, `ml.shift_resilience`, `ml.seed_stability`,
+  `ml.reason_code_stability`, `ml.effect_agreement`, `ml.additivity`, `ml.overfit`, `ml.weak_spot`,
+  `ml.conformal_coverage`, `ml.leakage_screen`, `ml.data_quality`, `ml.cbpe_estimate`, `ml.challenger_brier`) are
+  registered in the test catalogue (family `ml`) with the `h0` and the `reference` their row carries; the two p-value
+  tests (`ml.shift_resilience`, `ml.conformal_coverage`) are named to their size suite. No result changes.
+- `import riskvalidation.validation` imports `validation.ml` too, so the package alone registers every validation test, the thirteen
+  `ml.` ids included (the package-alone count test counts the whole inventory again).
+- The test catalogue (`riskvalidation.core.registry`) now lists every validation test of the aggregation, ccr, fairness, ifrs9,
+  irrbb, lgd_ead, liquidity, market, oprisk, portfolio and stress modules (89 test ids), each with its family, name, hypothesis,
+  reference and decision (`p_value` where the light is decided by a p-value against alphas, `metric` otherwise), so that
+  `spec(test_id)` answers for every row the engine writes. No function body, signature or result changes. `import
+  riskvalidation.validation` registers them all (the package imports the eleven modules; no optional dependency is loaded).
+  `ccr.pfe_exceedance_backtest` holds its hypothesis with `{q}` and `{1 - q}` where the row writes the quantile and its
+  complement; `liq.reverse_stress_round_trip` writes a second hypothesis on its threshold branch.
+- The engine's own tests check, over the whole session, that every `TestResult` an engine function builds names a registered test
+  with the `h0` and `reference` of its spec; the size rule now accepts a measurement in `NULL_SCENARIOS` or in a named `sizepower`
+  suite (`SIZE_SUITES`) and pins the registered p-value tests that have none (`SIZE_GAPS`).
+- U11-E: liquidity (contract `engine-liquidity-api` 1.2.0). New `riskvalidation.liquidity` (modules imported by path, nothing re-exported):
+  `runoff` (constant daily compounding `1 - (1 - q)^n` and its inverse, contractual roll-off, the transcribed ECB LiST 2019 Tables 3.2 and
+  3.3 and drawdown rates as `LIST_PARAMETERS`, BCBS d555 Table A.1 as `TABLE_A1`), `cbc` (the LiST para 74 haircut rule, liquidity value,
+  monetisation, the CBC stack, the HTM loss), `ladder` (contractual gaps, behavioural outflows, the net liquidity position, the survival
+  period, the minimum NLP, the cliff effect), `scenarios` (families and phases, the LiST parameter sets, the fast-run calibration, the
+  anchor, the uninsured-share and HTM-loss grids), `reverse` (the survival period against the run-off multiplier, the multiplier that
+  reaches a target by `scipy.optimize.brentq`, refusals with their reason) and `deposits` (a seeded depositor generator with an exact
+  truth by the transfer recursion).
+- A survival period is never a number when the net liquidity position stays non-negative to the horizon: `SurvivalResult.survives` is true,
+  `day` is `None` and `horizon` is the horizon. The reverse stress refuses an unbracketed target with its reason. A rate of exactly 0 or 1 is
+  legitimate for a segment.
+- New `riskvalidation.regulatory.lcr_nsfr`: HQLA with the LCR30.39 adjustments and caps, the LCR outflows, inflows, the 75 percent inflow
+  cap and the ratio, the NSFR ASF, RSF and ratio, each parameter with its paragraph and the in-force date 2019-12-15. The trade finance rate
+  and the NSFR derivative add-on rate (within 0.05 to 0.20) are caller-supplied, never defaults. The LCR is a Basel formula on aggregates,
+  never the bank's reported or regulatory LCR; the goldens are constructed, no official worked example exists.
+- New `riskvalidation.validation.liquidity`: eleven `TestResult` functions (`liq.list_compounding_golden`, `liq.survival_monotone_in_severity`,
+  `liq.cbc_haircut_rules`, `liq.nlp_identity`, `liq.runoff_adequacy_back_test`, `liq.runoff_vs_generator_truth`,
+  `liq.cliff_effect_diagnostic`, `liq.htm_loss_effect`, `liq.uninsured_share_sensitivity`, `liq.reverse_stress_round_trip`,
+  `liq.htm_revaluation_vs_reported`) with the policy label `contraste-liquidity-battery-1.0.0`, thresholds in `extras["thresholds"]` and
+  `not_evaluated` carrying no number. No existing engine result changes.
+- Reading choices of the contract's open points, labelled in `docs/liquidity/`: `fast_run_scenario` takes an additive keyword `scored` to
+  refuse the 2023 rows of Table A.1; a fast-run parameter set holds the one class `concentrated-uninsured`; the depositor chain is shared,
+  so the segments of a configuration must carry the same `p_enter_stress` and `p_exit_stress`.
+- Fix round after the Opus review (contract `engine-liquidity-api` 1.2.0): `net_cash_outflows` refuses a `cap` above 0.75 (LCR40.1);
+  `solve_multiplier` returns the threshold multiplier when the survival period steps past the target (a monetisation CBC), with the new
+  last field `SolveResult.survival_just_below`, and `validation.liquidity.reverse_stress_round_trip` takes the keyword-only
+  `survival_just_below` to test the threshold property (without it the 1.1.0 equality check is kept); the HQLA level shares of an empty
+  stock are NaN; `NSFR_RSF_FACTORS` gains `operational_deposits_held` at 0.50; `fast_run_scenario` takes `scored` as keyword-only; the
+  module tables, `ListScenario` dicts and scenario rate paths are read-only; a negative tolerance is refused.
+- Added `riskvalidation.aggregation` (contract `engine-aggregation-api` 1.0.0, U13-E1): `simple` (simple sum, correlation check,
+  variance-covariance, hybrid quantile, diversification factor, Euler diversification benefit, standard deviation contributions),
+  `copulas` (marginal quantile functions, Gaussian and Student t copula draws, t and Clayton tail dependence, Clayton copula, the
+  copula aggregate), `bounds` (comonotonic VaR, the rearrangement algorithm, the best and worst VaR bounds, reproducing Tables 1 and 4
+  of Embrechts, Puccetti and Ruschendorf 2013), `band` (the dependence-uncertainty band on the economic capital basis VaR less EL) and
+  `model_risk` (Barrieu and Scandolo AM and RM, the Glasserman and Xu worst case). Vine copulas, Clayton sampling and the BVAR stay
+  deferred (BL-078).
+- Added `riskvalidation.validation.aggregation`: eight tests (simple sum and variance-covariance, copula choice sensitivity, worst-case
+  bracket, correlation stress, diversification sign, horizon and confidence consistency, elliptical Monte Carlo agreement, the
+  Rosenberg and Schuermann reference). No existing engine result changes.
+- Added `docs/aggregation/` (six pages and an index) and the requirements `RV-1301` to `RV-1326` under
+  `docs/design/features/u13-aggregation/`.
+- Hardened `riskvalidation.aggregation` after the review of U13-E1: `worst_var_bounds` refuses a non-finite bound, `hybrid_quantile`
+  refuses a negative column quantile, and `dependence_band` takes `ec_consistency_tolerance` (default 0.01) and refuses an `ec` that
+  contradicts its marginals; the test gaps on the band EC basis, the upper range width and the random start are closed.
+- New package `riskvalidation.stress` and module `riskvalidation.validation.stress` (contract `engine-stress-api` 1.0.0, requirements `RV-1301` to `RV-1324`, pages `docs/stress/`), imported by path. `stress.satellites`: the probit, logit and identity links, the OLS satellite fit with standard errors on an explicit window (the identity link for rates that are zero or negative), the scenario projection. `stress.paths`: transposition, reversion to the baseline, annual to quarterly, deviation paths, the vintage check, compared with C06's committed output. `stress.capital`: the loss-only CET1 path, the PPNR row, the internal capital target (the 4 percent cap on `p2r`), the Chilean stack, the three-year plan, the P2G proxy, the 34-row Annex 3 summary, the EBA static balance sheet. `stress.reverse`: the minimum Mahalanobis scenario (closed form and SLSQP) with its plausibility. `stress.scenario_models`: the VAR and its conditional forecast, the skewed t, growth-at-risk. `validation.stress`: six `TestResult` tests (back-cast, sensitivity signs, static balance sheet rules, bottom-up against top-down, scenario severity, reverse solution check).
+- `stress.scenario_models.gar_quantile_regressions` reads `statsmodels`, the optional extra `stress` (the `pyproject.toml` entry is the integrator's); every other function needs NumPy and SciPy only. No existing engine result changes.
+- Two goldens of the contract contradicted its own light rules at the default gates (the back-cast "0.5 against 1.2: red", whose
+  deviation 0.5833 is within `peak_red` 0.60, and the bottom-up "160: amber", above the 0.50 red gate). The engine implements the rules
+  as written, and the contract's goldens were corrected to 0.4 against 1.2 (red) and 140 (amber), keeping the approved thresholds in
+  `engine-stress-api` 2.0.0 (Contraste U13 decision Z8).
+- Review fixes: `InternalTarget` gains `p2r` (default 0.0) and Annex 3 rows 7, 7.2 and 8 read it, not `c_p2`; `annex3_summary` raises `ValueError` naming both values when the RWA of `rwa_by_risk` differs from the capital plan's beyond 1e-9 relative; the `not_evaluated` rows of `validation.stress` carry `model_id` and `segment`; the `con_jac` docstring of `reverse_stress` fits the line length.
+- U14-E1: `riskvalidation.ml` (engine-ml-api 1.0.0): perturbation robustness and the shift score, the worst subsample and out-of-time
+  windows, seed stability, reason-code stability and the explainer agreement, the Shapley additivity, sign and monotonicity checks,
+  partial dependence, ICE and accumulated local effects, the overfit gap and the weak spots, split conformal prediction, the leakage
+  screen, six data-quality counts, the label-free performance estimate (CBPE), the paired Brier bootstrap and the grade
+  disagreement, and five planted-defect generators (leak, covariate shift, noise sensitivity, seed instability, exchangeability
+  break). NumPy and SciPy only; the model enters as a predict callable on arrays.
+- U14-E1: `riskvalidation.validation.ml`: twelve `TestResult` functions with ids `ml.robustness`, `ml.shift_resilience`,
+  `ml.seed_stability`, `ml.reason_code_stability`, `ml.effect_agreement`, `ml.additivity`, `ml.overfit`, `ml.weak_spot`,
+  `ml.conformal_coverage`, `ml.leakage_screen`, `ml.data_quality`, `ml.cbpe_estimate` and `ml.challenger_brier`. The lights read the
+  contract's Policy thresholds rows, kept in `riskvalidation.ml.policy` (`ml_thresholds`, `ml_policy`) and added to a base policy
+  only where it holds no row; `policies/default.json` is not edited (the integrator can move the rows there as they stand).
+- U14-E1: requirements RV-1401 to RV-1439 (`docs/design/features/u14-ml/`), pages `docs/ml/`, the size and power of every test on its
+  planted defect at 4,000 repetitions, and the MAPIE 1.5.0 reconciliation of the split conformal quantile (optional extra `ml`:
+  `pytest.importorskip("mapie")`; `pyproject.toml` is the integrator's). Findings against the contract: the 5th percentile of the
+  reason-code overlap is not bounded by the mean; the float product of the conformal rank misrounds for pairs such as
+  n = 149 and alpha = 0.18, not for the contract's two examples; MAPIE's classification quantile is the k-th or the (k + 1)-th order
+  statistic; the worst-subsample test has a false-alarm rate of about 10 percent under no shift.
+- U14-E1 fix round (engine-ml-api 1.1.0, after the Opus review): `conformal_coverage` takes the calibration size as the required
+  keyword `n_cal` and reads the covered count against the Beta-Binomial(m, k, n_cal + 1 - k) law (the binomial p-value stays in
+  `p_value_binomial`, beside it); `ml.conformal_coverage` is `not_evaluated` when k exceeds n_cal. `ml.shift_resilience` reads an
+  development-only reference (`shift_development_reference`, `ShiftReference`, default 199 draws) with the p-value cut points
+  0.05 and 0.01, and is `not_evaluated` without development labels. `ml.cbpe_estimate` is always `not_evaluated` (an estimate, not a
+  test), so it never moves the worst light. `reason_code_overlap` ranks reasons by signed attribution toward the event. The overfit
+  gap and the AUC loss are rounded to 12 decimals before they are compared. `ml.policy.threshold_rows()` gives the `ml.` rows as
+  plain mappings for `policies/default.json`. The size and power study carries the `sizepower` marker.
+- The metric tests of `riskvalidation.validation.ml` (`robustness` and the tests built by `_simple`: the upper_bad and lower_bad
+  rows) carry null `alpha_amber` and `alpha_red`, because they have no p-value threshold; their cut points stay in
+  `extras['thresholds']`. The p-value tests (`shift_resilience`, `conformal_coverage`) keep 0.05 and 0.01. No light changes.
+- New `riskvalidation.fairness` (U14-E2, contract `engine-fairness-api` 1.0.0): `metrics` (selection rates, demographic parity
+  difference and ratio, equalized odds and equal opportunity, the adverse impact ratio, calibration and AUC within groups, and
+  `four_fifths_flag`, decided on the counts in exact integer arithmetic against the highest-rate group, labelled an employment
+  benchmark and never a credit-law threshold), `inference` (the pooled two-proportion z-test and Fisher's exact test), `conditional`
+  (the logistic decision model by IRLS and the linear rate-spread model, the protected effect with its Wald interval), `replication`
+  (an estimate on year t against year t+1 by sign and size), `situation` (situation testing after arXiv:2502.01267: the Gower
+  distance under `range` or `standard`, k nearest neighbours, the statistic, the one-sided Wald interval with the exact quantile,
+  ceteris paribus and mutatis mutandis, `bonferroni_alpha`) and `plants` (three planted-bias generators with exact truths). The
+  published ST and CST counts of the loan-application experiment reproduce exactly under `standard` (a gated reconciliation, the data
+  file not stored). `riskvalidation.validation.fairness` returns the twelve `fair.` tests as `TestResult` rows with their lights from
+  `Policy` rows (`fairness.policy`), outcome-conditioned tests never run without an outcome. Each test has its size and power
+  measured at 4,000 repetitions; documented in `docs/fairness/`. The engine core stays NumPy and SciPy; fairlearn and statsmodels
+  are optional references of the tests. The `fair.` policy rows are carried by `fairness_default_policy()` until the integrator adds
+  them to `policies/default.json`.
+- U14-E2 fix round after the Opus review (`engine-fairness-api` 1.1.0): `demographic_parity` and `situation_testing` cap a red light from
+  any policy at amber and say so in `notes`; `protected_effect` refuses index 0 (the intercept; protected indicator j is index 1 + j);
+  `situation_test` takes `categorical`, a boolean mask over the columns of `X` (overlap for a categorical column, normalised Manhattan
+  for the others, also under `standard`; `None` keeps 1.0.0); the `fair.situation_testing` amber cut is 0.20 (size 0.0395, power 1.000
+  at n 400, k 30, 4,000 repetitions); `fairness_default_policy()` returns the default policy unchanged once it holds every `fair.` key; the
+  size and power module carries the `sizepower` pytest marker (the integrator registers it and deselects it in the engine CI).
+- `engine-fairness-api` 1.2.0 (the U14-P3 review, deviation 4): `fair.conditional_disparity`, `fair.rate_spread_disparity` and
+  `fair.situation_testing` carry null `alpha_amber` and `alpha_red`. They have no p-value threshold: the interval level and the
+  share cut point stay in `extras.thresholds` and in `policy_version`. No statistic, metric or light changes.
+- U9 regulatory calculators (`riskvalidation.regulatory`, contract `engine-regulatory-api` 1.0.0): five new modules, each function of the
+  contract with its golden values and invariants. `standardised` holds the CRE20 risk weights, credit conversion factors and the lookup as
+  data, every entry a `RegulatoryParameter(value, paragraph, table, in_force)` (`RiskWeight` is an alias); `output_floor` the RBC90.1
+  phase-in and `floored_rwa` (RBC20.13: 101.5, and 95 with the RBC90.2 cap); `sa_ccr` the CRE52 functions with every intermediate returned
+  (the five CRE99 netting sets from their trades give EAD 569, 381, 5,406, 936 and 1,879 exactly after rounding); `ba_cva` the MAR50.14 to
+  MAR50.25 formulas and the MAR50.16 Table 1 weights; `frtb` the SBM bucket and cross-bucket aggregation with the MAR21.4(5)(b) fallback,
+  the GIRR delta parameters (MAR21.42 to MAR21.50, with the sqrt(2) division of MAR21.44 stated), curvature, `sbm_capital` and the MAR33.4
+  liquidity-horizon cascade with the MAR33.12 horizons.
+- The GIRR delta sensitivity of `girr_delta_charge` is the change in value for a 1 bp shift divided by 0.0001 (MAR21.19), not the PV01 per
+  basis point. `entity_aggregate` takes one correlation per entity (CRE99 netting set 2 uses 0.5 and 0.8). Stated limits: no vega, no
+  SA-CVA, DRC or RRAO, no verified BA-CVA numeric example (BL-080). Pages in
+  `docs/regulatory/u9/`; requirements RV-901 to RV-925 in `docs/design/features/u9-regulatory/requirements.md`. NumPy and SciPy only.
+- Fix round after the review: `curvature_charge` squares the cross-bucket `gamma` as it does `rho` (MAR21.101, transcribed) and, when K_b+ equals
+  K_b-, selects the upward scenario only if sum CVR+ exceeds sum CVR- (MAR21.5(3)(a)(iii)); the curvature shock for consumers is
+  `curvature_shock_undivided` (the divided value is a derived reading); a forward-starting trade is pinned to its end-date bucket in a test.
+- Additive terms for the regulatory parity bake (contract `engine-regulatory-api` 2.1.0): `sa_ccr.credit_addon_terms` and `equity_addon_terms` return
+  `AddonTerms(systematic, idiosyncratic, addon)`, the two CRE52.61 terms under the root and the add-on (`entity_aggregate_terms` for explicit add-ons);
+  `frtb.cross_bucket_charge_detail` returns `CrossBucket(charge, fallback_used)`, true exactly when the MAR21.4(5)(b) fallback applied. The existing
+  functions keep their signatures and results and call the new ones. RV-926 and RV-927; pages 03 and 05 of `docs/regulatory/u9/`.
+- Trade effective notionals (contract `engine-regulatory-api` 2.1.0): `sa_ccr.credit_trade_effective_notional` (delta x notional x supervisory duration x maturity factor, CRE52.34)
+  and `commodity_trade_effective_notional` (delta x adjusted notional x maturity factor), so the parity bake computes none of them. RV-928.
+- New package `riskvalidation.ccr` (U9-E2, contract `engine-ccr-api` 1.0.0): `hw1f` (the Hull-White one-factor fit to today's curve,
+  the affine bond price, the exact simulation of the state and of the short rate, the zero-coupon bond option, the Jamshidian
+  swaption and the AR(1) calibration with standard errors), `swaps` (fixed-float swaps valued at any date, including between two
+  resets from the path's last fixing), `exposure` (EE and ENE, the effective EE and EPE, PFE with a seeded bootstrap error, netting,
+  the effective maturity, the analytic EE of a single swap, rung 1 as a wrapper of `regulatory.sa_ccr`), `collateral` (the credit
+  support amount, the delivery amount, the CRE53 MPoR floors, the close-out exposure, the regression dynamic initial margin, a
+  proxy and never SIMM) and `cva` (CVA, DVA and the Hull and White wrong-way hazard model with its sequential calibration).
+- New `riskvalidation.validation.ccr`: eight tests (`ccr.ee_analytic_vs_simulated`, `ccr.martingale_discounted_bonds`,
+  `ccr.eepe_recomputed`, `ccr.cva_recomputed`, `ccr.path_convergence`, `ccr.reconcile_ee_profile`, `ccr.pfe_exceedance_backtest`,
+  `ccr.pit_exposure_backtest`) and the helpers of the PIT backtest (`pit_from_simulated`, `anderson_darling_w2`,
+  `effective_sample_size`, `simulate_pit_critical_values`, `CriticalValues`). A PIT backtest without simulated critical values is
+  `not_evaluated` with no number.
+- Additions to the contract's names, reported for its next revision: `hw1f.curve_functions`, `hw1f.bank_account`,
+  `hw1f.bond_option_vol`, `hw1f.ar1_to_hw1f`, `swaps.reset_times`, `swaps.simulation_grid` and `validation.ccr.IID_CRITICAL_VALUES`,
+  and one optional trailing argument, `nominal`, of `hw1f.swaption_jamshidian` (the contract's signature cannot carry the notional
+  of the coupon bond equation).
+- Documentation in `docs/ccr/` and requirements `RV-950` to `RV-986` in `docs/design/features/u9-ccr/requirements.md`. No existing
+  engine result changes.
+- Fix round after the Opus review of U9-E2: `hw1f.bank_account(grid, short_rate, a, sigma, p0, forward)` integrates phi exactly (the
+  trapezoid on r biased every discounted exposure by up to 0.2 percent at five years on a semiannual grid); `wwr_cva` validates `dt`
+  also at b = 0; the residual spread of `calibrate_ar1` uses ddof = 1 as the source's listing; `validation.ccr.path_convergence`
+  takes the Monte Carlo standard errors as required keyword arguments (`ee_se_by_path_count`, `cva_se_by_path_count`) and its band is
+  `k_se` standard errors of the smaller count.
+
 ## [0.07.000] - 2026-10-14
 
 Portfolio credit capital, market risk, interest rate risk in the banking book and operational risk (Contraste units U7, U8, U10 and U12): `riskvalidation.portfolio` with `riskvalidation.validation.portfolio`, `riskvalidation.market` with `riskvalidation.validation.market` (the GARCH family through the optional extra `market`), `riskvalidation.irrbb` with `riskvalidation.validation.irrbb`, and `riskvalidation.oprisk` with `riskvalidation.validation.oprisk`, each reproducing the golden values of its Contraste contract (`engine-portfolio-api` 1.0.0, `engine-market-api` 1.0.0, `engine-irrbb-api` 1.1.0, `engine-oprisk-api` 1.0.0) and each reviewed by Opus with its fixes applied. No existing engine result changes.

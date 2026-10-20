@@ -23,6 +23,7 @@ import numpy as np
 from scipy import stats
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import same_length, scalar, vec
 
@@ -107,6 +108,14 @@ def _paired_t(d: np.ndarray) -> tuple[float, float, float, float]:
 # LGD calibration and discrimination
 
 
+@register(
+    "lgd_ead.lgd_calibration_by_segment",
+    family="lgd_ead",
+    name="LGD calibration by segment",
+    h0="the mean realised LGD equals the mean predicted LGD in the segment",
+    reference=f"{LOTERMAN_2012}; {QI_ZHAO_2011}; dossier 04 F.3 (calibration by segment, not R2 alone)",
+    decision="p_value",
+)
 def lgd_calibration_by_segment(realised: np.ndarray, predicted: np.ndarray, segment: str | None = None,
                                model_id: str | None = None, alpha_amber: float = 0.05,
                                alpha_red: float = 0.01) -> TestResult:
@@ -152,6 +161,14 @@ def lgd_calibration_by_segment(realised: np.ndarray, predicted: np.ndarray, segm
                       **common)
 
 
+@register(
+    "lgd_ead.lgd_calibration_over_time",
+    family="lgd_ead",
+    name="LGD calibration over time",
+    h0="in every period the mean realised LGD equals the mean predicted LGD",
+    reference=f"{LOTERMAN_2012}; {QI_ZHAO_2011}; dossier 04 F.3 (calibration over time)",
+    decision="p_value",
+)
 def lgd_calibration_over_time(realised: np.ndarray, predicted: np.ndarray, period: np.ndarray,
                               model_id: str | None = None, alpha_amber: float = 0.05,
                               alpha_red: float = 0.01) -> TestResult:
@@ -210,6 +227,14 @@ def lgd_calibration_over_time(realised: np.ndarray, predicted: np.ndarray, perio
                       notes="a period with zero spread has a certain gap" if certain_gap else "", **common)
 
 
+@register(
+    "lgd_ead.lgd_discrimination",
+    family="lgd_ead",
+    name="LGD rank discrimination",
+    h0="predicted and realised LGD are rank-independent",
+    reference=f"{LOTERMAN_2012}; Spearman (1904), doi:10.2307/1412159",
+    decision="metric",
+)
 def lgd_discrimination(realised: np.ndarray, predicted: np.ndarray, segment: str | None = None,
                        model_id: str | None = None, rho_green: float = 0.30, rho_amber: float = 0.10) -> TestResult:
     """The Spearman rank correlation of predicted and realised LGD (ties by average rank).
@@ -259,6 +284,14 @@ def lgd_discrimination(realised: np.ndarray, predicted: np.ndarray, segment: str
 # downturn coverage
 
 
+@register(
+    "lgd_ead.downturn_coverage",
+    family="lgd_ead",
+    name="Downturn coverage",
+    h0="the mean realised downturn LGD does not exceed the downturn LGD estimate",
+    reference=f"{EBA_DOWNTURN}; {LOTERMAN_2012}",
+    decision="p_value",
+)
 def downturn_coverage(estimate: float, realised_downturn: np.ndarray, segment: str | None = None,
                       model_id: str | None = None, alpha_amber: float = 0.05, alpha_red: float = 0.01) -> TestResult:
     """Does the downturn LGD estimate cover the realised LGD of the defaults in the downturn period?
@@ -301,6 +334,14 @@ def downturn_coverage(estimate: float, realised_downturn: np.ndarray, segment: s
 # EAD back-test and CCF estimator bias
 
 
+@register(
+    "lgd_ead.ead_backtest_by_band",
+    family="lgd_ead",
+    name="EAD backtest by band",
+    h0="the predicted EAD equals the realised EAD in every utilisation band",
+    reference=f"{TONG_2016}; {QI_2009}; dossier 04 G.3 (back-test in currency by utilisation band)",
+    decision="metric",
+)
 def ead_backtest_by_band(predicted_ead: np.ndarray, realised_ead: np.ndarray, utilisation: np.ndarray,
                          band_edges: np.ndarray, model_id: str | None = None, gap_amber: float = 0.10,
                          gap_red: float = 0.25) -> TestResult:
@@ -369,6 +410,14 @@ def ead_backtest_by_band(predicted_ead: np.ndarray, realised_ead: np.ndarray, ut
     )
 
 
+@register(
+    "lgd_ead.ccf_estimator_bias",
+    family="lgd_ead",
+    name="CCF estimator bias",
+    h0="the estimator is unbiased (the mean estimate equals the known CCF)",
+    reference=f"{TONG_2016}; {QI_2009}; dossier 04 G.1 to G.3 (the CCF estimators and their reference-date designs)",
+    decision="metric",
+)
 def ccf_estimator_bias(estimates: np.ndarray, truth: float, tolerance: float, model_id: str | None = None,
                        alpha_amber: float = 0.05, alpha_red: float = 0.01) -> TestResult:
     """The bias of a CCF estimator against the known CCF of the C09 generator, over R independent replications.
