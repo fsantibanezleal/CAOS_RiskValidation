@@ -181,6 +181,9 @@ def test_ir_addon_invariants():
     one = s.ir_addon([swap])
     assert one.addon == pytest.approx(0.005 * 1_000_000.0 * _sd(0, 10), rel=1e-13)
     assert one.trades[0].bucket == "B3" and one.trades[0].maturity_factor == 1.0
+    # the bucket follows the END date: a forward-starting trade (start 2, end 7) is B3, never B2 (CRE52.57)
+    fwd = s.ir_addon([s.IrTrade("USD", 2.0, 7.0, 1_000_000.0, 1.0)])
+    assert fwd.trades[0].bucket == "B3" and fwd.hedging_sets[0].d_b2 == 0.0
     assert one.trades[0].supervisory_duration == pytest.approx(_sd(0, 10), rel=1e-14)
     assert one.trades[0].adjusted_notional == pytest.approx(1_000_000.0 * _sd(0, 10), rel=1e-14)
     # a receiver has delta -1: its effective notional is negative but the add-on is the same size

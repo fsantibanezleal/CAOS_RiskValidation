@@ -114,6 +114,10 @@ class GirrParameters:
 def girr_parameters(specified_currency: bool = True) -> GirrParameters:
     """The GIRR delta tenors, risk weights, correlations, gamma and curvature shock (research addendum R7).
 
+    The curvature shock a consumer applies is `curvature_shock_undivided` (0.017): MAR21.99 bases it on "the highest
+    prescribed delta risk weight", and MAR21.44's division by sqrt(2) names the delta risk weights of MAR21.42 to
+    MAR21.43 only. `curvature_shock` (0.017 / sqrt(2) = 0.012021) is a derived reading, kept exposed and labelled.
+
     With `specified_currency` the risk weights (and the curvature shock) are divided by sqrt(2) (MAR21.44) and
     `sqrt2_applied` says so; the specified currencies are EUR, USD, GBP, AUD, JPY, SEK, CAD and the bank's domestic
     reporting currency.
@@ -242,17 +246,19 @@ def curvature_charge(
 ) -> float:
     """MAR21.5: the curvature charge of B buckets of K factors, with the psi rule.
 
-    `rho` is the (K, K) DELTA correlation, squared here (MAR21.100); `gamma` is the (B, B) cross-bucket correlation as
-    given by the caller (MAR21.101 is not transcribed). Both take the correlation scenario. K_b = max(K_b+, K_b-); S_b
-    is the sum of the CVR of the scenario that selected K_b (the upward one when K_b+ > K_b-, otherwise the downward
-    one).
+    `rho` is the (K, K) DELTA correlation and `gamma` the (B, B) DELTA cross-bucket correlation; both are squared here
+    (MAR21.100 and MAR21.101: the curvature correlations are the squares of the delta ones) and then take the
+    correlation scenario (MAR21.6). K_b = max(K_b+, K_b-); S_b is the sum of the CVR of the scenario that selected K_b:
+    the upward one when K_b+ > K_b-, the downward one when K_b+ < K_b-, and on a tie (K_b+ = K_b-) the upward one if
+    sum CVR+ > sum CVR-, otherwise the downward one (MAR21.5(3)(a)(iii)).
     """
     plus = _array("cvr_plus", cvr_plus, ndim=2)
     minus = _array("cvr_minus", cvr_minus, shape=plus.shape)
     n_buckets, n_factors = plus.shape
     delta_rho = _array("rho", rho, shape=(n_factors, n_factors))
     r = _offdiagonal(_correlation_under("rho", delta_rho**2, scenario))
-    g = _offdiagonal(_correlation_under("gamma", _array("gamma", gamma, shape=(n_buckets, n_buckets)), scenario))
+    delta_gamma = _array("gamma", gamma, shape=(n_buckets, n_buckets))
+    g = _offdiagonal(_correlation_under("gamma", delta_gamma**2, scenario))
     k_b = np.zeros(n_buckets)
     s_b = np.zeros(n_buckets)
     for b in range(n_buckets):
@@ -260,9 +266,10 @@ def curvature_charge(
         for cvr in (plus[b], minus[b]):
             radicand = float(np.sum(np.maximum(cvr, 0.0) ** 2) + cvr @ (r * _psi(cvr, cvr)) @ cvr)
             roots.append(math.sqrt(max(0.0, radicand)))
-        up = roots[0] > roots[1]
+        sum_plus, sum_minus = float(np.sum(plus[b])), float(np.sum(minus[b]))
+        up = roots[0] > roots[1] or (roots[0] == roots[1] and sum_plus > sum_minus)  # MAR21.5(3)(a)(iii)
         k_b[b] = max(roots)
-        s_b[b] = float(np.sum(plus[b] if up else minus[b]))
+        s_b[b] = sum_plus if up else sum_minus
     radicand = float(k_b @ k_b + s_b @ (g * _psi(s_b, s_b)) @ s_b)
     return math.sqrt(max(0.0, radicand))
 

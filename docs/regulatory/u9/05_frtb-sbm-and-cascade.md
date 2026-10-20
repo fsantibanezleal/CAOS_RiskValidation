@@ -73,8 +73,29 @@ $$K_b^{\pm}=\sqrt{\max\Big(0,\ \sum_k\max(CVR_k^{\pm},0)^2+\sum_k\sum_{l\ne k}\r
 $$\text{curvature}=\sqrt{\max\Big(0,\ \sum_bK_b^2+\sum_b\sum_{c\ne b}\gamma_{bc}\,S_bS_c\,\psi(S_b,S_c)\Big)}$$
 
 with $\psi(x,y)=0$ if both are negative and 1 otherwise, and $S_b=\sum_kCVR_k^{+}$ if the upward scenario was selected for bucket $b$, else $\sum_kCVR_k^{-}$. The within-bucket correlations
-are the squares of the delta ones (MAR21.100). `curvature_charge(cvr_plus, cvr_minus, rho, gamma, scenario)` takes the (B, K) positions, the (K, K) DELTA correlation, which it squares, and the (B, B)
-cross-bucket correlation as given; both take the correlation scenario. All-negative positions give 0 and the result is never negative.
+are the squares of the delta ones (MAR21.100) and so are the cross-bucket ones (MAR21.101), $\gamma_{bc}^2$. `curvature_charge(cvr_plus, cvr_minus, rho, gamma, scenario)` takes the (B, K) positions, the
+(K, K) DELTA correlation and the (B, B) DELTA cross-bucket correlation; it squares both and then applies the correlation scenario. The upward scenario is selected for bucket $b$ when
+$K_b^{+}>K_b^{-}$; on a tie ($K_b^{+}=K_b^{-}$) it is selected if $\sum_kCVR_k^{+}>\sum_kCVR_k^{-}$, otherwise the downward one (MAR21.5(3)(a)(iii)). All-negative positions give 0 and the
+result is never negative.
+
+### Transcribed paragraphs
+
+Source: Basel Framework MAR21, version in force 2023-01-01 (published 2026-03-23 on the page), `https://www.bis.org/basel_framework/chapter/MAR/21.htm?inforce=20230101&published=20200327`,
+fetched 2026-10-19. The page renders formulas as SVG images without alt text; the symbols below were read from those images rendered, and the prose is verbatim.
+
+MAR21.101: "For aggregating curvature risk positions across buckets, the curvature risk correlations are determined by squaring the corresponding delta correlation parameters. For instance, when
+aggregating [two GIRR buckets b and c], the correlation should be [the square of the delta gamma]. In applying the high and low correlations scenario set out in MAR21.6, the curvature risk
+capital requirements are calculated by applying the curvature correlation parameters [gamma_bc] (ie the square of the corresponding delta correlation parameter)."
+
+MAR21.100 (first sentence): "For aggregating curvature risk positions within a bucket, the curvature risk correlations are determined by squaring the corresponding delta correlation parameters."
+
+MAR21.5(3)(a), the selection: "The bucket level capital requirement (K_b) is determined as the greater of the capital requirement under the upward scenario (K_b+) and the capital requirement under
+the downward scenario (K_b-). Notably, the selection of upward and downward scenarios is not necessarily the same across the high, medium and low correlations scenarios specified in MAR21.6.
+(i) Where [K_b = K_b+], this shall be termed "selecting the upward scenario". (ii) Where [K_b = K_b-], this shall be termed "selecting the downward scenario". (iii) In the specific case where
+[K_b+ = K_b-] if [the sum over k of CVR_k+ > the sum over k of CVR_k-], it is deemed that the upward scenario is selected; otherwise the downward scenario is selected."
+
+Both conditions of (iii) are formulas on the page: the first is $K_b^{+}=K_b^{-}$ and the second is $\sum_kCVR_k^{+}>\sum_kCVR_k^{-}$, read from the rendered images
+(`MAR21_20220101_32.svg` and `_33.svg`). The engine compares $K_b^{+}$ and $K_b^{-}$ for exact floating-point equality.
 
 ## The liquidity-horizon cascade (MAR33.4)
 
@@ -104,10 +125,8 @@ In force: MAR21 and MAR33 2023-01-01. The engine computes and states no complian
 
 - UNVERIFIED (addendum R7): the footnote 13 formula of MAR21.46 is reconstructed and matches all 100 entries of Table 2; the table is the primary value. The vega risk-weight formula
   (footnote 24) is not transcribed (a swap book has no vega); vega is not implemented.
-- UNVERIFIED: MAR21.101 (the curvature cross-bucket aggregation) was not read in the addendum; `curvature_charge` follows dossier 01 D.2 (MAR21.5, the psi rule). C12 is a single-currency
-  USD book with one GIRR bucket, so the cross-bucket step of MAR21.101 does not bind; it is a stated limit for a multi-currency book. The reading that the caller passes the delta correlation
-  (squared here) and the final cross-bucket gamma is the engine's; a tie between $K_b^{+}$ and $K_b^{-}$ selects the downward scenario (dossier 01 D.2: "else").
-- The curvature shock divided by sqrt(2) for a specified currency is DERIVED arithmetic (addendum R7), not a printed number.
+- The curvature shock a consumer uses is `curvature_shock_undivided` (0.017). MAR21.99 bases it on "the highest prescribed delta risk weight" and MAR21.44's division by sqrt(2) names the delta
+  risk weights of MAR21.42 to MAR21.43, so the divided value 0.012021 is a DERIVED reading (addendum R7), kept exposed as `curvature_shock` and labelled so.
 - The row of MAR33.12 Table 2 "commodity volatility, 60 or 120 days" is ambiguous in dossier 01 D.3 and is not transcribed.
 - Only the GIRR risk class is parameterised; the other six risk classes, DRC (MAR22), RRAO (MAR23) and SA-CVA are out of scope (decision D1 of the U9 sizing). No official numeric
   example of FRTB SBM exists in the sources read (dossier 01 UNVERIFIED item 8): the tests rest on the invariants of dossier 01 M.1.
