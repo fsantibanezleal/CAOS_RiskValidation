@@ -128,7 +128,33 @@ normal case, and the cohort PD of its best grades is zero in most years.
 Aalen-Johansen estimators against the generator's truth within four Monte Carlo standard errors, and that the cohort
 estimator puts zero on the rare cells the truth makes positive.
 
-## 6. What not to claim
+## 6. Reconciliation with the transitionMatrix package
+
+Open Risk's `transitionMatrix` 0.5.1 (Apache-2.0, `pip install "riskvalidation[transitions]"`) is the independent
+reference of the cohort estimator, used in the tests only; the engine never imports it.
+`tests/test_transitions_reconciliation.py` (RV-415) feeds one seeded panel (600 entities, 6 dates, four grades and
+default, 157 withdrawals) to `pooled_cohort` and `cohort` and to the package's `CohortEstimator.fit`
+(`transitionMatrix/estimators/cohort_estimator.py` l.48), and compares them element-wise within 1e-12. The count-averaged
+matrix of the package is Anderson and Goodman's (2.8) and equals the engine's `treatment="state"` matrix, the withdrawn
+share being what the package's rows lack; the measured largest difference is 0.0. The industry treatment (`"exclude"`)
+has no counterpart in the package; it equals the package's matrix renormalised on the performing columns, which is how
+the engine defines it.
+
+Where the conventions differ the tests state both values and loosen nothing:
+
+- an empty row is NaN in the engine (listed in `empty_rows`) and zeros in the package;
+- the package reports what a panel shows after default (a reinstatement is a migration out of default); the engine
+  sets the default row to the unit vector;
+- the package handles the last record of its last entity twice (l.150 to l.155): a difference of up to 1.6e-3 on this
+  panel, reproduced exactly by counting that migration again; the tests end the panel with an absorbing default entity
+  so the comparison is clean;
+- the package has no maximum likelihood generator from paths (`duration_generator`): its `generator` (`model.py` l.231)
+  is the matrix logarithm and its `KaplanMeierEstimator` is an empty class, so the duration estimator is not reconciled
+  against it;
+- its Aalen-Johansen estimator divides by the risk set after the exits (`aalen_johansen_estimator.py` l.189, l.201): with
+  four obligors and one move the increment is 1/3, the engine's is 1/4, the textbook Nelson-Aalen value.
+
+## 7. What not to claim
 
 - CEREP's figures are the agencies' EU entities' statistics as ESMA computes them, not the agencies' own studies;
   every figure must say which entity, scope, horizon and default definition it follows.
