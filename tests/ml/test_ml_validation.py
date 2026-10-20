@@ -104,7 +104,10 @@ def test_robustness_boundaries_agree_with_the_strict_finding():
         assert (res.light is not Light.GREEN) == robustness_finding(curve, 0.02, 0.5)  # light and boolean agree
         assert row["model_id"] == "m1" and set(row["extras"]["thresholds"]) >= {"perturbation_tolerance"}
         assert row["extras"]["thresholds"]["perturbation_tolerance"] == 0.02
-        assert row["alpha_amber"] == NA(0.02, math.inf) and row["alpha_red"] == NA(0.04, math.inf)
+        # a metric test: no p-value alphas; the cut points are in extras (engine-ml-api 2.0.0, as fairness 1.2.0)
+        assert row["alpha_amber"] is None and row["alpha_red"] is None
+        assert row["extras"]["thresholds"]["amber_cut"] == NA(0.02, math.inf)
+        assert row["extras"]["thresholds"]["red_cut"] == NA(0.04, math.inf)
         assert "perturbation_tolerance=0.02" in row["policy_version"]
 
 
@@ -421,3 +424,19 @@ def test_ml_policy_parameters_replace_a_packaged_default_row_and_keep_a_customis
     own = Policy(policy_id="x", version="1", description="", thresholds={**base.thresholds, "ml.robustness": custom})
     kept = ml_policy(own, perturbation_tolerance=0.01)
     assert kept.thresholds["ml.robustness"] == custom
+
+
+def test_metric_rows_carry_no_p_value_alphas_and_p_value_rows_keep_theirs():
+    """A metric test (upper_bad or lower_bad) has no p-value threshold, so its row carries null alphas with the cut points
+    in extras['thresholds'] (the web reads the alpha fields as p-value cut points; the fairness counterpart is
+    engine-fairness-api 1.2.0). The p-value tests keep 0.05 and 0.01."""
+    import riskvalidation.validation.ml as v
+    from riskvalidation.ml.robustness import robustness_curve
+
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(400, 3))
+    y = (X[:, 0] + rng.normal(size=400) > 0).astype(int)
+    curve = robustness_curve(lambda a: 1 / (1 + np.exp(-a[:, 0])), X, y, [0.0, 0.5, 1.0], seed=1)
+    r = v.robustness("m", curve, 0.02, 0.5)
+    assert (r.alpha_amber, r.alpha_red) == (None, None)
+    assert r.extras["thresholds"]["amber_cut"] is not None
