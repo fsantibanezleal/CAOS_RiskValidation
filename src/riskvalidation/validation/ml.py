@@ -24,6 +24,7 @@ import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.policy import Policy, Threshold
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.ml import policy as _policy
 from riskvalidation.ml.cbpe import CbpeAuc
@@ -115,6 +116,14 @@ def _cut_matches(th: Threshold, tolerance: float, name: str, *, red: float | Non
 # ml.robustness
 
 
+@register(
+    "ml.robustness",
+    family="ml",
+    name="Perturbation robustness",
+    h0="the AUC at the preset noise scale loses no more than the tolerance against the clean AUC",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1009-1012, I.1 l.1189); {SR_11_7}",
+    decision="metric",
+)
 def robustness(
     model_id: str, curve: RobustnessCurve, tolerance: float, preset_eps: float, policy: Policy | None = None
 ) -> TestResult:
@@ -249,6 +258,19 @@ def _simple(
     )
 
 
+@register(
+    "ml.shift_resilience",
+    family="ml",
+    name="Resilience to distribution shift",
+    h0=(
+        "the AUC drop on the worst subsample by shift score is that of a random development subset of the same size"
+    ),
+    reference=(
+        f"{DOSSIER_06_C7} (C.7 l.1013-1015, I.1 l.1190); PiML resilience; SS1/23 operating boundaries; "
+        "Monte Carlo test against development-only draws (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585)"
+    ),
+    decision="p_value",
+)
 def shift_resilience(
     model_id: str, result: SubsampleResult, reference: ShiftReference, policy: Policy | None = None
 ) -> TestResult:
@@ -379,6 +401,14 @@ def shift_resilience(
     )
 
 
+@register(
+    "ml.seed_stability",
+    family="ml",
+    name="Seed stability",
+    h0="the AUC does not depend on the training seed",
+    reference=f"{DOSSIER_06_C7} (I.1 l.1191); {ECB_43}",
+    decision="metric",
+)
 def seed_stability(model_id: str, dispersion: SeedDispersion, policy: Policy | None = None) -> TestResult:
     """Seed stability (06 I.1 l.1191; ECB 43 and 59). metric = the standard deviation of the AUC across seeds (AUC
     points; n = the seeds). Light (``ml.seed_stability``, upper_bad, inclusive): green below 0.01, amber from it, red
@@ -398,6 +428,14 @@ def seed_stability(model_id: str, dispersion: SeedDispersion, policy: Policy | N
     )
 
 
+@register(
+    "ml.reason_code_stability",
+    family="ml",
+    name="Reason-code stability",
+    h0="the top reasons of an obligor do not change across bootstrap refits",
+    reference=f"dossier 04 (credit risk models) J.2 l.881-883 and ladder P4 l.968; {DOSSIER_06_C7}",
+    decision="metric",
+)
 def reason_code_stability(model_id: str, overlap: OverlapResult, policy: Policy | None = None) -> TestResult:
     """Reason-code stability (04 J.2 l.881-883; ladder P4 l.968). metric = the mean top-k reason overlap across refits
     (share; n = the refits). Light (``ml.reason_code_stability``, lower_bad, inclusive): green above 0.80, amber at or
@@ -417,6 +455,14 @@ def reason_code_stability(model_id: str, overlap: OverlapResult, policy: Policy 
     )
 
 
+@register(
+    "ml.effect_agreement",
+    family="ml",
+    name="Explainer agreement",
+    h0="the explainers rank the features alike (SHAP against ALE or PDP)",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1006-1008, I.1 l.1193); {EBA_ML}",
+    decision="metric",
+)
 def effect_agreement(model_id: str, rho: float, n_features: int, policy: Policy | None = None) -> TestResult:
     """Explainer agreement (06 C.7 l.1006-1008; I.1 l.1193; ECB 43(d), 66). metric = the Spearman rho of the mean
     absolute SHAP against the range of the ALE or PDP curve (n = the features). Light (``ml.effect_agreement``,
@@ -442,6 +488,14 @@ def effect_agreement(model_id: str, rho: float, n_features: int, policy: Policy 
 # ml.additivity, ml.overfit, ml.weak_spot
 
 
+@register(
+    "ml.additivity",
+    family="ml",
+    name="Shapley additivity",
+    h0="the attributions plus the base value reproduce the prediction",
+    reference=f"{DOSSIER_06_C7} (C.7 l.990: f(x) = phi_0 + sum phi_i); Lundberg and Lee (2017), arXiv 1705.07874",
+    decision="metric",
+)
 def additivity(model_id: str, gap: float, tolerance: float = 1e-9, policy: Policy | None = None) -> TestResult:
     """Shapley additivity (06 C.7 l.990). metric = the maximum over rows of the additivity gap (prediction units). Light
     (``ml.additivity``, upper_bad, strict): red when the gap exceeds the numeric ``tolerance``, green otherwise (never
@@ -466,6 +520,14 @@ def additivity(model_id: str, gap: float, tolerance: float = 1e-9, policy: Polic
     )
 
 
+@register(
+    "ml.overfit",
+    family="ml",
+    name="Overfit gap",
+    h0="the model performs on the holdout as on the training data",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1016-1018, I.1 l.1187); {ECB_43}(a); EBA recommendation (i)",
+    decision="metric",
+)
 def overfit(model_id: str, result: OverfitResult, policy: Policy | None = None) -> TestResult:
     """The overfit gap (06 C.7 l.1016-1018; I.1 l.1187; ECB 43(a)). metric = the train minus holdout gap (metric units).
     Light (``ml.overfit``, upper_bad, strict): red when the gap exceeds ``overfit_tolerance`` (0.05), green otherwise
@@ -489,6 +551,14 @@ def overfit(model_id: str, result: OverfitResult, policy: Policy | None = None) 
     )
 
 
+@register(
+    "ml.weak_spot",
+    family="ml",
+    name="Weak spots",
+    h0="no slice of the data has an error above the weak-spot multiple of the average error",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1016-1018, I.1 l.1188); PiML WeakSpot",
+    decision="metric",
+)
 def weak_spot(
     model_id: str, spots: Sequence[WeakSpot], k: float, n_slices: int, policy: Policy | None = None
 ) -> TestResult:
@@ -525,6 +595,14 @@ def weak_spot(
 # ml.conformal_coverage, ml.leakage_screen, ml.data_quality
 
 
+@register(
+    "ml.conformal_coverage",
+    family="ml",
+    name="Conformal coverage",
+    h0="the coverage of the split conformal set equals the target 1 - alpha (exchangeability holds)",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1019-1028, I.1 l.1194); {ANGELOPOULOS}",
+    decision="p_value",
+)
 def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | None = None) -> TestResult:
     """Conformal coverage (06 C.7 l.1019-1028; I.1 l.1194). p_value = the two-sided Beta-Binomial p-value of the covered
     count given the calibration size (``result.p_value``; the coverage of a split conformal set is Beta(k, n_cal + 1 -
@@ -612,6 +690,21 @@ _LEAK = {
 _ORDER = {Light.GREEN: 0, Light.AMBER: 1, Light.RED: 2}
 
 
+@register(
+    "ml.leakage_screen",
+    family="ml",
+    name="Leakage screen",
+    h0=(
+        "no feature leaks the outcome: none is dated after the observation date, none is near-perfect alone, "
+        "no entity is in "
+        "both slices and development and out-of-time rows are alike"
+    ),
+    reference=(
+        f"{DOSSIER_06_C7} (C.7 l.1048-1051, I.1 l.1197); dossier 07 D pattern 3 l.597-600; "
+        "ING probatus sample_similarity"
+    ),
+    decision="metric",
+)
 def leakage_screen(
     model_id: str,
     temporal: int,
@@ -713,6 +806,14 @@ def leakage_screen(
     )
 
 
+@register(
+    "ml.data_quality",
+    family="ml",
+    name="Data quality",
+    h0="every counted data-quality check passes",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1045-1047, I.1 l.1198); ECB paragraph 52(h)(vii) and Overarching paragraph 11",
+    decision="metric",
+)
 def data_quality(model_id: str, counts: Sequence[DataQualityCount], policy: Policy | None = None) -> TestResult:
     """Data quality (06 C.7 l.1045-1047; I.1 l.1198; ECB 52(h)(vii)). metric = the largest share of failed checks over
     the ``dq_`` counts (``1 - share_ok``); n and n_events = the cells or rows checked and failed, summed. Light
@@ -766,6 +867,17 @@ def _with_events(res: TestResult, n_events: int) -> TestResult:
 # ml.cbpe_estimate, ml.challenger_brier (no policy threshold)
 
 
+@register(
+    "ml.cbpe_estimate",
+    family="ml",
+    name="Label-free AUC estimate",
+    h0=(
+        "the label-free AUC estimate equals the labelled AUC (calibrated probabilities, no concept drift, "
+        "no extrapolation)"
+    ),
+    reference=f"{DOSSIER_06_C7} (C.7 l.1052-1058, I.1 l.1199); {NANNYML}",
+    decision="metric",
+)
 def cbpe_estimate(model_id: str, estimate: CbpeAuc, labels_supplied: bool = False) -> TestResult:
     """The label-free AUC estimate (06 C.7 l.1052-1058; I.1 l.1199). An estimate, not a test: the row is always
     ``not_evaluated`` with a null statistic, metric and p-value, so that it never moves ``SuiteRun.worst()``. The reason
@@ -800,6 +912,14 @@ def cbpe_estimate(model_id: str, estimate: CbpeAuc, labels_supplied: bool = Fals
     return _not_evaluated(test_id, h0, alt, ref, version, reason, model_id=model_id, extras=extras, inputs=ins)
 
 
+@register(
+    "ml.challenger_brier",
+    family="ml",
+    name="Champion and challenger Brier",
+    h0="the champion and the challenger have the same Brier score",
+    reference=f"{DOSSIER_06_C7} (C.7 l.1041-1044, I.1 l.1196); SS1/23 principle 3.3(b)(iii); ECB guide paragraph 60",
+    decision="metric",
+)
 def challenger_brier(model_id: str, result: PairedBrier) -> TestResult:
     """Champion and challenger by the paired Brier bootstrap (06 C.7 l.1041-1044; SS1/23 3.3(b)(iii); ECB 60). No policy
     threshold. metric = statistic = the Brier difference challenger minus champion with its 95 percent percentile
