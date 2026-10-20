@@ -9,7 +9,7 @@ import math
 
 import numpy as np
 import pytest
-from reg_helpers import cre99_netting_set, example, load_calculators
+from reg_helpers import cre99_netting_set, example, load_calculators, named
 
 from riskvalidation.regulatory import frtb as f
 from riskvalidation.regulatory import sa_ccr as s
@@ -104,3 +104,75 @@ def test_cross_bucket_detail_matches_the_plain_function_over_scenarios():
 def test_cross_bucket_detail_refuses_as_the_plain_function():
     with pytest.raises(ValueError, match="k_b"):
         f.cross_bucket_charge_detail(np.array([-1.0]), np.array([1.0]), np.eye(1))
+
+
+# RV-928: the CRE52.34 trade effective notionals of credit and commodity trades
+
+
+def test_credit_trade_effective_notional_formula_and_refusals():
+    for mpor in (None, 10, 20):
+        got = s.credit_trade_effective_notional(-1.0, 10_000.0, 0.0, 5.0, mpor)
+        want = -1.0 * 10_000.0 * s.supervisory_duration(0.0, 5.0) * s.maturity_factor(5.0, mpor)
+        assert got == want
+    assert s.credit_trade_effective_notional(1.0, 100.0, 1.0, 3.0) == pytest.approx(
+        100.0 * (math.exp(-0.05) - math.exp(-0.15)) / 0.05 * 1.0, rel=1e-14
+    )
+    with pytest.raises(ValueError, match="end"):
+        s.credit_trade_effective_notional(1.0, 100.0, 3.0, 1.0)
+    with pytest.raises(ValueError, match="mpor_business_days"):
+        s.credit_trade_effective_notional(1.0, 100.0, 0.0, 1.0, 0)
+    with pytest.raises(ValueError, match="delta"):
+        s.credit_trade_effective_notional(float("nan"), 100.0, 0.0, 1.0)
+    with pytest.raises(ValueError, match="notional"):
+        s.credit_trade_effective_notional(1.0, float("inf"), 0.0, 1.0)
+
+
+def test_commodity_trade_effective_notional_formula_and_refusals():
+    for mpor in (None, 10, 20):
+        got = s.commodity_trade_effective_notional(1.0, 2_500.0, 0.5, mpor)
+        assert got == 1.0 * 2_500.0 * s.maturity_factor(0.5, mpor)
+    assert s.commodity_trade_effective_notional(-1.0, 100.0, 4.0) == -100.0
+    with pytest.raises(ValueError, match="maturity_years"):
+        s.commodity_trade_effective_notional(1.0, 100.0, -1.0)
+    with pytest.raises(ValueError, match="mpor_business_days"):
+        s.commodity_trade_effective_notional(1.0, 100.0, 1.0, -5)
+    with pytest.raises(ValueError, match="adjusted_notional"):
+        s.commodity_trade_effective_notional(1.0, float("nan"), 1.0)
+
+
+def test_cre99_entity_effective_notionals_reproduce_through_the_new_functions():
+    from reg_helpers import terms
+
+    checked = 0
+    for ex_id in ("cre99-netting-set-2", "cre99-netting-set-3", "cre99-netting-set-4", "cre99-netting-set-5"):
+        ex = example(DOC, ex_id)
+        mpor = named(ex["inputs"]).get("mpor_business_days")
+        run = cre99_netting_set(ex)
+        credit, commodity = [], {}
+        for trade in ex["trades"]:
+            t = terms(trade)
+            if t["asset_class"] == "credit":
+                d = 1.0 if t["position"] == "protection-buyer" else -1.0
+                en = s.credit_trade_effective_notional(
+                    d, t["notional"], float(t["start_years"]), float(t["end_years"]), mpor
+                )
+                credit.append(s.CreditEntity(t["rating"], t["reference_kind"] == "index", en))
+            elif t["asset_class"] == "commodity":
+                d = 1.0 if t["position"] == "long" else -1.0
+                en = s.commodity_trade_effective_notional(d, t["adjusted_notional"], float(t["maturity_years"]), mpor)
+                key = (t["hedging_set"], t["commodity_type"])
+                commodity[key] = commodity.get(key, 0.0) + en
+        if credit:
+            assert credit == run["credit_entities"]
+            assert s.credit_addon(credit) == run["addon_credit"]
+            checked += 1
+        if commodity:
+            sf = s.supervisory_parameter("commodity-oil-gas-metals-agricultural-other", "supervisory_factor").value
+            rho = s.supervisory_parameter("commodity-oil-gas-metals-agricultural-other", "correlation").value
+            sets: dict[str, list] = {}
+            for (hs, _k), en in commodity.items():
+                sets.setdefault(hs, []).append(s.CommodityEntity(sf, rho, en))
+            assert s.commodity_addon(sets) == run["addon_commodity"]
+            checked += 1
+        assert round(run["result"].ead) == {2: 381, 3: 5406, 4: 936, 5: 1879}[int(ex_id[-1])]
+    assert checked >= 2

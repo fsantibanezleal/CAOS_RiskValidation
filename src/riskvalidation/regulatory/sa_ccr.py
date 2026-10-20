@@ -339,6 +339,31 @@ def _credit_key(entity: CreditEntity) -> str:
     return key
 
 
+def credit_trade_effective_notional(
+    delta: float, notional: float, start_years: float, end_years: float, mpor_business_days: int | None = None
+) -> float:
+    """CRE52.34, CRE52.52: the effective notional of a credit trade, delta x notional x supervisory duration(start,
+    end) x maturity factor(end), the maturity factor margined when `mpor_business_days` is given."""
+    return (
+        _finite("delta", delta)
+        * _finite("notional", notional)
+        * supervisory_duration(start_years, end_years)
+        * maturity_factor(end_years, mpor_business_days)
+    )
+
+
+def commodity_trade_effective_notional(
+    delta: float, adjusted_notional: float, maturity_years: float, mpor_business_days: int | None = None
+) -> float:
+    """CRE52.52: the effective notional of a commodity trade, delta x adjusted notional x maturity factor(maturity),
+    the maturity factor margined when `mpor_business_days` is given."""
+    return (
+        _finite("delta", delta)
+        * _finite("adjusted_notional", adjusted_notional)
+        * maturity_factor(maturity_years, mpor_business_days)
+    )
+
+
 def credit_addon_terms(entities: list[CreditEntity]) -> AddonTerms:
     """CRE52.61 to CRE52.65: the systematic term (sum rho A)^2, the idiosyncratic term sum (1 - rho^2) A^2 and the
     add-on of the credit entities, with A = SF x EN and correlation 0.5 for a single name and 0.8 for an index."""

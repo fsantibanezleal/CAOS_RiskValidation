@@ -61,13 +61,14 @@ def cre99_netting_set(ex: dict) -> dict:
             )
         elif asset == "credit":
             delta = 1.0 if t["position"] == "protection-buyer" else -1.0
-            mf = s.maturity_factor(float(t["end_years"]), mpor)
-            en = delta * t["notional"] * s.supervisory_duration(float(t["start_years"]), float(t["end_years"])) * mf
+            en = s.credit_trade_effective_notional(
+                delta, t["notional"], float(t["start_years"]), float(t["end_years"]), mpor
+            )
             credit.append(s.CreditEntity(t["rating"], t["reference_kind"] == "index", en))
         else:
             assert asset == "commodity"
             delta = 1.0 if t["position"] == "long" else -1.0
-            en = delta * t["adjusted_notional"] * s.maturity_factor(float(t["maturity_years"]), mpor)
+            en = s.commodity_trade_effective_notional(delta, t["adjusted_notional"], float(t["maturity_years"]), mpor)
             key = (t["hedging_set"], t["commodity_type"])
             commodity[key] = commodity.get(key, 0.0) + en
     out: dict[str, object] = {"margined": margined, "mpor": mpor}
