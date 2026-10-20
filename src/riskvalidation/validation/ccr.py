@@ -192,19 +192,26 @@ def cva_recomputed(epe_discounted: np.ndarray, pd: np.ndarray, lgd: float, cva_r
                        int(np.asarray(pd).size))
 
 
-def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count: dict[int, float],
+def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count: dict[int, float], *,
+                     ee_se_by_path_count: dict[int, np.ndarray], cva_se_by_path_count: dict[int, float],
                      k_se: float = 3.0) -> TestResult:
     """The change of the EE profile and of the CVA between the two largest path counts, money; the keys are path counts.
+    The caller passes the Monte Carlo standard errors of each count, ``ee_se_by_path_count`` (K,) and
+    ``cva_se_by_path_count``, with the same keys.
 
-    statistic = the largest absolute change of the EE profile divided by the peak of the larger count's profile; metric
-    = the CVA change relative to the larger count's CVA. The relative Monte Carlo error implied by the smaller count
-    ``n`` is ``1 / sqrt(n)`` (a unit coefficient of variation, a convention of this test: the inputs carry no
-    standard error). Light (a Contraste internal gate): green when the larger of the two changes is within ``k_se``
-    times that error, amber within ``2 k_se`` times, red beyond; ``extras["thresholds"]``. Fewer than two path
-    counts is ``not_evaluated`` with its reason."""
+    statistic = the largest ``|EE_large - EE_small| / se_small`` over the grid (a point with no standard error counts 0
+    for a zero change and infinity otherwise); metric = ``|CVA_large - CVA_small| / se_small`` of the CVA. The band is
+    ``k_se`` times the standard error of the smaller count (the unit coefficient-of-variation band of earlier versions
+    is gone: the EE of an at-the-money swap has a coefficient of variation above 1, so it lit on noise). Light (a
+    Contraste internal gate): green when the larger of the two is within ``k_se``, amber within ``2 k_se``, red
+    beyond; ``extras["thresholds"]``. Fewer than two path counts is ``not_evaluated`` with its reason."""
     k = _positive(k_se, "k_se")
     if set(ee_by_path_count) != set(cva_by_path_count):
         raise ValueError("cva_by_path_count must have the same path counts as ee_by_path_count")
+    if set(ee_se_by_path_count) != set(ee_by_path_count):
+        raise ValueError("ee_se_by_path_count must have the same path counts as ee_by_path_count")
+    if set(cva_se_by_path_count) != set(ee_by_path_count):
+        raise ValueError("cva_se_by_path_count must have the same path counts as ee_by_path_count")
     counts = sorted(ee_by_path_count)
     if any(int(c) != c or c < 1 for c in counts):
         raise ValueError("ee_by_path_count keys must be positive integers (path counts)")
@@ -218,28 +225,30 @@ def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count:
     small, big = vec(ee_by_path_count[small_n], "ee_by_path_count"), vec(ee_by_path_count[big_n], "ee_by_path_count")
     if small.size != big.size:
         raise ValueError("ee_by_path_count profiles must have the same length")
-    peak = float(np.max(np.abs(big)))
-    diff = float(np.max(np.abs(big - small)))
-    stat = (diff / peak) if peak > 0.0 else (0.0 if diff == 0.0 else math.inf)
-    c_small, c_big = scalar(cva_by_path_count[small_n], "cva_by_path_count"), scalar(cva_by_path_count[big_n],
-                                                                                    "cva_by_path_count")
-    delta = abs(c_big - c_small)
-    metric = (delta / abs(c_big)) if c_big != 0.0 else (0.0 if delta == 0.0 else math.inf)
-    rel_err = 1.0 / math.sqrt(small_n)
+    se_small = _nonneg_vec(ee_se_by_path_count[small_n], "ee_se_by_path_count")
+    if se_small.size != small.size:
+        raise ValueError("ee_se_by_path_count profiles must have the length of ee_by_path_count")
+    _nonneg_vec(ee_se_by_path_count[big_n], "ee_se_by_path_count")
+    stat = float(np.max(_scaled_gap(big - small, se_small)))
+    c_small = scalar(cva_by_path_count[small_n], "cva_by_path_count")
+    c_big = scalar(cva_by_path_count[big_n], "cva_by_path_count")
+    cse = scalar(cva_se_by_path_count[small_n], "cva_se_by_path_count")
+    if cse < 0.0:
+        raise ValueError("cva_se_by_path_count must be nonnegative")
+    metric = float(_scaled_gap(np.array([c_big - c_small]), np.array([cse]))[0])
     change = max(stat, metric)
-    if change <= k * rel_err + EPS:
+    if change <= k + EPS:
         light = Light.GREEN
-    elif change <= 2.0 * k * rel_err + EPS:
+    elif change <= 2.0 * k + EPS:
         light = Light.AMBER
     else:
         light = Light.RED
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_CONVERGENCE,
-        policy_version=_version(k_se=k, relative_error="1 / sqrt(smaller path count)"), light=light, statistic=stat,
-        metric=metric, n=int(big_n),
-        extras={"thresholds": {"k_se": k, "relative_mc_error_smaller_count": rel_err, "smaller_count": int(small_n),
-                               "larger_count": int(big_n)}},
-        notes="" if light is Light.GREEN else ("the profile or the CVA moved more than the Monte Carlo error of the "
+        policy_version=_version(k_se=k, band="k_se times the standard error of the smaller path count"),
+        light=light, statistic=stat, metric=metric, n=int(big_n),
+        extras={"thresholds": {"k_se": k, "smaller_count": int(small_n), "larger_count": int(big_n)}},
+        notes="" if light is Light.GREEN else ("the profile or the CVA moved more than k_se standard errors of the "
                                                "smaller path count"))
 
 

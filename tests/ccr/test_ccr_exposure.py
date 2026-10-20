@@ -218,7 +218,7 @@ def test_analytic_ee_single_swap():
     sim = swaps.simulation_grid(grid, [s])
     r = hw1f.simulate_short_rate(sim, a, sigma, fwd, n, 99)
     v = swaps.swap_values_on_grid([s], sim, r, a, sigma, p0, fwd)
-    ee_mc, se_mc = ex.expected_exposure(ex.net_values(v), hw1f.bank_account(sim, r))
+    ee_mc, se_mc = ex.expected_exposure(ex.net_values(v), hw1f.bank_account(sim, r, a, sigma, p0, fwd))
     analytic = ex.analytic_ee_single_swap(s, sim, a, sigma, p0, fwd) * p0(sim)
     assert np.all(np.abs(ee_mc - analytic)[1:] <= 4.0 * se_mc[1:])
     assert analytic[1:-1].min() > 0.0

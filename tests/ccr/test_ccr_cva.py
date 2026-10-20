@@ -185,6 +185,11 @@ def test_wwr_cva():
     surv = np.exp(-np.cumsum(h0 * dt[None, :], axis=1))
     pdij = np.diff(np.concatenate([np.ones((p_paths, 1)), surv], axis=1), axis=1) * -1.0
     assert lgd * float(np.sum(np.mean(pdij * exposure, axis=0))) == pytest.approx(independent, rel=1e-9)
+    # H8 (review F3): dt is validated at b = 0 as at any other b (length K, positive entries)
+    for bad_dt in (dt[:3], np.concatenate([dt[:-1], [0.0]]), np.concatenate([dt[:-1], [-0.5]])):
+        for b0 in (0.0, 0.1):
+            with pytest.raises(ValueError, match="dt"):
+                cv.wwr_cva(w, exposure, target, bad_dt, lgd, b0)
     # wrong-way risk raises CVA for a positively correlated exposure; right-way risk lowers it
     values = [cv.wwr_cva(w, exposure, target, dt, lgd, b)[0] for b in (-0.2, -0.05, 0.0, 0.05, 0.1, 0.2, 0.4)]
     assert all(x < y for x, y in zip(values, values[1:], strict=False))

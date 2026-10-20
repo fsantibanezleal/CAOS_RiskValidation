@@ -183,18 +183,56 @@ def simulate_short_rate(grid: np.ndarray, a: float, sigma: float, forward: Curve
     return x + phi(np.asarray(grid, dtype=float), a, sigma, forward)[None, :]
 
 
-def bank_account(grid: np.ndarray, short_rate: np.ndarray) -> np.ndarray:
-    """(P, K) the numeraire ``N(t) = exp(integral of r)`` of the paths, the integral by the
-    trapezoid rule on the grid, ``N(0) = 1``. It is the numeraire for ``exposure.expected_exposure`` in the
-    discounted measure."""
+PHI_SERIES_THRESHOLD = 0.5
+"""Below ``a t`` of this size the integral of ``phi`` uses its power series in ``a t`` (the limit ``t^3 / 6`` and its
+corrections, truncated at about 1e-12 relative); above it the closed form, whose cancellation is about
+``eps / (a t)^2`` relative to the term (4e-16)."""
+
+_PHI_SERIES = tuple((-1.0) ** k * (2.0**k - 2.0) / math.factorial(k + 1) / 2.0 for k in range(2, 19))
+"""Coefficients ``c_k`` of ``(1 / (2 a^2)) [t - 2 (1 - e^{-a t}) / a + (1 - e^{-2 a t}) / (2 a)]``, which is
+``t^3 sum_k c_k (a t)^{k-2}``,
+from the expansions of the two exponentials; ``c_2 = 1/6`` is the limit."""
+
+
+def _phi_integral_term(t: np.ndarray, a: float) -> np.ndarray:
+    """``(1 / (2 a^2)) [t - 2 (1 - e^{-a t}) / a + (1 - e^{-2 a t}) / (2 a)]``, the part of the integral of ``phi``
+    from 0 to ``t`` that is multiplied by ``sigma^2``; ``t^3 / 6`` in the limit ``a`` to 0. Where ``a t`` is below
+    ``PHI_SERIES_THRESHOLD`` the series is used, so that the closed form never loses its digits to cancellation."""
+    tt = np.asarray(t, dtype=float)
+    u = a * tt
+    series = np.zeros_like(tt)
+    for c in reversed(_PHI_SERIES):
+        series = series * u + c
+    series = tt**3 * series
+    if a == 0.0:
+        return series
+    closed = (tt + (2.0 * np.expm1(-u) - 0.5 * np.expm1(-2.0 * u)) / a) / (2.0 * a**2)
+    return np.where(u < PHI_SERIES_THRESHOLD, series, closed)
+
+
+def bank_account(grid: np.ndarray, short_rate: np.ndarray, a: float, sigma: float, p0: Curve,
+                 forward: Curve) -> np.ndarray:
+    """(P, K) the numeraire ``N(t) = exp(integral of r)`` of the paths, ``N(0) = 1``, the numeraire of
+    ``exposure.expected_exposure`` in the discounted measure.
+
+    With ``r = phi + x`` the deterministic part is integrated exactly,
+    ``integral_0^t phi = -ln P(0, t) + sigma^2 (1 / (2 a^2)) [t - 2 (1 - e^{-a t}) / a + (1 - e^{-2 a t}) / (2 a)]``
+    (``sigma^2 t^3 / 6`` as ``a`` tends to 0), and only the state ``x = r - phi`` is integrated by the trapezoid rule
+    on the grid. The trapezoid on ``r`` itself misses the integral of ``phi`` by an amount that depends on the grid
+    (the forward of a zero curve jumps at its pillars), a bias in every discounted exposure. At ``sigma = 0`` the
+    discount factor ``1 / N(t)`` is ``P(0, t)`` on any grid. ``a``, ``sigma``, ``p0`` and ``forward`` are those of
+    ``simulate_short_rate``."""
     g = vec(grid, "grid")
-    if np.any(np.diff(g) <= 0.0):
-        raise ValueError("grid must be strictly increasing")
+    if g[0] != 0.0 or np.any(np.diff(g) <= 0.0):
+        raise ValueError("grid must start at 0 and be strictly increasing")
     r = mat(short_rate, "short_rate")
     if r.shape[1] != g.size:
         raise ValueError(f"short_rate has {r.shape[1]} columns for a grid of {g.size} points")
-    area = np.cumsum(0.5 * (r[:, 1:] + r[:, :-1]) * np.diff(g)[None, :], axis=1)
-    return np.exp(np.hstack([np.zeros((r.shape[0], 1)), area]))
+    a_, s_ = _mean_reversion(a), _volatility(sigma)
+    x = r - phi(g, a_, s_, forward)[None, :]
+    area = np.cumsum(0.5 * (x[:, 1:] + x[:, :-1]) * np.diff(g)[None, :], axis=1)
+    det = -np.log(_eval(p0, g)) + s_**2 * _phi_integral_term(g, a_)
+    return np.exp(np.hstack([np.zeros((r.shape[0], 1)), area]) + det[None, :])
 
 
 def bond_option_vol(expiry: float, bond_maturity: float, a: float, sigma: float) -> float:
@@ -331,7 +369,8 @@ def calibrate_ar1(dates: list[str], short_rate: np.ndarray, before: str, min_yea
                   dt: float | None = None) -> Ar1Fit:
     """OLS of ``x(t_i)`` on ``x(t_{i-1})`` for the observations strictly before ``before`` (no look-ahead), mapped to
     ``a`` and ``sigma`` by ``ar1_to_hw1f``, ``theta = c / (1 - b)`` (addendum R6, Brigo et
-    al. arXiv 0812.4210). The residual spread is ``delta = sqrt(SSE / (m - 2))``. The
+    al. arXiv 0812.4210). The residual spread is ``delta = std(resid, ddof = 1)``, as the listing of addendum R6 has it
+    (the OLS variance of ``b`` keeps its divisor ``m - 2``). The
     standard errors are the OLS standard error of ``b`` propagated to ``a`` by the delta method, and for ``sigma`` the
     delta method on ``(b, delta)`` with the OLS standard error of ``b`` and the normal-theory
     ``delta / sqrt(2 (m - 2))`` of the residual spread, the two taken as independent.
@@ -374,7 +413,7 @@ def calibrate_ar1(dates: list[str], short_rate: np.ndarray, before: str, min_yea
     se_b = math.sqrt(max(float(cov[1, 1]), 0.0))
     if not 0.0 < b < 1.0:
         raise ValueError(f"the series is not mean-reverting: the AR(1) coefficient b = {b} must lie in (0, 1)")
-    delta = math.sqrt(s2)
+    delta = float(np.std(resid, ddof=1))
     a_hat, sigma_hat = ar1_to_hw1f(b, delta, step)
     a_se = se_b / (b * step)
     h = 2.0 * math.log(b) / ((b**2 - 1.0) * step)                 # sigma = delta sqrt(h)

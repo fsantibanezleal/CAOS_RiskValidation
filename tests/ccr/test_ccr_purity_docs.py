@@ -63,7 +63,7 @@ def _calls():
         (hw1f.bond_price, (arr(0.01, 0.02), 1.0, 3.0, 0.1, 0.01, p0, fwd)),
         (hw1f.simulate_state, (grid, 0.1, 0.01, 10, 3)),
         (hw1f.simulate_short_rate, (grid, 0.1, 0.01, fwd, 10, 3)),
-        (hw1f.bank_account, (grid, values)),
+        (hw1f.bank_account, (grid, values, 0.1, 0.01, p0, fwd)),
         (hw1f.bond_option, (True, 0.9, 1.0, 3.0, 0.1, 0.01, p0)),
         (hw1f.swaption_jamshidian, (True, 1.0, arr(1.5, 2.0), arr(0.02, 1.02), 0.1, 0.01, p0, fwd)),
         (hw1f.calibrate_ar1, (dates, series, "2010-01-01")),
@@ -95,12 +95,23 @@ def _calls():
         (val.ee_analytic_vs_simulated, (arr(1, 2), arr(1, 2.1), arr(0.1, 0.1))),
         (val.eepe_recomputed, (arr(0.25, 0.5, 1.0), arr(1, 3, 2), 2.5)),
         (val.cva_recomputed, (arr(10, 20), arr(0.1, 0.1), 0.6, 1.8)),
-        (val.path_convergence, ({100: arr(1, 2), 400: arr(1, 2.1)}, {100: 1.0, 400: 1.1})),
+        (_path_convergence, ({100: arr(1, 2), 400: arr(1, 2.1)}, {100: 1.0, 400: 1.1},
+                             {100: arr(0.1, 0.1), 400: arr(0.05, 0.05)}, {100: 0.1, 400: 0.05})),
         (val.reconcile_ee_profile, (arr(1, 2), arr(0.1, 0.1), arr(1, 2.1), arr(0.1, 0.1))),
         (val.pfe_exceedance_backtest, (realised, np.full(20, 1.5), 0.95)),
         (val.pit_exposure_backtest, (realised, simulated, {"p05": 2.5, "p01": 3.9})),
         (val.effective_sample_size, (norm_cdf(rng.standard_normal(30)),)),
     ]
+
+
+def _path_convergence(ee, cva_, ee_se, cva_se):
+    """``val.path_convergence`` takes its standard errors as keyword arguments; this keeps the (fn, args) table."""
+    from riskvalidation.validation import ccr as val
+    return val.path_convergence(ee, cva_, ee_se_by_path_count=ee_se, cva_se_by_path_count=cva_se)
+
+
+_path_convergence.__module__ = "riskvalidation.validation.ccr"
+_path_convergence.__name__ = "path_convergence"
 
 
 def norm_cdf(z):

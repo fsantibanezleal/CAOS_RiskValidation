@@ -91,28 +91,77 @@ def test_eepe_and_cva_recomputed():
 
 def test_path_convergence():
     ee = arr(0.0, 1.0, 2.0, 1.5, 0.5)
-    r = v.path_convergence({1000: ee.copy(), 4000: ee.copy()}, {1000: 1.8, 4000: 1.8})
+    se1, se4 = arr(0.0, 0.02, 0.04, 0.03, 0.01), arr(0.0, 0.01, 0.02, 0.015, 0.005)
+    ses = {"ee_se_by_path_count": {1000: se1, 4000: se4}, "cva_se_by_path_count": {1000: 0.05, 4000: 0.025}}
+    r = v.path_convergence({1000: ee.copy(), 4000: ee.copy()}, {1000: 1.8, 4000: 1.8}, **ses)
     assert r.test_id == "ccr.path_convergence" and r.light is Light.GREEN and r.statistic == 0.0 and r.metric == 0.0
     assert r.extras["thresholds"]["k_se"] == 3.0
-    rel = 1.0 / math.sqrt(1000)                                        # the relative error of the smaller count
-    for delta, light in ((0.05, Light.GREEN), (3.0 * rel + 0.01, Light.AMBER), (6.0 * rel + 0.01, Light.RED)):
-        r = v.path_convergence({1000: ee * (1.0 - delta), 4000: ee}, {1000: 2.0 * (1.0 - delta), 4000: 2.0})
-        assert r.light is light, (delta, r.statistic)
-        assert r.statistic == pytest.approx(delta, abs=1e-12) and r.metric == pytest.approx(delta, abs=1e-12)
-    # the light follows the larger of the two changes; the two largest counts are compared
-    r = v.path_convergence({500: ee * 0.1, 1000: ee * 0.99, 4000: ee}, {500: 0.1, 1000: 1.0, 4000: 1.0})
-    assert r.light is Light.GREEN and r.statistic == pytest.approx(0.01, abs=1e-12) and r.metric == 0.0
-    r = v.path_convergence({1000: ee, 4000: ee}, {1000: 1.0, 4000: 1.2})
-    assert r.metric == pytest.approx(0.2 / 1.2, abs=1e-12) and r.light is not Light.GREEN
+    # the band is k_se times the standard error of the smaller count: statistic = the largest |change| / se (EE),
+    # metric = |CVA change| / se (CVA); green within k_se, amber within 2 k_se, red beyond
+    for z, light in ((2.9, Light.GREEN), (4.0, Light.AMBER), (6.5, Light.RED)):
+        big = ee.copy()
+        small = ee.copy()
+        small[2] = ee[2] - z * se1[2]
+        r = v.path_convergence({1000: small, 4000: big}, {1000: 1.8, 4000: 1.8}, **ses)
+        assert r.light is light, (z, r.statistic)
+        assert r.statistic == pytest.approx(z, abs=1e-9) and r.metric == 0.0
+        r = v.path_convergence({1000: ee, 4000: ee}, {1000: 1.8 - z * 0.05, 4000: 1.8}, **ses)
+        assert r.light is light and r.metric == pytest.approx(z, abs=1e-9) and r.statistic == 0.0
+    # the two largest counts are compared, and a point with no standard error needs a zero change
+    r = v.path_convergence({500: ee * 0.1, 1000: ee * 0.99, 4000: ee}, {500: 0.1, 1000: 1.8, 4000: 1.8},
+                           ee_se_by_path_count={500: se1, 1000: se1, 4000: se4},
+                           cva_se_by_path_count={500: 0.1, 1000: 0.05, 4000: 0.025})
+    assert r.statistic == pytest.approx(0.01 * 2.0 / 0.04, abs=1e-12) and r.light is Light.GREEN
+    r = v.path_convergence({1000: ee + arr(0.5, 0, 0, 0, 0), 4000: ee}, {1000: 1.8, 4000: 1.8}, **ses)
+    assert r.light is Light.RED and math.isinf(r.statistic)
     # fewer than two path counts: not evaluated, with its reason and no number
-    one = v.path_convergence({1000: ee}, {1000: 1.0})
+    one = v.path_convergence({1000: ee}, {1000: 1.0}, ee_se_by_path_count={1000: se1}, cva_se_by_path_count={1000: 0.1})
     assert one.light is Light.NOT_EVALUATED and "path count" in one.notes
     row = one.to_dict()
     assert row["statistic"] is None and row["p_value"] is None and row["metric"] is None
     with pytest.raises(ValueError, match="cva_by_path_count"):
-        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.0, 2000: 1.0})
+        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.0, 2000: 1.0}, **ses)
     with pytest.raises(ValueError, match="ee_by_path_count"):
-        v.path_convergence({1000: ee, 4000: ee[:3]}, {1000: 1.0, 4000: 1.0})
+        v.path_convergence({1000: ee, 4000: ee[:3]}, {1000: 1.0, 4000: 1.0}, **ses)
+    with pytest.raises(ValueError, match="ee_se_by_path_count"):
+        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.8, 4000: 1.8}, ee_se_by_path_count={1000: se1},
+                           cva_se_by_path_count=ses["cva_se_by_path_count"])
+    with pytest.raises(ValueError, match="cva_se_by_path_count"):
+        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.8, 4000: 1.8}, ee_se_by_path_count=ses["ee_se_by_path_count"],
+                           cva_se_by_path_count={1000: 0.05})
+    with pytest.raises(ValueError, match="ee_se_by_path_count"):
+        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.8, 4000: 1.8},
+                           ee_se_by_path_count={1000: se1[:3], 4000: se4},
+                           cva_se_by_path_count=ses["cva_se_by_path_count"])
+    with pytest.raises(TypeError):                                      # the standard errors are required, by keyword
+        v.path_convergence({1000: ee, 4000: ee}, {1000: 1.8, 4000: 1.8})
+
+
+def test_path_convergence_same_model_green_and_planted_shift_red():
+    """H10: two path counts drawn from the same model are green with the Monte Carlo standard errors (an at-the-money
+    swap has a coefficient of variation above 1, which the removed unit-CV band could not tolerate); a planted shift
+    beyond the band is red."""
+    rng = np.random.default_rng(11)
+    grid_n = 6
+
+    def draw(n):
+        w = rng.normal(0.0, 1.0, (n, grid_n)).cumsum(axis=1)             # at-the-money, mean zero
+        pay = np.maximum(w, 0.0)
+        disc = pay * 0.8
+        return (pay.mean(axis=0), pay.std(axis=0, ddof=1) / math.sqrt(n), float(disc.mean()),
+                float(disc.mean(axis=1).std(ddof=1)) / math.sqrt(n))
+
+    lights = []
+    for _ in range(20):
+        (e1, s1, c1, cs1), (e2, s2, c2, cs2) = draw(2000), draw(8000)
+        lights.append(v.path_convergence({2000: e1, 8000: e2}, {2000: c1, 8000: c2},
+                                         ee_se_by_path_count={2000: s1, 8000: s2},
+                                         cva_se_by_path_count={2000: cs1, 8000: cs2}).light)
+    assert sum(light is Light.GREEN for light in lights) >= 17, lights     # a 3-sigma band over 7 contrasts
+    (e1, s1, c1, cs1), (e2, s2, c2, cs2) = draw(2000), draw(8000)
+    r = v.path_convergence({2000: e1 + 8.0 * s1, 8000: e2}, {2000: c1, 8000: c2},
+                           ee_se_by_path_count={2000: s1, 8000: s2}, cva_se_by_path_count={2000: cs1, 8000: cs2})
+    assert r.light is Light.RED
 
 
 # ---------------------------------------------------------------------------------------------------- RV-979
@@ -415,8 +464,9 @@ def test_rows_serialise_and_not_evaluated_carry_no_number():
         v.martingale_discounted_bonds(sim, sim, se),
         v.eepe_recomputed(arr(0.25, 0.5, 1.0), arr(1.0, 3.0, 2.0), 2.5),
         v.cva_recomputed(arr(10.0, 20.0), arr(0.1, 0.1), 0.6, 1.8),
-        v.path_convergence({1000: sim, 4000: sim}, {1000: 1.0, 4000: 1.0}),
-        v.path_convergence({1000: sim}, {1000: 1.0}),
+        v.path_convergence({1000: sim, 4000: sim}, {1000: 1.0, 4000: 1.0}, ee_se_by_path_count={1000: se, 4000: se},
+                           cva_se_by_path_count={1000: 0.1, 4000: 0.05}),
+        v.path_convergence({1000: sim}, {1000: 1.0}, ee_se_by_path_count={1000: se}, cva_se_by_path_count={1000: 0.1}),
         v.reconcile_ee_profile(sim, se, sim, se),
         v.pfe_exceedance_backtest(np.full(100, 5.0), np.full(100, 10.0), 0.95),
         v.pit_exposure_backtest(realised, simulated, {"p05": 2.492, "p01": 3.880}),
