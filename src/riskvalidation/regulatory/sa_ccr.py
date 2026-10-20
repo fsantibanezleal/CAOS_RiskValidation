@@ -270,8 +270,20 @@ def fx_addon(hedging_sets: dict[str, float]) -> float:
     return factor * sum(abs(_finite("hedging_sets", en)) for en in hedging_sets.values())
 
 
-def entity_aggregate(addons: list[float], rhos: list[float]) -> float:
-    """CRE52.61, CRE52.66, CRE52.70: sqrt((sum rho_e A_e)^2 + sum (1 - rho_e^2) A_e^2), one rho per entity."""
+@dataclass(frozen=True)
+class AddonTerms:
+    """The two terms under the root of CRE52.61, CRE52.66 and CRE52.70 and the add-on: `systematic` is
+    (sum_e rho_e A_e)^2, `idiosyncratic` is sum_e (1 - rho_e^2) A_e^2 and `addon` is
+    sqrt(systematic + idiosyncratic)."""
+
+    systematic: float
+    idiosyncratic: float
+    addon: float
+
+
+def entity_aggregate_terms(addons: list[float], rhos: list[float]) -> AddonTerms:
+    """CRE52.61, CRE52.66, CRE52.70: the systematic term, the idiosyncratic term and the add-on of `entity_aggregate`,
+    one rho per entity."""
     if len(addons) != len(rhos):
         raise ValueError(
             f"rhos has {len(rhos)} entries for {len(addons)} addons: one correlation per entity is required"
@@ -285,7 +297,12 @@ def entity_aggregate(addons: list[float], rhos: list[float]) -> float:
         r.append(v)
     systematic = sum(rho * x for rho, x in zip(r, a, strict=True)) ** 2
     idiosyncratic = sum((1.0 - rho * rho) * x * x for rho, x in zip(r, a, strict=True))
-    return math.sqrt(systematic + idiosyncratic)
+    return AddonTerms(systematic, idiosyncratic, math.sqrt(systematic + idiosyncratic))
+
+
+def entity_aggregate(addons: list[float], rhos: list[float]) -> float:
+    """CRE52.61, CRE52.66, CRE52.70: sqrt((sum rho_e A_e)^2 + sum (1 - rho_e^2) A_e^2), one rho per entity."""
+    return entity_aggregate_terms(addons, rhos).addon
 
 
 @dataclass(frozen=True)
@@ -322,8 +339,9 @@ def _credit_key(entity: CreditEntity) -> str:
     return key
 
 
-def credit_addon(entities: list[CreditEntity]) -> float:
-    """CRE52.61 to CRE52.65: entity add-ons SF x EN with correlation 0.5 for a single name and 0.8 for an index."""
+def credit_addon_terms(entities: list[CreditEntity]) -> AddonTerms:
+    """CRE52.61 to CRE52.65: the systematic term (sum rho A)^2, the idiosyncratic term sum (1 - rho^2) A^2 and the
+    add-on of the credit entities, with A = SF x EN and correlation 0.5 for a single name and 0.8 for an index."""
     addons, rhos = [], []
     for e in entities:
         key = _credit_key(e)
@@ -332,11 +350,17 @@ def credit_addon(entities: list[CreditEntity]) -> float:
             * _finite("effective_notional", e.effective_notional)
         )
         rhos.append(SUPERVISORY_PARAMETERS[(key, "correlation")].value)
-    return entity_aggregate(addons, rhos)
+    return entity_aggregate_terms(addons, rhos)
 
 
-def equity_addon(entities: list[EquityEntity]) -> float:
-    """CRE52.66 to CRE52.69: factors 32 and 20 percent, correlations 50 and 80 percent for single names and indices."""
+def credit_addon(entities: list[CreditEntity]) -> float:
+    """CRE52.61 to CRE52.65: entity add-ons SF x EN with correlation 0.5 for a single name and 0.8 for an index."""
+    return credit_addon_terms(entities).addon
+
+
+def equity_addon_terms(entities: list[EquityEntity]) -> AddonTerms:
+    """CRE52.66 to CRE52.69: the systematic term, the idiosyncratic term and the add-on of the equity entities, with
+    factors 32 and 20 percent and correlations 50 and 80 percent for single names and indices."""
     addons, rhos = [], []
     for e in entities:
         key = "equity-index" if e.is_index else "equity-single-name"
@@ -345,7 +369,12 @@ def equity_addon(entities: list[EquityEntity]) -> float:
             * _finite("effective_notional", e.effective_notional)
         )
         rhos.append(SUPERVISORY_PARAMETERS[(key, "correlation")].value)
-    return entity_aggregate(addons, rhos)
+    return entity_aggregate_terms(addons, rhos)
+
+
+def equity_addon(entities: list[EquityEntity]) -> float:
+    """CRE52.66 to CRE52.69: factors 32 and 20 percent, correlations 50 and 80 percent for single names and indices."""
+    return equity_addon_terms(entities).addon
 
 
 def commodity_addon(hedging_sets: dict[str, list[CommodityEntity]]) -> float:
