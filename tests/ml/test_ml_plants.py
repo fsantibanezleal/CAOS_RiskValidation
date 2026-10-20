@@ -156,10 +156,10 @@ def test_exchangeability_break_plant_truth_and_coverage():
     assert len(d["p_cal"]) > len(d["p_test"]) == 2000
     scores = np.where(d["y_cal"] == 1, 1.0 - d["p_cal"], d["p_cal"])
     q = split_conformal_quantile(scores, alpha)
-    cov = conformal_coverage(conformal_sets(d["p_test"], q), d["y_test"], alpha)
+    cov = conformal_coverage(conformal_sets(d["p_test"], q), d["y_test"], alpha, n_cal=len(d["p_cal"]))
     se = math.sqrt(cov.coverage * (1.0 - cov.coverage) / cov.n)
     assert abs(cov.coverage - t["coverage_test"]) <= 5.0 * se + 0.01
     p = stats.binomtest(round(cov.coverage * cov.n), cov.n, 1.0 - alpha).pvalue
-    assert cov.p_value == pytest.approx(p, abs=1e-12)
+    assert cov.p_value_binomial == pytest.approx(p, abs=1e-12)
     with pytest.raises(ValueError, match="n"):
         ExchangeabilityBreakPlant(5, 0.0, 1)

@@ -8,7 +8,7 @@ Carlo error. The ``seed`` of a plant is the default seed of ``sample()`` and, wh
 shift, misspecification) and on the construction of ``generators.BinormalScores`` (a leak at the feature level). The
 design constants of each plant (the portfolio, the prevalence, the separation, the Beta law of the PDs) are stated in
 its docstring and in ``docs/ml/08_size-and-power.md``; they are the plants' own, not regulatory values. Contract:
-``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/plants.py``.
+``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/plants.py``.
 """
 
 from __future__ import annotations

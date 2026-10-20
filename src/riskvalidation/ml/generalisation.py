@@ -1,5 +1,5 @@
 """The overfit gap and the weak spots (PiML "Overfit" and "WeakSpot"; dossier 06 C.7 l.1016-1018; I.1 l.1187-1188; ECB
-guide paragraph 43(a); EBA recommendation (i)). Contract: ``engine-ml-api`` 1.0.0, module
+guide paragraph 43(a); EBA recommendation (i)). Contract: ``engine-ml-api`` 1.1.0, module
 ``riskvalidation/ml/generalisation.py``.
 """
 
@@ -29,10 +29,12 @@ def overfit_gap(
     metric_train: float, metric_test: float, tolerance: float, higher_is_better: bool = True
 ) -> OverfitResult:
     """``gap = metric_train - metric_test`` when higher is better (AUC), ``metric_test - metric_train`` otherwise
-    (Brier); the flag is raised when the gap exceeds the tolerance (a gap equal to it is not flagged)."""
+    (Brier); the flag is raised when the gap exceeds the tolerance (a gap equal to it is not flagged). The gap is
+    rounded to 12 decimals before it is compared, so a gap that is the tolerance in decimals (0.80 - 0.75 is
+    0.050000000000000044 in floats) is not flagged."""
     train, test = scalar(metric_train, "metric_train"), scalar(metric_test, "metric_test")
     tol = nonneg(tolerance, "tolerance")
-    gap = train - test if higher_is_better else test - train
+    gap = round(train - test if higher_is_better else test - train, 12)
     return OverfitResult(gap=gap, tolerance=tol, flag=bool(gap > tol))
 
 

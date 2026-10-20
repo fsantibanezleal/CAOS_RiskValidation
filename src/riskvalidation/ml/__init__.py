@@ -7,5 +7,5 @@ The engine imports no learning library: a model enters as a predict callable on 
 computed in the pipeline. Every function is pure and deterministic (randomness takes a ``seed``), never mutates its
 inputs and raises ``ValueError`` naming the field when data is missing or invalid. Tolerances, grids, counts and cut
 points are conventions, never regulatory thresholds. The engine computes and states no compliance claim. The
-``TestResult`` functions are in ``riskvalidation.validation.ml``. Contract: ``engine-ml-api`` 1.0.0.
+``TestResult`` functions are in ``riskvalidation.validation.ml``. Contract: ``engine-ml-api`` 1.1.0.
 """

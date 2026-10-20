@@ -93,7 +93,10 @@ def test_overfit_gap_directions_and_boundary():
     r = overfit_gap(0.90, 0.80, 0.05)
     assert isinstance(r, OverfitResult) and r.gap == pytest.approx(0.10) and r.tolerance == 0.05 and r.flag is True
     assert overfit_gap(0.85, 0.80, 0.05).flag is False  # gap 0.05 (0.85 - 0.80 = 0.04999999999999993 in floats)
-    assert overfit_gap(0.8, 0.5, 0.3).flag is (0.8 - 0.5 > 0.3)  # flag is exactly (gap > tolerance)
+    # 0.8 - 0.5 is 0.30000000000000004 in floats but 0.3 in decimals: the 12-decimal gap equals the tolerance (m3)
+    assert overfit_gap(0.8, 0.5, 0.3).flag is False
+    g = overfit_gap(0.8, 0.5, 0.29)
+    assert g.flag is (g.gap > g.tolerance) is True  # flag is exactly (gap > tolerance)
     assert overfit_gap(0.25, 0.20, 0.05, higher_is_better=False).gap == pytest.approx(-0.05)  # Brier: test - train
     b = overfit_gap(0.10, 0.18, 0.05, higher_is_better=False)
     assert b.gap == pytest.approx(0.08) and b.flag is True and b.tolerance == 0.05
@@ -114,6 +117,15 @@ def test_weak_spots_planted_slice_three_times_the_rest():
     assert [(w.label, w.n) for w in hit] == [(3, 100)]
     assert hit[0].mean_error == 3.0 and hit[0].ratio == pytest.approx(3.0 / overall, abs=1e-15) and hit[0].ratio > 2.0
     assert weak_spots(err, bins, 4.0) == []  # absent for k = 4
+
+
+def test_weak_spots_a_slice_at_exactly_k_times_the_overall_error_is_not_reported():
+    """Review minor m1 (mutant M12): four slices of 100 with errors (3, 1, 1, 1) per row: the overall mean is 1.5, the
+    first slice's ratio is exactly 2.0 and `ratio > k` excludes it at k = 2."""
+    bins = np.repeat(np.arange(4), 100)
+    err = np.where(bins == 0, 3.0, 1.0)
+    assert weak_spots(err, bins, 2.0) == []
+    assert [w.label for w in weak_spots(err, bins, 1.99)] == [0]
 
 
 def test_weak_spots_min_n_sorting_and_refusals():

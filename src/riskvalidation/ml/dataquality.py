@@ -1,6 +1,6 @@
 """Data-quality checks as counted checks feeding a ``TestResult``: completeness, validity ranges, uniqueness,
 consistency, timeliness and label consistency (dossier 06 C.7 l.1045-1047; I.1 l.1198; ECB guide paragraph 52(h)(vii)
-and Overarching paragraph 11). Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/dataquality.py``.
+and Overarching paragraph 11). Contract: ``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/dataquality.py``.
 """
 
 from __future__ import annotations

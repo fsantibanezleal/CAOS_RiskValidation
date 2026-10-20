@@ -41,4 +41,7 @@ Conventions of every page:
 Findings of unit U14-E1 against the contract (each is stated again on its page): F1 the 5th percentile of the reason-code overlap is
 not bounded by the mean (page 02); F2 the float product of the split-conformal rank misrounds for some `(n, alpha)` and the
 contract's two examples are not among them (page 05); F3 MAPIE's classification quantile is the k-th or the (k + 1)-th order
-statistic (page 05); F4 the share of the worst-subsample test has a method-inherent false-alarm rate under no shift (page 08).
+statistic (page 05); F4 the share of the worst-subsample test has a method-inherent false-alarm rate under no shift (page 08), closed by the permutation
+reference (page 01). The fix round of the review (engine-ml-api 1.1.0) adds the Beta-Binomial null of the conformal coverage test
+(page 05), the signed reason codes (page 02), the always-`not_evaluated` CBPE row (page 07) and the 12-decimal strict boundaries
+(page 09).

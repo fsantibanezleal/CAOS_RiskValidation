@@ -4,7 +4,7 @@ Perturbation (PiML "Robustness"; SR 11-7 sensitivity analysis): Gaussian noise o
 standard deviation is added to the **evaluation** features only, never to the training slice, and AUC and Brier are read
 against eps. Resilience (PiML "Resilience"): performance on the worst subsample by a shift score (the worst 10 percent
 is the dossier's example) and on out-of-time windows. A model enters only as a predict callable on arrays; the engine
-imports no learning library. Contract: ``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/robustness.py``.
+imports no learning library. Contract: ``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/robustness.py``.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from riskvalidation.ml import _logistic
-from riskvalidation.ml._checks import binary, decimal, mat, nonneg, predictions, same_rows, scalar, vec
+from riskvalidation.ml._checks import binary, decimal, index, mat, nonneg, predictions, same_rows, scalar, vec
 from riskvalidation.validation.discrimination import auc_with_variance
 
 Predict = Callable[[np.ndarray], np.ndarray]
@@ -104,13 +104,15 @@ def robustness_curve(
 
 def robustness_finding(curve: RobustnessCurve, tolerance: float, preset_eps: float) -> bool:
     """True exactly when the AUC loss ``-auc_delta`` at ``preset_eps`` exceeds ``tolerance`` (a loss equal to the
-    tolerance is not a finding). ``preset_eps`` must be a point of the grid."""
+    tolerance is not a finding). The loss is rounded to 12 decimals before it is compared, so a loss that is the
+    tolerance in decimals (0.80 - 0.78 is 0.020000000000000018 in floats) is not a finding. ``preset_eps`` must be a
+    point of the grid."""
     tol = nonneg(tolerance, "tolerance")
     eps = scalar(preset_eps, "preset_eps")
     hits = [i for i, g in enumerate(curve.grid) if math.isclose(g, eps, rel_tol=0.0, abs_tol=1e-12)]
     if not hits:
         raise ValueError(f"preset_eps {eps} is not a point of the grid {curve.grid}")
-    return bool(-curve.auc_delta[hits[0]] > tol)
+    return bool(round(-curve.auc_delta[hits[0]], 12) > tol)
 
 
 def shift_score_rank(X_dev: np.ndarray, X_eval: np.ndarray, seed: int) -> np.ndarray:
@@ -126,6 +128,10 @@ def shift_score_rank(X_dev: np.ndarray, X_eval: np.ndarray, seed: int) -> np.nda
     if min(len(dev), len(ev)) < _logistic.FOLDS:
         raise ValueError(f"X_dev and X_eval need at least {_logistic.FOLDS} rows each")
     return _logistic.crossfit_resemblance(dev, ev, seed)[len(dev) :]
+
+
+class SingleClassSubsampleError(ValueError):
+    """The worst subsample holds a single class, so it has no AUC (a ``ValueError``)."""
 
 
 @dataclass(frozen=True)
@@ -169,9 +175,90 @@ def worst_subsample_performance(
         return SubsampleResult(n=n, auc=auc_full, brier=brier_full, auc_full=auc_full, brier_full=brier_full)
     idx = np.argsort(-s, kind="stable")[:m]
     if yy[idx].min() == yy[idx].max():
-        raise ValueError(f"the worst subsample of {m} rows holds a single class: no AUC (raise share)")
+        raise SingleClassSubsampleError(f"the worst subsample of {m} rows holds a single class: no AUC (raise share)")
     auc, brier = _metrics(p[idx], yy[idx])
     return SubsampleResult(n=m, auc=auc, brier=brier, auc_full=auc_full, brier_full=brier_full)
+
+
+@dataclass(frozen=True)
+class ShiftReference:
+    """The permutation reference of the worst-subsample AUC drop: the drop observed on the evaluation rows, the drops of
+    ``n_permutations`` random re-labellings of the pooled rows as development and evaluation (``null_drops``, empty
+    without development labels), the one-sided p-value ``(1 + #{null >= observed}) / (len(null_drops) + 1)``
+    (NaN without development labels or when no permutation has a drop), the ``share`` of the worst subsample and the
+    number of permutations left out because their worst subsample held a single class and has no AUC (``n_undefined``;
+    ``len(null_drops) + n_undefined = n_permutations``)."""
+
+    observed_drop: float
+    null_drops: tuple[float, ...]
+    p_value: float
+    n_permutations: int
+    share: float
+    labelled: bool
+    n_undefined: int = 0
+
+
+def shift_permutation_reference(
+    predict: Predict,
+    X_dev: np.ndarray,
+    y_dev: np.ndarray | None,
+    X_eval: np.ndarray,
+    y_eval: np.ndarray,
+    score: np.ndarray,
+    share: float,
+    shift_permutations: int = 199,
+    seed: int = 0,
+) -> ShiftReference:
+    """An exact permutation reference for the drop ``auc_full - auc_worst`` of ``worst_subsample_performance``.
+
+    Under no shift the evaluation rows with the highest shift score are a region of the feature space on which the AUC
+    is lower by range restriction, so the raw drop is positive under the null (finding F4 of unit U14-E1, size 0.1055).
+    The reference pools the development rows ``(X_dev, y_dev)`` and the evaluation rows ``(X_eval, y_eval)`` and
+    repeats ``shift_permutations`` times (R, default 199, a convention): permute the domain labels keeping the two group
+    sizes, refit the shift score exactly as ``shift_score_rank`` does (cross-fitted, the permuted "development" rows
+    class 0, the permuted "evaluation" rows class 1), and compute the drop on the permuted evaluation rows with
+    ``worst_subsample_performance`` at the same ``share``. ``score`` is the shift score of the observed evaluation rows
+    (``shift_score_rank``); the observed drop is that of ``worst_subsample_performance(predict, X_eval, y_eval, score,
+    share)``. The p-value is ``(1 + #{null drops >= observed drop}) / (R + 1)``. A permutation whose worst subsample
+    holds a single class has no AUC and is left out (counted in ``n_undefined``; R is then the number of drops that
+    exist, a conditional permutation test: the observed subsample has an AUC, or the function raises). Deterministic for
+    a ``seed``.
+
+    ``y_dev=None`` (no development labels) returns an unlabelled reference: no null drops and a NaN p-value."""
+    dev, ev = mat(X_dev, "X_dev"), mat(X_eval, "X_eval")
+    if dev.shape[1] != ev.shape[1]:
+        raise ValueError(f"X_eval must have the {dev.shape[1]} columns of X_dev, got {ev.shape[1]}")
+    y_ev = binary(y_eval, "y_eval")
+    s = vec(score, "score")
+    same_rows(X_eval=ev, y_eval=y_ev, score=s)
+    r = index(shift_permutations, "shift_permutations", 10**9, lo=1)
+    sh = scalar(share, "share")
+    if min(len(dev), len(ev)) < _logistic.FOLDS:
+        raise ValueError(f"X_dev and X_eval need at least {_logistic.FOLDS} rows each")
+    obs = worst_subsample_performance(predict, ev, y_ev, s, sh)
+    observed = float(obs.auc_full - obs.auc)
+    if y_dev is None:
+        return ShiftReference(observed, (), math.nan, r, sh, False)
+    y_dv = binary(y_dev, "y_dev", both=False)
+    same_rows(X_dev=dev, y_dev=y_dv)
+    pooled, y_pool = np.vstack([dev, ev]), np.concatenate([y_dv, y_ev])
+    n_dev, n = len(dev), len(dev) + len(ev)
+    rng = np.random.default_rng(seed)
+    nulls: list[float] = []
+    undefined = 0
+    for _ in range(r):
+        perm = rng.permutation(n)
+        i_dev, i_ev = perm[:n_dev], perm[n_dev:]
+        sub_seed = int(rng.integers(0, 2**63 - 1))
+        sc = _logistic.crossfit_resemblance(pooled[i_dev], pooled[i_ev], sub_seed)[n_dev:]
+        try:
+            res = worst_subsample_performance(predict, pooled[i_ev], y_pool[i_ev], sc, sh)
+        except SingleClassSubsampleError:
+            undefined += 1
+            continue
+        nulls.append(float(res.auc_full - res.auc))
+    p = (1 + sum(d >= observed for d in nulls)) / (len(nulls) + 1) if nulls else math.nan
+    return ShiftReference(observed, tuple(nulls), float(p), r, sh, True, undefined)
 
 
 def oot_window_performance(predict: Predict, X: np.ndarray, y: np.ndarray, window: np.ndarray) -> dict[str, float]:

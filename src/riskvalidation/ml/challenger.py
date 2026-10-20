@@ -1,7 +1,7 @@
 """Champion and challenger: the paired bootstrap of the Brier difference and the share of obligors whose grade differs
 by two or more notches, beside the existing ``disc_delong`` (dossier 06 C.7 l.1041-1044; I.1 l.1196; SS1/23 principle
 3.3(b)(iii); ECB guide paragraph 60). The existing ``bootstrap_ci`` resamples one score and cannot resample two
-forecasts jointly, so the paired form is new. Contract: ``engine-ml-api`` 1.0.0, module
+forecasts jointly, so the paired form is new. Contract: ``engine-ml-api`` 1.1.0, module
 ``riskvalidation/ml/challenger.py``.
 """
 

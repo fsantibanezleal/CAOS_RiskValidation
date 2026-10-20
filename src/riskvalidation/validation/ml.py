@@ -1,5 +1,5 @@
 """The ML validation tests (dossier 06 C.7 l.979-1058 and I.1 l.1184-1200; dossier 04 J.2 l.881-883): each returns one
-``TestResult`` that validates against ``common/test-result``; contract ``engine-ml-api`` 1.0.0, module
+``TestResult`` that validates against ``common/test-result``; contract ``engine-ml-api`` 1.1.0, module
 ``validation.ml``.
 
 Test ids are prefixed ``ml.``. The lights come from the engine's ``Policy`` (``Threshold(kind, amber, red)`` keyed by
@@ -20,6 +20,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from typing import Any
 
+import numpy as np
+
 from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.policy import Policy, Threshold
 from riskvalidation.core.result import Light, TestResult
@@ -31,15 +33,15 @@ from riskvalidation.ml.dataquality import DataQualityCount
 from riskvalidation.ml.explanations import OverlapResult
 from riskvalidation.ml.generalisation import OverfitResult, WeakSpot
 from riskvalidation.ml.leakage import AucResult, SingleFeatureAuc
-from riskvalidation.ml.robustness import RobustnessCurve, SubsampleResult
+from riskvalidation.ml.robustness import RobustnessCurve, ShiftReference, SubsampleResult
 from riskvalidation.ml.seeds import SeedDispersion
 
 NAN = float("nan")
-BATTERY = "ml-battery-1.0.0"
+BATTERY = "ml-battery-1.1.0"
 
 DOSSIER_06_C7 = (
     "dossier 06 (model risk management and validation) C.7 ML/AI validation and I.1, the validation engine "
-    "catalogue; contract engine-ml-api 1.0.0"
+    "catalogue; contract engine-ml-api 1.1.0"
 )
 SR_11_7 = (
     "SR 11-7 sensitivity analysis (historical reference text, superseded in the US by SR 26-2; dossier 06 A.1): "
@@ -132,7 +134,7 @@ def robustness(
     hits = [i for i, g in enumerate(curve.grid) if math.isclose(g, eps, rel_tol=0.0, abs_tol=1e-12)]
     if not hits:
         raise ValueError(f"preset_eps {eps} is not a point of the grid {curve.grid}")
-    deg = -curve.auc_delta[hits[0]]
+    deg = round(-curve.auc_delta[hits[0]], 12)  # 12 decimals: a loss that is the tolerance in decimals stays green
     version = _version(pol, perturbation_tolerance=tol, preset_eps=eps)
     ins = (list(curve.grid), list(curve.auc), list(curve.brier), tol, eps)
     th = pol.threshold(test_id)
@@ -247,29 +249,119 @@ def _simple(
     )
 
 
-def shift_resilience(model_id: str, result: SubsampleResult, policy: Policy | None = None) -> TestResult:
-    """Resilience to distribution shift (06 C.7 l.1013-1015). metric = the AUC of the full sample minus the AUC of the
-    worst subsample (AUC points; n = the subsample rows). Light (``ml.shift_resilience``, upper_bad, inclusive): green
-    below the amber cut point (0.05), amber from it, red from the red cut point (0.10); conventions, no dossier
-    value."""
+def shift_resilience(
+    model_id: str, result: SubsampleResult, reference: ShiftReference, policy: Policy | None = None
+) -> TestResult:
+    """Resilience to distribution shift (06 C.7 l.1013-1015), read against an exact permutation reference. statistic =
+    metric = the AUC of the full sample minus the AUC of the worst subsample (AUC points; n = the subsample rows);
+    p_value = ``reference.p_value``, ``(1 + #{null drops >= observed drop}) / (R + 1)`` over the drops of random
+    re-labellings of the pooled development and evaluation rows
+    (``riskvalidation.ml.robustness.shift_permutation_reference``). Under no shift the raw drop is positive (range
+    restriction on the worst subsample, finding F4), so the drop alone is not read against a cut point. Light
+    (``ml.shift_resilience``, p_value kind): red below ``alpha_red`` (0.01), amber below ``alpha_amber`` (0.05), green
+    otherwise; conventions. The null drops are summarised in ``extras`` (their mean and their 95th percentile). Without
+    development labels the test is not_evaluated. ``reference.observed_drop`` must be the drop of ``result``, else it
+    raises."""
+    test_id = "ml.shift_resilience"
+    h0 = "the AUC drop on the worst subsample by shift score is the drop of a random re-labelling of the pooled rows"
+    alt = "the model loses more AUC on the rows that resemble the development sample least than chance explains"
+    ref = (
+        f"{DOSSIER_06_C7} (C.7 l.1013-1015, I.1 l.1190); PiML resilience; SS1/23 operating boundaries; "
+        "permutation test (Phipson and Smyth 2010, doi:10.2202/1544-6115.1585)"
+    )
+    pol = _resolve(policy)
     drop = float(result.auc_full - result.auc)
-    return _simple(
-        "ml.shift_resilience",
-        model_id,
-        drop,
-        int(result.n),
-        policy,
-        h0="the AUC on the worst subsample by shift score equals the full-sample AUC",
-        alt="the model loses AUC on the rows that resemble the development sample least",
-        ref=f"{DOSSIER_06_C7} (C.7 l.1013-1015, I.1 l.1190); PiML resilience; SS1/23 operating boundaries",
-        params={},
+    version = _version(pol, shift_permutations=reference.n_permutations, share=reference.share)
+    ins = (
+        result.n,
+        result.auc,
+        result.brier,
+        result.auc_full,
+        result.brier_full,
+        reference.observed_drop,
+        list(reference.null_drops),
+        reference.p_value,
+        reference.n_permutations,
+        reference.n_undefined,
+        reference.share,
+    )
+    extras = {
+        "auc_full": result.auc_full,
+        "auc_worst": result.auc,
+        "brier_full": result.brier_full,
+        "brier_worst": result.brier,
+        "shift_permutations": reference.n_permutations,
+        "n_undefined": reference.n_undefined,
+        "share": reference.share,
+    }
+    n = int(result.n)
+    if reference.labelled and _isfinite(drop, reference.observed_drop) and abs(reference.observed_drop - drop) > 1e-9:
+        raise ValueError(
+            f"reference.observed_drop {reference.observed_drop} is not the drop {drop} of result: build the reference "
+            "from the same predict, rows, score and share"
+        )
+    th = pol.threshold(test_id)
+    if th is None:
+        return _not_evaluated(
+            test_id,
+            h0,
+            alt,
+            ref,
+            version,
+            f"policy {pol.label} holds no threshold for {test_id}",
+            n=n,
+            model_id=model_id,
+            extras=extras,
+            inputs=ins,
+        )
+    if not reference.labelled:
+        return _not_evaluated(
+            test_id,
+            h0,
+            alt,
+            ref,
+            version,
+            "no development labels: the permutation reference pools the development and evaluation rows with labels",
+            n=n,
+            model_id=model_id,
+            extras=extras,
+            inputs=ins,
+        )
+    if not _isfinite(drop, reference.p_value) or not reference.null_drops:
+        return _not_evaluated(
+            test_id,
+            h0,
+            alt,
+            ref,
+            version,
+            "the AUC drop or its permutation p-value is not finite (missing data)",
+            n=n,
+            model_id=model_id,
+            extras=extras,
+            inputs=ins,
+        )
+    nulls = np.asarray(reference.null_drops, dtype=float)
+    return TestResult(
+        test_id=test_id,
+        h0=h0,
+        alternative=alt,
+        reference=ref,
+        policy_version=version,
+        light=th.classify(reference.p_value),
+        statistic=drop,
+        p_value=float(reference.p_value),
+        metric=drop,
+        alpha_amber=th.amber,
+        alpha_red=th.red,
+        n=n,
+        model_id=model_id,
+        inputs_hash=inputs_hash(*ins),
         extras={
-            "auc_full": result.auc_full,
-            "auc_worst": result.auc,
-            "brier_full": result.brier_full,
-            "brier_worst": result.brier,
+            "thresholds": {"alpha_amber": th.amber, "alpha_red": th.red},
+            **extras,
+            "null_mean": float(nulls.mean()),
+            "null_p95": float(np.percentile(nulls, 95.0)),
         },
-        inputs=(result.n, result.auc, result.brier, result.auc_full, result.brier_full),
     )
 
 
@@ -371,7 +463,7 @@ def overfit(model_id: str, result: OverfitResult, policy: Policy | None = None) 
     return _simple(
         "ml.overfit",
         model_id,
-        float(result.gap) if _isfinite(result.gap) else None,
+        round(float(result.gap), 12) if _isfinite(result.gap) else None,  # 12 decimals, as overfit_gap
         None,
         pol,
         h0="the model performs on the holdout as on the training data",
@@ -420,17 +512,22 @@ def weak_spot(
 
 
 def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | None = None) -> TestResult:
-    """Conformal coverage (06 C.7 l.1019-1028; I.1 l.1194). p_value = the two-sided binomial p-value of the coverage
-    against ``1 - alpha``; metric = the empirical coverage; statistic = coverage minus target. Light
-    (``ml.conformal_coverage``, p_value kind): red below ``alpha_red`` (0.01), amber below ``alpha_amber`` (0.05), green
-    otherwise. A coverage loss is read as an exchangeability violation, never as proof."""
+    """Conformal coverage (06 C.7 l.1019-1028; I.1 l.1194). p_value = the two-sided Beta-Binomial p-value of the covered
+    count given the calibration size (``result.p_value``; the coverage of a split conformal set is Beta(k, n_cal + 1 -
+    k) distributed, so the count of m test points is Beta-Binomial(m, k, n_cal + 1 - k)); metric = the empirical
+    coverage; statistic = coverage minus target. The dossier's binomial p-value is in ``extras["p_value_binomial"]``
+    beside it and never drives the light. Light (``ml.conformal_coverage``, p_value kind): red below ``alpha_red``
+    (0.01), amber below ``alpha_amber`` (0.05), green otherwise. When ``k > n_cal`` the set is every label and the
+    coverage is 1 by construction: not_evaluated. A coverage loss is read as an exchangeability violation, never as
+    proof."""
     test_id = "ml.conformal_coverage"
     pol = _resolve(policy)
     h0 = "the coverage of the split conformal set equals the target 1 - alpha (exchangeability holds)"
     alt = "the coverage differs from the target: the calibration and evaluation samples are not exchangeable"
     ref = f"{DOSSIER_06_C7} (C.7 l.1019-1028, I.1 l.1194); {ANGELOPOULOS}"
-    version = _version(pol, target=result.target)
-    ins = (result.n, result.coverage, result.target, result.p_value)
+    version = _version(pol, target=result.target, n_cal=result.n_cal)
+    ins = (result.n, result.coverage, result.target, result.p_value, result.n_cal, result.k, result.p_value_binomial)
+    extras = {"target": result.target, "n_cal": int(result.n_cal), "k": int(result.k)}
     th = pol.threshold(test_id)
     if th is None:
         return _not_evaluated(
@@ -442,6 +539,19 @@ def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | N
             f"policy {pol.label} holds no threshold for {test_id}",
             n=int(result.n),
             model_id=model_id,
+            inputs=ins,
+        )
+    if result.k > result.n_cal:
+        return _not_evaluated(
+            test_id,
+            h0,
+            alt,
+            ref,
+            version,
+            f"k = {result.k} exceeds n_cal = {result.n_cal}: the set is every label, the coverage is 1 by construction",
+            n=int(result.n),
+            model_id=model_id,
+            extras=extras,
             inputs=ins,
         )
     if not _isfinite(result.p_value, result.coverage, result.target):
@@ -471,7 +581,11 @@ def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | N
         n=int(result.n),
         model_id=model_id,
         inputs_hash=inputs_hash(*ins),
-        extras={"thresholds": {"alpha_amber": th.amber, "alpha_red": th.red}, "target": result.target},
+        extras={
+            "thresholds": {"alpha_amber": th.amber, "alpha_red": th.red},
+            **extras,
+            "p_value_binomial": float(result.p_value_binomial),
+        },
     )
 
 
@@ -639,11 +753,12 @@ def _with_events(res: TestResult, n_events: int) -> TestResult:
 
 
 def cbpe_estimate(model_id: str, estimate: CbpeAuc, labels_supplied: bool = False) -> TestResult:
-    """The label-free AUC estimate (06 C.7 l.1052-1058; I.1 l.1199). No policy threshold: the estimate is not evidence.
-    not_evaluated when a label is supplied (the labelled AUC is read instead); otherwise an estimate row with
-    metric = statistic = the estimated AUC and the light amber, so that it is never green or red evidence, with the
-    label ``estimate`` and the four assumptions in ``extras`` (UNVERIFIED reading of the contract's "an estimate row":
-    the engine Light has no estimate value, see ``docs/ml/09``)."""
+    """The label-free AUC estimate (06 C.7 l.1052-1058; I.1 l.1199). An estimate, not a test: the row is always
+    ``not_evaluated`` with a null statistic, metric and p-value, so that it never moves ``SuiteRun.worst()``. The reason
+    is "an estimate, not a test: CBPE estimates performance without labels (06 C.7 l.1052-1058)" followed by the four
+    assumptions (in ``notes``), or, when a label is supplied, "a label is supplied: read the labelled AUC, an estimate
+    is not evidence when labels exist". The estimated AUC, its label ``estimate`` and the assumptions are in
+    ``extras["estimate"]``."""
     test_id = "ml.cbpe_estimate"
     h0 = (
         "the label-free AUC estimate equals the labelled AUC (calibrated probabilities, no concept drift, "
@@ -653,40 +768,22 @@ def cbpe_estimate(model_id: str, estimate: CbpeAuc, labels_supplied: bool = Fals
     ref = f"{DOSSIER_06_C7} (C.7 l.1052-1058, I.1 l.1199); {NANNYML}"
     version = _version(_resolve(None), policy_threshold="none")
     ins = (estimate.estimated_auc, estimate.label, list(estimate.assumptions), labels_supplied)
-    extras = {"label": estimate.label, "assumptions": list(estimate.assumptions)}
+    extras = {
+        "estimate": {
+            "estimated_auc": float(estimate.estimated_auc),
+            "label": estimate.label,
+            "assumptions": list(estimate.assumptions),
+        }
+    }
     if labels_supplied:
-        return _not_evaluated(
-            test_id,
-            h0,
-            alt,
-            ref,
-            version,
-            "a label is supplied: read the labelled AUC, an estimate is not evidence when labels exist",
-            model_id=model_id,
-            extras=extras,
-            inputs=ins,
+        reason = "a label is supplied: read the labelled AUC, an estimate is not evidence when labels exist"
+    else:
+        reason = (
+            "an estimate, not a test: CBPE estimates performance without labels (06 C.7 l.1052-1058); it assumes "
+            + ", ".join(estimate.assumptions)
+            + "; it complements, never replaces, back-testing"
         )
-    if not _isfinite(estimate.estimated_auc):
-        return _not_evaluated(
-            test_id, h0, alt, ref, version, "the estimate is not finite", model_id=model_id, extras=extras, inputs=ins
-        )
-    return TestResult(
-        test_id=test_id,
-        h0=h0,
-        alternative=alt,
-        reference=ref,
-        policy_version=version,
-        light=Light.AMBER,
-        statistic=float(estimate.estimated_auc),
-        metric=float(estimate.estimated_auc),
-        model_id=model_id,
-        inputs_hash=inputs_hash(*ins),
-        notes="estimate, not evidence: assumes "
-        + ", ".join(estimate.assumptions)
-        + "; it complements, never replaces, "
-        "back-testing",
-        extras={"thresholds": {"policy_threshold": "none"}, **extras},
-    )
+    return _not_evaluated(test_id, h0, alt, ref, version, reason, model_id=model_id, extras=extras, inputs=ins)
 
 
 def challenger_brier(model_id: str, result: PairedBrier) -> TestResult:

@@ -1,7 +1,7 @@
 """Seed stability: the dispersion of the AUC, of the grade assigned to each obligor and of the attribution ranks across
 retraining seeds (dossier 06 I.1 l.1191; ECB guide paragraph 43 on the randomness of the training process and paragraph
 59 on stored seeds, A.3 l.290-299 and B.9 l.647). The training function is a callable the pipeline supplies. Contract:
-``engine-ml-api`` 1.0.0, module ``riskvalidation/ml/seeds.py``.
+``engine-ml-api`` 1.1.0, module ``riskvalidation/ml/seeds.py``.
 """
 
 from __future__ import annotations

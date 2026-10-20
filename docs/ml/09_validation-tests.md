@@ -18,39 +18,51 @@ serialised, never a number.
 | Test id | Metric read | Kind | Amber | Red | Boundary |
 |---|---|---|---|---|---|
 | `ml.robustness` | AUC degradation at the preset scale, $-\Delta_{\mathrm{AUC}}$ | upper_bad | 0.02 (`perturbation_tolerance`) | 0.04 (twice it) | strict |
-| `ml.shift_resilience` | AUC of the full sample minus AUC of the worst subsample | upper_bad | 0.05 | 0.10 | inclusive |
+| `ml.shift_resilience` | permutation p-value of the AUC drop on the worst subsample (statistic: the drop) | p_value | 0.05 | 0.01 | inclusive |
 | `ml.seed_stability` | standard deviation of the AUC across seeds | upper_bad | 0.01 | 0.02 | inclusive |
 | `ml.reason_code_stability` | mean top-four reason overlap across refits | lower_bad | 0.80 | 0.60 | inclusive |
 | `ml.effect_agreement` | Spearman rho of mean absolute SHAP against the ALE range | lower_bad | 0.70 | 0.40 | inclusive |
 | `ml.additivity` | maximum Shapley additivity gap | upper_bad | 1e-9 | 1e-9 | strict |
 | `ml.overfit` | train minus holdout AUC gap | upper_bad | 0.05 (`overfit_tolerance`) | 0.05 | strict |
 | `ml.weak_spot` | error ratio of the worst slice (0 when none) | upper_bad | 2.0 (`weak_spot_multiple`) | 1e12 (sentinel: never red) | strict |
-| `ml.conformal_coverage` | binomial p-value of the coverage against $1-\alpha$ | p_value | 0.05 | 0.01 | inclusive |
+| `ml.conformal_coverage` | Beta-Binomial p-value of the coverage against $1-\alpha$ given `n_cal` | p_value | 0.05 | 0.01 | inclusive |
 | `ml.leakage_screen.single_feature_auc` | largest single-feature $\max(\mathrm{AUC},1-\mathrm{AUC})$ | upper_bad | 0.95 | 0.95 | strict |
 | `ml.leakage_screen.resemblance_auc` | cross-fitted development against out-of-time AUC | upper_bad | 0.70 | 0.70 | strict |
 | `ml.leakage_screen.temporal_order` | feature values dated after the observation date | upper_bad | 1 | 1 | inclusive (a rule) |
 | `ml.leakage_screen.entity_overlap` | indicator of any test entity present in training | upper_bad | 1 | 1 | inclusive (a rule) |
 | `ml.data_quality` | largest share of failed checks | upper_bad | 0.01 | 0.05 | inclusive |
-| `ml.cbpe_estimate` | no policy threshold: the estimate is not evidence | none | | | |
+| `ml.cbpe_estimate` | no policy threshold: an estimate, not a test (always `not_evaluated`) | none | | | |
 | `ml.challenger_brier` | no policy threshold: the 95 percent paired interval | none | | | |
 
 The four named parameters are the approved values of decision V6 of unit U14; every other cut point is the contract's proposal with
 no dossier value, a convention awaiting the main session's approval, never a regulatory threshold (dossier 06 I.6). The rows are in
-`riskvalidation.ml.policy` because `policies/default.json` is the integrator's file; they can be moved there as they stand.
+`riskvalidation.ml.policy` because `policies/default.json` is the integrator's file; `threshold_rows()` gives them as plain mappings
+(`kind`, `amber`, `red`, `source`; the strict rows as their `nextafter` floats) to write there as they stand.
+
+**Conventions added by the review.** The strict rows are decided on 12-decimal values: `overfit_gap` rounds the gap, and
+`robustness_finding` and `ml.robustness` round the AUC loss, to 12 decimals before comparing, so `0.80 - 0.75` (0.050000000000000044 in
+floats) and `0.85 - 0.80` (0.04999999999999993) are both a gap of exactly 0.05, green at the tolerance 0.05. Two constants of the
+resemblance fit are conventions of the engine, not regulatory values: the ridge strength `RIDGE = 1` and the number of cross-fitting
+folds `FOLDS = 5` (`ml/_logistic.py`); they change the numbers `resemblance_auc` and `shift_score_rank` produce.
 
 Light rules (each in the function's docstring):
 
 - `robustness`: green when the AUC degradation at the preset scale is at most the tolerance, amber above it up to twice it, red
   above; statistic and metric are the degradation.
-- `shift_resilience`, `seed_stability`, `reason_code_stability`, `effect_agreement`: the metric against its row; `n` is the
-  subsample rows, the seeds, the refits and the features.
+- `shift_resilience`: the permutation p-value of `shift_permutation_reference` (page 01) against the p-value cut points; statistic and
+  metric are the observed drop, `extras` holds `null_mean`, `null_p95` and `shift_permutations`; `not_evaluated` without development
+  labels; `n` is the subsample rows.
+- `seed_stability`, `reason_code_stability`, `effect_agreement`: the metric against its row; `n` is the seeds, the refits and the
+  features.
 - `additivity` (red when the gap exceeds the numeric tolerance 1e-9, never amber), `overfit` (red when the gap exceeds the
   tolerance, never amber), `weak_spot` (amber when the worst ratio exceeds $k$, never red).
-- `conformal_coverage`: red below `alpha_red`, amber below `alpha_amber`, on the binomial p-value; the metric is the coverage.
+- `conformal_coverage`: red below `alpha_red`, amber below `alpha_amber`, on the Beta-Binomial p-value; the metric is the coverage;
+  `extras` holds `n_cal`, `k` and `p_value_binomial`; `not_evaluated` when `k` exceeds `n_cal`.
 - `leakage_screen`: the worst of four screens read on their own keys; red when any trips; statistic is the number of screens that
   tripped, `extras["screens"]` holds each value and light.
 - `data_quality`: the largest failed share over the counts; `n` and `n_events` are the cells or rows checked and failed, summed.
-- `cbpe_estimate`: not_evaluated when a label is supplied; otherwise an estimate row.
+- `cbpe_estimate`: always `not_evaluated` (an estimate, not a test); statistic, metric and p-value null; the estimated AUC in
+  `extras["estimate"]`, the four assumptions in the notes; with a label supplied the reason is that the labelled AUC is read.
 - `challenger_brier`: amber when the paired interval lies above zero (the challenger's Brier is higher), green otherwise.
 
 ## Open points for the main session (decisions the contract leaves open)
