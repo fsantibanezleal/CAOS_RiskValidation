@@ -6,7 +6,7 @@ bound, Gaussian, t, comonotonic, worst case) instead of a single diversified num
 
 ## The rows
 
-`dependence_band(ppfs, ec, el, corr, nu_set, level, horizon_years, n_draws, seed, chunk_size, bounds_n, bounds_epsilon)` returns a
+`dependence_band(ppfs, ec, el, corr, nu_set, level, horizon_years, n_draws, seed, chunk_size, bounds_n, bounds_epsilon, ec_consistency_tolerance)` returns a
 `Band` whose rows run over the same marginals, in this order:
 
 | Row (`method`) | `nu` | Capital |
@@ -34,6 +34,11 @@ row that breaks either rule.
 - The lower-bound row is a signed capital: the best VaR less the sum of the expected losses may be negative (Table 4, $d=56$: best
   VaR 45.82 against an expected loss of 56) and is reported as computed, with its diversification factor; every other row is not
   below zero.
+- `ec` must match the marginals: for every $k$ the band refuses $|EC_k-(F_k^{-1}(	ext{level})-EL_k)|>	au\max(1,|EC_k|)$
+  with a `ValueError` naming the marginal and both values. $	au$ is the keyword `ec_consistency_tolerance`, default 0.01, a
+  convention: `marginal_ppf_sample` interpolates while `var_from_sample` takes the order statistic, so the two agree only to
+  sampling resolution.
+- `dependence_band` inherits the refusal of `worst_var_bounds` for a non-finite bound (`bounds_n` too small for an unbounded tail).
 - A row above the headline is a true result (VaR is not subadditive): the band reports it, `validation.aggregation.diversification_sign`
   flags it, and nothing repairs or refuses it here.
 - One horizon and one confidence level apply to every row: `level` lies in $(0,1)$ and `horizon_years` is a positive integer (the

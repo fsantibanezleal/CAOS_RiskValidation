@@ -34,7 +34,7 @@ under the seed, sweeps until the value changes by less than `epsilon` between tw
 `converged = False`) and returns `(matrix, value, sweeps, converged)`, the matrix a column-wise permutation of the input.
 `worst_var_bounds(ppfs, alpha, n, epsilon, max_sweeps, seed)` builds the four matrices, runs the four rearrangements with the seeds
 `seed` to `seed + 3` and returns `VarBounds` (`lower_range` $=(t_N,\bar t_N)$, `upper_range` $=(s_N,\bar s_N)$, `sweeps` in that order,
-`converged` when all four stopped on `epsilon`). `comonotonic_var(ppfs, q)` is $\sum_kF_k^{-1}(q)$.
+`converged` when all four stopped on `epsilon`). It raises `ValueError` when any of the four values is not finite: with $n$ not above the number of marginals the last cell of the upper matrix is $F^{-1}(1)=+\infty$ in every row ("n is too small for the unbounded upper tail: s-bar is infinite; use n > the number of marginals"). `comonotonic_var(ppfs, q)` is $\sum_kF_k^{-1}(q)$.
 
 ## Golden values
 

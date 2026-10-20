@@ -95,6 +95,8 @@ def hybrid_quantile(samples: np.ndarray, q: float) -> float:
     if np.any(np.ptp(x, axis=0) == 0.0):
         raise ValueError("samples has a constant column: its correlation is undefined")
     v = np.array([var_from_sample(x[:, k], level) for k in range(x.shape[1])])
+    if np.any(v < 0.0):
+        raise ValueError(f"the square-root formula needs nonnegative quantiles, got {v.tolist()}")
     r = np.corrcoef(x, rowvar=False).reshape(x.shape[1], x.shape[1])
     return math.sqrt(max(float(v @ r @ v), 0.0))
 

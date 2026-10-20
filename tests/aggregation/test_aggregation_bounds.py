@@ -52,8 +52,10 @@ def test_rearrangement_table1_golden():
     assert x[-1] == pytest.approx([69.71068] * 3, abs=5e-6)
     assert x[-1].sum() == pytest.approx(209.1320, abs=5e-4)
     assert x.sum(axis=0) == pytest.approx([851.72901] * 3, abs=5e-5)
+    ys = []
     for seed in (0, 1, 2):
         y, value, sweeps, converged = b.rearrangement_algorithm(x, "max-min-row-sum", 1e-9, 1000, seed)
+        ys.append(y)
         assert converged and sweeps >= 1
         assert y.sum(axis=0) == pytest.approx([851.72901] * 3, abs=5e-5)
         for j in range(3):
@@ -62,6 +64,7 @@ def test_rearrangement_table1_golden():
         assert value == pytest.approx(rows.min(), abs=1e-12)
         assert rows.min() == pytest.approx(44.7671, abs=0.5)
         assert rows.max() == pytest.approx(87.8122, abs=0.5)
+    assert not np.array_equal(ys[0], ys[1])  # the random start of F5 step 3 makes seeds differ (review F3)
 
 
 def test_rearrangement_invariants_and_refusals():
@@ -120,6 +123,8 @@ def test_worst_var_bounds_table4_d8(alpha):
     assert res.upper_range[0] == pytest.approx(upper[0], abs=tol)
     assert res.upper_range[1] == pytest.approx(upper[1], abs=tol)
     assert res.converged
+    assert res.upper_range[1] - res.upper_range[0] > 1e-4  # the s-bar and s matrices differ (review F2)
+    assert res.lower_range[1] >= res.lower_range[0]
     assert len(res.sweeps) == 4 and all(s >= 1 for s in res.sweeps)
     assert res.lower_range[0] <= res.lower_range[1] <= b.comonotonic_var([pareto2_ppf] * 8, alpha)
     assert b.comonotonic_var([pareto2_ppf] * 8, alpha) <= res.upper_range[0] <= res.upper_range[1]
@@ -146,3 +151,9 @@ def test_worst_var_bounds_bracket_and_refusals():
         b.worst_var_bounds(ppfs, 0.99, n=1)
     with pytest.raises(ValueError, match="ppfs"):
         b.worst_var_bounds(ppfs[:1], 0.99, n=100)
+
+
+def test_worst_var_bounds_refuses_a_non_finite_bound():
+    # review F4: with n = d the last cell of the upper matrix is F^-1(1) = +inf in every row
+    with pytest.raises(ValueError, match="n is too small for the unbounded upper tail"):
+        b.worst_var_bounds([pareto2_ppf] * 8, 0.99, n=8)

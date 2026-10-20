@@ -75,14 +75,21 @@ def test_dependence_band_golden_and_invariants(band):
 def test_band_expected_loss_and_signed_lower_bound():
     el = np.array([0.5, 1.0])
     tiny = dict(KW, n_draws=20_000, bounds_n=500)
-    out = bd.dependence_band(PPFS, EC, el, R5, [5.0], **tiny)
+    out = bd.dependence_band(PPFS, EC - el, el, R5, [5.0], **tiny)
     wb = b.worst_var_bounds(PPFS, 0.999, n=500, epsilon=1e-3, seed=5)
     by = {r.method: r for r in out.rows}
     assert by["lower-bound"].capital == pytest.approx(wb.lower_range[0] - 1.5, rel=1e-12)
     assert by["worst-case"].capital == pytest.approx(wb.upper_range[1] - 1.5, rel=1e-12)
+    # the simulated rows are EC = VaR - EL, never the VaR (review F1)
+    g = c.copula_aggregate(PPFS, R5, "gaussian", None, 1.5, 0.999, 20_000, 5, 50_000)
+    t5 = c.copula_aggregate(PPFS, R5, "t", 5.0, 1.5, 0.999, 20_000, 5, 50_000)
+    assert by["gaussian-copula"].capital == pytest.approx(g.ec, rel=1e-12)
+    assert by["gaussian-copula"].capital == pytest.approx(g.var - 1.5, rel=1e-12)
+    assert by["t-copula"].capital == pytest.approx(t5.ec, rel=1e-12)
+    assert by["t-copula"].capital == pytest.approx(t5.var - 1.5, rel=1e-12)
     # a lower bound below the expected loss is reported as computed, signed (Table 4, d = 56: 45.82 against an EL of 56)
     big_el = np.array([1.7, 1.7])  # the best VaR is 3.2: below the expected loss of 3.4
-    neg = bd.dependence_band(PPFS, EC, big_el, R5, [5.0], **tiny)
+    neg = bd.dependence_band(PPFS, EC - big_el, big_el, R5, [5.0], **tiny)
     assert [r for r in neg.rows if r.method == "lower-bound"][0].capital < 0.0
     assert all(r.capital > 0.0 for r in neg.rows if r.method != "lower-bound")  # every other row is not below zero
 
@@ -140,3 +147,15 @@ def test_band_row_invariants():
         bd.BandRow("t-copula", None, 5.0, 0.7, "information-not-capital", None)
     with pytest.raises(ValueError, match="method"):
         bd.BandRow("median", None, 5.0, 0.7, "information-not-capital", None)
+
+
+def test_band_refuses_ec_that_contradicts_the_marginals():
+    # review F6: ec = (100, 100) on unit Pareto(2) marginals whose 0.999 quantile is about 30.6
+    with pytest.raises(ValueError, match="ec_consistency_tolerance|marginal 0"):
+        bd.dependence_band([_pareto(1.0), _pareto(1.0)], np.array([100.0, 100.0]), EL0, R5, [4.0], **KW)
+    with pytest.raises(ValueError, match="marginal 1"):
+        bd.dependence_band(PPFS[:1] + [_pareto(1.0)], EC, EL0, R5, [4.0], **KW)
+    # consistent marginals pass at the default tolerance, and a loose tolerance admits the contradiction
+    bd.dependence_band(PPFS, EC, EL0, R5, [4.0], **dict(KW, n_draws=2000, bounds_n=200))
+    bd.dependence_band([_pareto(1.0), _pareto(1.0)], np.array([100.0, 100.0]), EL0, R5, [4.0],
+                       **dict(KW, n_draws=2000, bounds_n=200), ec_consistency_tolerance=10.0)
