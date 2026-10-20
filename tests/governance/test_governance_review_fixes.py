@@ -88,13 +88,8 @@ def test_importing_the_validation_package_registers_the_gov_tests():
     assert all(i in out.stdout for i in GOV_IDS)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="waiting for the corrected Contraste fixture rationale (review F2): the engine copy of "
-    "the fixture still holds the osfi-2027 and ecb sentences of the fixture builder; once the main session "
-    "sends the corrected fixture this test passes and the xfail mark is removed",
-)
 def test_scope_rationale_equals_the_fixture_rationale(inventory_doc):
+    """Review F2: the fixture's rationale is the engine's sentence (CAOS_Contraste a8170a5)."""
     for e in inventory_doc["entries"]:
         rec = scope_record(ScopeAnswers(**e["scope"]["answers"]))
         assert [d.rationale for d in rec] == [p["rationale"]["en"] for p in e["scope"]["profiles"]]
