@@ -404,3 +404,20 @@ def test_inputs_are_not_mutated_by_the_validation_functions():
     spots = np.array([1.0])  # nothing to mutate in a tuple-based API: the arrays of the engine stay untouched
     v.additivity("m", float(spots[0]))
     assert spots[0] == 1.0
+
+
+def test_ml_policy_parameters_replace_a_packaged_default_row_and_keep_a_customised_one():
+    """The packaged default policy carries the ml. rows (the batch 3 integration); a parameterised ml_policy replaces a
+    row the base holds at its packaged default and keeps a row the base customised."""
+    from riskvalidation.ml.policy import ml_policy, ml_thresholds
+
+    packaged = ml_thresholds()
+    base = Policy(policy_id="riskvalidation-default", version="2026.10.1", description="base with the packaged ml rows",
+                  thresholds={**default_policy().thresholds, **packaged})
+    tuned = ml_policy(base, perturbation_tolerance=0.01)
+    assert tuned.thresholds["ml.robustness"] == ml_thresholds(perturbation_tolerance=0.01)["ml.robustness"]
+    assert tuned.thresholds["ml.robustness"] != packaged["ml.robustness"]
+    custom = Threshold(kind="upper_bad", amber=0.5, red=0.9, source="a caller's own row")
+    own = Policy(policy_id="x", version="1", description="", thresholds={**base.thresholds, "ml.robustness": custom})
+    kept = ml_policy(own, perturbation_tolerance=0.01)
+    assert kept.thresholds["ml.robustness"] == custom
