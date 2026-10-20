@@ -251,7 +251,9 @@ def test_p2g_proxy_golden_and_invariants():
 
 def _annex_inputs(mitigation: bool = True):
     capital = {"cet1": 11.0, "at1": 1.25, "t2": 2.5}
-    target = c.internal_capital_target(c_dsib=0.015, c_p2=0.00125, c_ccob=0.025, c_ccyb=0.005, c_d=0.01875)
+    target = c.internal_capital_target(
+        c_dsib=0.015, c_p2=0.00125, c_ccob=0.025, c_ccyb=0.005, c_d=0.01875, p2r=0.00125
+    )
     rwa_by_risk = {"credit": 70.0, "market": 20.0, "operational": 10.0}
     internal = {
         "credit": 6.0,
@@ -370,3 +372,29 @@ def test_eba_static_balance_sheet_golden_and_invariants():
     with pytest.raises(ValueError, match="stage_balances"):
         c.eba_static_balance_sheet(arr(80, 15), arr(1))
     assert math.isfinite(float(out.sum()))
+
+
+def test_annex3_rows_7_and_8_read_p2r_not_c_p2():
+    """The C18 values: the bank's c_p2 (0.01) is above the art. 66 quinquies requirement p2r (0.00125)."""
+    capital, _, rwa_by, internal, plan, m = _annex_inputs()
+    target = c.internal_capital_target(
+        c_dsib=0.015, c_p2=0.01, c_ccob=0.025, c_ccyb=0.005, c_d=0.01875, p2r=0.00125
+    )
+    assert target.p2r == 0.00125 and target.c_p2 == 0.01
+    by = {r["row_id"]: r for r in c.annex3_summary(capital, target, rwa_by, internal, plan, m)}
+    assert by["7.2"]["a"]["value"] == pytest.approx(0.00125, abs=1e-15)
+    assert by["7.2"]["b"]["value"] == pytest.approx(0.125, abs=1e-12)
+    assert by["7"]["a"]["value"] == pytest.approx(0.08 + 0.015 + 0.00125, abs=1e-15)
+    assert by["8"]["a"]["value"] == pytest.approx(0.0075 - 0.00125, abs=1e-15)
+    assert by["8"]["b"]["value"] == pytest.approx(0.75 - 0.125, abs=1e-12)
+    assert by["5"]["a"]["value"] == target.oi  # the OI keeps the bank's own c_p2
+    assert target.oi == pytest.approx(0.08 + 0.015 + 0.01 + 0.025 + 0.005 + 0.01875, abs=1e-15)
+
+
+def test_annex3_summary_refuses_an_rwa_that_differs_from_the_plan():
+    capital, target, _, internal, plan, m = _annex_inputs()
+    off = {"credit": 70.0, "market": 20.0, "operational": 11.0}  # RWA 101 against the plan's 100
+    with pytest.raises(ValueError, match=r"101.*100|100.*101"):
+        c.annex3_summary(capital, target, off, internal, plan, m)
+    ok = {"credit": 70.0, "market": 20.0, "operational": 10.0 * (1 + 1e-10)}
+    c.annex3_summary(capital, target, ok, internal, plan, m)

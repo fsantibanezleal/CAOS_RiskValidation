@@ -97,7 +97,7 @@ cells `{"value", "status"}` of status `value`, `RI` (an immaterial risk), `not-t
 standardised method) or `not-applicable`. The row ids `2.T2`, `2.AT1` and `2.CET1` are the contract's ids for the three unnumbered
 components of row 2. The form states thousand pesos; the document states millions.
 
-Identities: row 3 column B is the RWA; row 5 is `oi`; row 7 is $8\% + $ row 7.1 $+$ row 7.2 (row 7.2 is the target's `c_p2`); row 8 is row 6 less
+Identities: row 3 column B is the RWA; row 5 is `oi`; row 7 is $8\% + $ row 7.1 $+$ row 7.2 (row 7.2 is the target's `p2r`, never `c_p2`); row 8 is row 6 less
 row 7.2; row 9 is $c_{\text{CCoB}} + c_{\text{CCyB}}$; row 11 is $c_d$; row 12 is row 1.1 less row 5; row 10.1 is the largest fall of CET1/RWA from the jump-off in
 the stress without mitigation and row 10.2 the same with mitigation, `not-applicable` when `mitigation_applies` is false (the form: "N/A if the
 stress leads to no mitigation actions"). The legal requirement of rows 4 and 4.1 to 4.3 is 8 percent of the risk's RWA; the internal
@@ -126,8 +126,9 @@ total $(100, 100)$; stage 1 plus stage 2 is $(93, 90)$.
 - The static balance sheet holds RWA constant; a dynamic balance sheet (30-year climate horizons) is out of scope. The EBA reversion of
   adverse parameters over six years after the horizon (paragraph 133; the paragraph number 132 is UNVERIFIED) matters only for a bake that
   extends beyond three years.
-- Row 7.2 reads `c_p2` because `InternalTarget` carries no separate art. 66 quinquies requirement; a caller that distinguishes them
-  adjusts row 7.2 itself.
+- Rows 7, 7.2 and 8 read `InternalTarget.p2r` (the art. 66 quinquies requirement, at most `c_p2`); `c_p2`, the bank's own Pillar 2
+  estimate, only enters the OI of row 5. `annex3_summary` refuses an RWA (the sum of `rwa_by_risk`) that differs from the capital
+  plan's beyond 1e-9 relative.
 - The Annex 3 sheet 3 capital-planning tables (the A, B.1, B.2 and C blocks by year) are carried by `capital_plan`, not by
   `annex3_summary`.
 

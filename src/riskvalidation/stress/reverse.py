@@ -121,7 +121,7 @@ def reverse_stress(
             return float(loss_fn(np.array(x, dtype=float))) / thr - 1.0
 
         def con_jac(x: np.ndarray) -> np.ndarray:
-            """Central differences: more accurate than SLSQP's forward differences, which stall on some SciPy versions."""
+            """Central differences: SLSQP's forward differences stall on some SciPy versions."""
             g = np.empty(k)
             for j in range(k):
                 h = 1e-6 * max(1.0, abs(x[j]))
