@@ -178,7 +178,9 @@ def test_outcome_conditioned_results_lights_and_omitted_groups():
         eo = fv.equalized_odds("m", y, d, g)
         assert eo.test_id == "fair.equalized_odds" and eo.light is light, (tpr, fpr, eo.metric)
         assert eo.metric == equalized_odds_difference(y, d, g)
-        assert (eo.alpha_amber, eo.alpha_red) == (0.05, 0.10)
+        # a metric light: null alphas (the p-value cut points), the metric cut points in extras (as the ml. metric rows)
+        assert (eo.alpha_amber, eo.alpha_red) == (None, None)
+        assert (eo.extras["thresholds"]["amber"], eo.extras["thresholds"]["red"]) == (0.05, 0.10)
         assert eo.extras["rates_by_group"]["a"]["tpr"] == tpr[0]
         tpr_gap = abs(tpr[0] - tpr[1])
         opp = fv.equal_opportunity("m", y, d, g)

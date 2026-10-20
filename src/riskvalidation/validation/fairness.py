@@ -293,7 +293,8 @@ def _outcome_result(test_id: str, model_id: str, metric: float, pol: Policy, *, 
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
         policy_version=_version(pol, alpha_amber=th.amber, alpha_red=th.red), light=light, metric=metric,
-        alpha_amber=th.amber, alpha_red=th.red, n=n, n_events=n_events, model_id=model_id,
+        # a metric light: the alpha fields are p-value cut points and stay null; the metric's cut points are in extras
+        alpha_amber=None, alpha_red=None, n=n, n_events=n_events, model_id=model_id,
         notes=f"{notes}; the cut points are conventions, never regulatory thresholds; {NO_LEGAL_CLAIM}",
         extras={**extras, "thresholds": _threshold_extras(test_id, th)})
 
