@@ -32,7 +32,7 @@ from riskvalidation.core.registry import catalogue, spec
 PREFIX = {
     "aggregation": "aggregation", "ccr": "ccr", "fairness": "fair", "ifrs9": "ifrs9", "irrbb": "irrbb",
     "lgd_ead": "lgd_ead", "liquidity": "liq", "market": "market", "oprisk": "oprisk", "portfolio": "portfolio",
-    "stress": "stress",
+    "stress": "stress", "ml": "ml",
 }
 
 # test id -> (module, function, decision as the function's own code decides it): `p_value` where the light is decided
@@ -139,8 +139,22 @@ INVENTORY = {
     "stress.bottom_up_vs_top_down": ("stress", "bottom_up_vs_top_down", "metric"),
     "stress.scenario_severity": ("stress", "scenario_severity", "metric"),
     "stress.reverse_solution_check": ("stress", "reverse_solution_check", "metric"),
+    # ml
+    "ml.robustness": ("ml", "robustness", "metric"),
+    "ml.shift_resilience": ("ml", "shift_resilience", "p_value"),
+    "ml.seed_stability": ("ml", "seed_stability", "metric"),
+    "ml.reason_code_stability": ("ml", "reason_code_stability", "metric"),
+    "ml.effect_agreement": ("ml", "effect_agreement", "metric"),
+    "ml.additivity": ("ml", "additivity", "metric"),
+    "ml.overfit": ("ml", "overfit", "metric"),
+    "ml.weak_spot": ("ml", "weak_spot", "metric"),
+    "ml.conformal_coverage": ("ml", "conformal_coverage", "p_value"),
+    "ml.leakage_screen": ("ml", "leakage_screen", "metric"),
+    "ml.data_quality": ("ml", "data_quality", "metric"),
+    "ml.cbpe_estimate": ("ml", "cbpe_estimate", "metric"),
+    "ml.challenger_brier": ("ml", "challenger_brier", "metric"),
 }
-assert len(INVENTORY) == 89
+assert len(INVENTORY) == 102
 
 # ids whose row text is built from arguments: the spec holds the text with `{...}` where the argument goes, and a row
 # matches when the rest is equal and the argument is a number
@@ -151,6 +165,14 @@ PARAMETERISED = {
 H0_VARIANTS = {
     "liq.reverse_stress_round_trip": {
         "the solved multiplier is the threshold: the target is reached at it and not just below it"},
+    # the branch that finds no data-quality count at all
+    "ml.data_quality": {"data quality counts hold no failure"},
+}
+# the same for the reference: the no-count branch of `ml.data_quality` cites the dossier lines without the ECB text
+REFERENCE_VARIANTS = {
+    "ml.data_quality": {
+        "dossier 06 (model risk management and validation) C.7 ML/AI validation and I.1, the validation engine "
+        "catalogue; contract engine-ml-api 2.0.0 (C.7 l.1045-1047, I.1 l.1198)"},
 }
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "riskvalidation" / "validation"
@@ -207,7 +229,7 @@ def test_the_catalogue_holds_the_inventory_beside_the_older_families():
     _import_all()
     ids = {s.test_id for s in catalogue()}
     assert set(INVENTORY) <= ids
-    assert len(set(INVENTORY)) == 89
+    assert len(set(INVENTORY)) == 102
     for module in PREFIX:
         assert {s.test_id for s in catalogue(module)} == {i for i, v in INVENTORY.items() if v[0] == module}, module
     # no family of the inventory reaches an older module's ids, and the older 27 tests are still there
@@ -252,7 +274,7 @@ def test_every_result_names_a_registered_test_session_wide():
             unregistered.add(tid)
             continue
         h0_ok = _matches(h0, s.h0, tid in PARAMETERISED) or h0 in H0_VARIANTS.get(tid, set())
-        ref_ok = _matches(reference, s.reference, False)
+        ref_ok = _matches(reference, s.reference, False) or reference in REFERENCE_VARIANTS.get(tid, set())
         if not (h0_ok and ref_ok):
             mismatched.append((tid, "h0" if not h0_ok else "reference", h0 if not h0_ok else reference))
     assert not unregistered, f"unregistered test ids: {sorted(unregistered)}"
@@ -265,7 +287,9 @@ def test_parameterised_and_variant_ids_are_registered_and_listed():
         assert "{" in spec(tid).h0, tid
     for tid, variants in H0_VARIANTS.items():
         assert variants and spec(tid).h0 not in variants
-    assert (set(PARAMETERISED) | set(H0_VARIANTS)) <= set(INVENTORY)
+    for tid, variants in REFERENCE_VARIANTS.items():
+        assert variants and spec(tid).reference not in variants
+    assert (set(PARAMETERISED) | set(H0_VARIANTS) | set(REFERENCE_VARIANTS)) <= set(INVENTORY)
 
 
 def test_importing_the_validation_package_alone_registers_the_inventory():
@@ -278,7 +302,9 @@ def test_importing_the_validation_package_alone_registers_the_inventory():
         "print(sorted(m for m in ('arch', 'statsmodels', 'pandas', 'fairlearn', 'mapie') if m in sys.modules))"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.splitlines()
-    assert int(out[0]) == len(INVENTORY) + 27
+    # `validation/__init__.py` does not import `validation.ml` (it is imported by path, as `riskvalidation.ml` states),
+    # so the ml ids register on `import riskvalidation.validation.ml` and are not counted here
+    assert int(out[0]) == sum(1 for v in INVENTORY.values() if v[0] != "ml") + 27
     assert out[1] == "[]"
 
 
