@@ -98,6 +98,7 @@ DOCUMENTED_SIZE = {tid: MARKOV_PAGE for tid in ("rating.time_homogeneity", "rati
 # test must exist and name the test (by its id or by its function name, which is how the fairness suite labels its rows)
 _FAIRNESS_SIZE = "tests/fairness/test_fairness_size_power.py::test_size_and_power_two_proportion_z_and_fisher"
 _MARKET_SIZE = "tests/validation_market/test_market_size.py::"
+_ML_SIZE = "tests/ml/test_ml_size_power.py::test_size_under_the_null_and_power_against_the_planted_defect"
 SIZE_SUITES = {
     "fair.two_proportion_z": _FAIRNESS_SIZE,
     "fair.fisher_exact": _FAIRNESS_SIZE,
@@ -109,6 +110,8 @@ SIZE_SUITES = {
     "market.du_escanciano_unconditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
     "market.du_escanciano_conditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
     "market.dynamic_quantile_test": _MARKET_SIZE + "test_size_of_the_dq_test_at_production_configurations",
+    "ml.shift_resilience": _ML_SIZE,
+    "ml.conformal_coverage": _ML_SIZE,
 }
 # registered p-value tests whose size has no measurement in either place yet. Each is a finding, not a pass: the list
 # is pinned (a test below fails when an entry is measured, so it leaves the list, and when a new p-value test is
@@ -135,6 +138,7 @@ def _p_value_tests() -> set[str]:
     import riskvalidation.validation.lgd_ead  # noqa: F401
     import riskvalidation.validation.liquidity  # noqa: F401
     import riskvalidation.validation.market  # noqa: F401
+    import riskvalidation.validation.ml  # noqa: F401
     import riskvalidation.validation.oprisk  # noqa: F401
     import riskvalidation.validation.portfolio  # noqa: F401
     import riskvalidation.validation.stress  # noqa: F401

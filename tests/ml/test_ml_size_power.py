@@ -34,6 +34,8 @@ def test_at_least_4000_repetitions():
 
 @pytest.mark.parametrize("test_id", sorted(COND))
 def test_size_under_the_null_and_power_against_the_planted_defect(test_id):
+    """The size under the null of every `ml.` light, among them the two p-value tests the catalogue's size rule names
+    here: `ml.shift_resilience` (`shift_resilience`) and `ml.conformal_coverage` (`conformal_coverage`)."""
     run_null, gen_null, gen_def, run_def, _ = COND[test_id]
     null = study(run_null, gen_null)
     defect = study(run_def or run_null, gen_def, seed=SEED + 1)
