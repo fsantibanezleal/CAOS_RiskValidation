@@ -1,0 +1,861 @@
+{
+ "csa-mpor-10d": {
+  "sa_ccr": {
+   "paragraph": "CRE52",
+   "in_force_date": "2023-01-01",
+   "margined": true,
+   "v": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "c": {
+    "amount": 60000.0,
+    "currency": "USD"
+   },
+   "th": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mta": {
+    "amount": 10000.0,
+    "currency": "USD"
+   },
+   "nica": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mpor_business_days": 10,
+   "rc": {
+    "amount": 20000.0,
+    "currency": "USD"
+   },
+   "trades": [
+    {
+     "trade_id": "SW-1",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 10.0,
+     "notional": {
+      "amount": 10000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 7.869386806,
+     "adjusted_notional": {
+      "amount": 78693868.057473,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 0.3,
+     "bucket": "B3",
+     "effective_notional": 23608160.417242
+    },
+    {
+     "trade_id": "SW-2",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 5.0,
+     "notional": {
+      "amount": 6000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 4.423984339,
+     "adjusted_notional": {
+      "amount": 26543906.031431,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 0.3,
+     "bucket": "B2",
+     "effective_notional": -7963171.809429
+    },
+    {
+     "trade_id": "SW-3",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 3.0,
+     "notional": {
+      "amount": 4000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 2.785840471,
+     "adjusted_notional": {
+      "amount": 11143361.885995,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 0.3,
+     "bucket": "B2",
+     "effective_notional": 3343008.565799
+    },
+    {
+     "trade_id": "SW-4",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 0.5,
+     "notional": {
+      "amount": 2000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 0.493801759,
+     "adjusted_notional": {
+      "amount": 987603.518867,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 0.3,
+     "bucket": "B1",
+     "effective_notional": -296281.05566
+    }
+   ],
+   "hedging_sets": [
+    {
+     "hedging_set": "USD",
+     "d_b1": -296281.05566,
+     "d_b2": -4620163.243631,
+     "d_b3": 23608160.417242,
+     "offset": true,
+     "effective_notional": 20586295.81301,
+     "supervisory_factor": 0.005,
+     "addon": 102931.479065
+    }
+   ],
+   "addon_by_class": {
+    "interest_rate": 102931.479065,
+    "fx": 0.0,
+    "credit": 0.0,
+    "equity": 0.0,
+    "commodity": 0.0
+   },
+   "addon_aggregate": {
+    "amount": 102931.479065,
+    "currency": "USD"
+   },
+   "multiplier_floor": 0.05,
+   "multiplier": 1.0,
+   "pfe": {
+    "amount": 102931.479065,
+    "currency": "USD"
+   },
+   "alpha": 1.4,
+   "ead": {
+    "amount": 172104.070691,
+    "currency": "USD"
+   }
+  },
+  "ba_cva": {
+   "paragraph": "MAR50.14 to MAR50.16",
+   "in_force_date": "2023-01-01",
+   "imm_bank": false,
+   "ds": 0.65,
+   "rho": 0.5,
+   "alpha": 1.4,
+   "counterparties": [
+    {
+     "counterparty_id": "CPTY-1",
+     "sector": "financials",
+     "rating_class": "investment-grade",
+     "risk_weight": 0.05,
+     "ead": {
+      "amount": 172104.070691,
+      "currency": "USD"
+     },
+     "m_years": 10.0,
+     "discount_factor": 0.786938681,
+     "scva": 48369.767968256
+    }
+   ],
+   "k_reduced": 48369.767968256,
+   "capital": {
+    "amount": 31440.349179,
+    "currency": "USD"
+   },
+   "limit": {
+    "en": "No official numeric example is verified; the tests rest on the invariants of dossier 01 M.1.",
+    "es": "No hay ejemplo numerico oficial verificado; las pruebas se apoyan en los invariantes."
+   }
+  },
+  "girr": {
+   "paragraph": "MAR21.42 to MAR21.50",
+   "in_force_date": "2023-01-01",
+   "currency": "USD",
+   "sqrt2_division": true,
+   "sqrt2_label": "convention",
+   "sensitivities": [
+    0.0,
+    -1000000.0,
+    0.0,
+    0.0,
+    11600000.0,
+    -27000000.0,
+    80000000.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "weighted_sensitivities": [
+    0.0,
+    -12020.81528,
+    0.0,
+    0.0,
+    98429.263941,
+    -210010.714012,
+    622253.967444,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scenarios": [
+    {
+     "scenario": "low",
+     "k_b": 506396.079616
+    },
+    {
+     "scenario": "medium",
+     "k_b": 504595.280002
+    },
+    {
+     "scenario": "high",
+     "k_b": 502788.030635
+    }
+   ],
+   "delta_charge": {
+    "amount": 506396.079616,
+    "currency": "USD"
+   },
+   "delta_charge_undivided": {
+    "amount": 716152.203726,
+    "currency": "USD"
+   }
+  }
+ },
+ "csa-mpor-20d": {
+  "sa_ccr": {
+   "paragraph": "CRE52",
+   "in_force_date": "2023-01-01",
+   "margined": true,
+   "v": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "c": {
+    "amount": 60000.0,
+    "currency": "USD"
+   },
+   "th": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mta": {
+    "amount": 10000.0,
+    "currency": "USD"
+   },
+   "nica": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mpor_business_days": 20,
+   "rc": {
+    "amount": 20000.0,
+    "currency": "USD"
+   },
+   "trades": [
+    {
+     "trade_id": "SW-1",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 10.0,
+     "notional": {
+      "amount": 10000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 7.869386806,
+     "adjusted_notional": {
+      "amount": 78693868.057473,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 0.424264069,
+     "bucket": "B3",
+     "effective_notional": 33386980.644743
+    },
+    {
+     "trade_id": "SW-2",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 5.0,
+     "notional": {
+      "amount": 6000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 4.423984339,
+     "adjusted_notional": {
+      "amount": 26543906.031431,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 0.424264069,
+     "bucket": "B2",
+     "effective_notional": -11261625.572402
+    },
+    {
+     "trade_id": "SW-3",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 3.0,
+     "notional": {
+      "amount": 4000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 2.785840471,
+     "adjusted_notional": {
+      "amount": 11143361.885995,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 0.424264069,
+     "bucket": "B2",
+     "effective_notional": 4727728.052882
+    },
+    {
+     "trade_id": "SW-4",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 0.5,
+     "notional": {
+      "amount": 2000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 0.493801759,
+     "adjusted_notional": {
+      "amount": 987603.518867,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 0.424264069,
+     "bucket": "B1",
+     "effective_notional": -419004.687189
+    }
+   ],
+   "hedging_sets": [
+    {
+     "hedging_set": "USD",
+     "d_b1": -419004.687189,
+     "d_b2": -6533897.51952,
+     "d_b3": 33386980.644743,
+     "offset": true,
+     "effective_notional": 29113418.737783,
+     "supervisory_factor": 0.005,
+     "addon": 145567.093689
+    }
+   ],
+   "addon_by_class": {
+    "interest_rate": 145567.093689,
+    "fx": 0.0,
+    "credit": 0.0,
+    "equity": 0.0,
+    "commodity": 0.0
+   },
+   "addon_aggregate": {
+    "amount": 145567.093689,
+    "currency": "USD"
+   },
+   "multiplier_floor": 0.05,
+   "multiplier": 1.0,
+   "pfe": {
+    "amount": 145567.093689,
+    "currency": "USD"
+   },
+   "alpha": 1.4,
+   "ead": {
+    "amount": 231793.931164,
+    "currency": "USD"
+   }
+  },
+  "ba_cva": {
+   "paragraph": "MAR50.14 to MAR50.16",
+   "in_force_date": "2023-01-01",
+   "imm_bank": false,
+   "ds": 0.65,
+   "rho": 0.5,
+   "alpha": 1.4,
+   "counterparties": [
+    {
+     "counterparty_id": "CPTY-1",
+     "sector": "financials",
+     "rating_class": "investment-grade",
+     "risk_weight": 0.05,
+     "ead": {
+      "amount": 231793.931164,
+      "currency": "USD"
+     },
+     "m_years": 10.0,
+     "discount_factor": 0.786938681,
+     "scva": 65145.575126939
+    }
+   ],
+   "k_reduced": 65145.575126939,
+   "capital": {
+    "amount": 42344.623833,
+    "currency": "USD"
+   },
+   "limit": {
+    "en": "No official numeric example is verified; the tests rest on the invariants of dossier 01 M.1.",
+    "es": "No hay ejemplo numerico oficial verificado; las pruebas se apoyan en los invariantes."
+   }
+  },
+  "girr": {
+   "paragraph": "MAR21.42 to MAR21.50",
+   "in_force_date": "2023-01-01",
+   "currency": "USD",
+   "sqrt2_division": true,
+   "sqrt2_label": "convention",
+   "sensitivities": [
+    0.0,
+    -1000000.0,
+    0.0,
+    0.0,
+    11600000.0,
+    -27000000.0,
+    80000000.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "weighted_sensitivities": [
+    0.0,
+    -12020.81528,
+    0.0,
+    0.0,
+    98429.263941,
+    -210010.714012,
+    622253.967444,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scenarios": [
+    {
+     "scenario": "low",
+     "k_b": 506396.079616
+    },
+    {
+     "scenario": "medium",
+     "k_b": 504595.280002
+    },
+    {
+     "scenario": "high",
+     "k_b": 502788.030635
+    }
+   ],
+   "delta_charge": {
+    "amount": 506396.079616,
+    "currency": "USD"
+   },
+   "delta_charge_undivided": {
+    "amount": 716152.203726,
+    "currency": "USD"
+   }
+  }
+ },
+ "netting-set": {
+  "sa_ccr": {
+   "paragraph": "CRE52",
+   "in_force_date": "2023-01-01",
+   "margined": false,
+   "v": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "c": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "th": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mta": {
+    "amount": 10000.0,
+    "currency": "USD"
+   },
+   "nica": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mpor_business_days": null,
+   "rc": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "trades": [
+    {
+     "trade_id": "SW-1",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 10.0,
+     "notional": {
+      "amount": 10000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 7.869386806,
+     "adjusted_notional": {
+      "amount": 78693868.057473,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 1.0,
+     "bucket": "B3",
+     "effective_notional": 78693868.057473
+    },
+    {
+     "trade_id": "SW-2",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 5.0,
+     "notional": {
+      "amount": 6000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 4.423984339,
+     "adjusted_notional": {
+      "amount": 26543906.031431,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 1.0,
+     "bucket": "B2",
+     "effective_notional": -26543906.031431
+    },
+    {
+     "trade_id": "SW-3",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 3.0,
+     "notional": {
+      "amount": 4000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 2.785840471,
+     "adjusted_notional": {
+      "amount": 11143361.885995,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 1.0,
+     "bucket": "B2",
+     "effective_notional": 11143361.885995
+    },
+    {
+     "trade_id": "SW-4",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 0.5,
+     "notional": {
+      "amount": 2000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 0.493801759,
+     "adjusted_notional": {
+      "amount": 987603.518867,
+      "currency": "USD"
+     },
+     "delta": -1,
+     "maturity_factor": 0.707106781,
+     "bucket": "B1",
+     "effective_notional": -698341.145314
+    }
+   ],
+   "hedging_sets": [
+    {
+     "hedging_set": "USD",
+     "d_b1": -698341.145314,
+     "d_b2": -15400544.145436,
+     "d_b3": 78693868.057473,
+     "offset": true,
+     "effective_notional": 68671487.774101,
+     "supervisory_factor": 0.005,
+     "addon": 343357.438871
+    }
+   ],
+   "addon_by_class": {
+    "interest_rate": 343357.438871,
+    "fx": 0.0,
+    "credit": 0.0,
+    "equity": 0.0,
+    "commodity": 0.0
+   },
+   "addon_aggregate": {
+    "amount": 343357.438871,
+    "currency": "USD"
+   },
+   "multiplier_floor": 0.05,
+   "multiplier": 1.0,
+   "pfe": {
+    "amount": 343357.438871,
+    "currency": "USD"
+   },
+   "alpha": 1.4,
+   "ead": {
+    "amount": 592700.414419,
+    "currency": "USD"
+   }
+  },
+  "ba_cva": {
+   "paragraph": "MAR50.14 to MAR50.16",
+   "in_force_date": "2023-01-01",
+   "imm_bank": false,
+   "ds": 0.65,
+   "rho": 0.5,
+   "alpha": 1.4,
+   "counterparties": [
+    {
+     "counterparty_id": "CPTY-1",
+     "sector": "financials",
+     "rating_class": "investment-grade",
+     "risk_weight": 0.05,
+     "ead": {
+      "amount": 592700.414419,
+      "currency": "USD"
+     },
+     "m_years": 10.0,
+     "discount_factor": 0.786938681,
+     "scva": 166578.172178209
+    }
+   ],
+   "k_reduced": 166578.172178209,
+   "capital": {
+    "amount": 108275.811916,
+    "currency": "USD"
+   },
+   "limit": {
+    "en": "No official numeric example is verified; the tests rest on the invariants of dossier 01 M.1.",
+    "es": "No hay ejemplo numerico oficial verificado; las pruebas se apoyan en los invariantes."
+   }
+  },
+  "girr": {
+   "paragraph": "MAR21.42 to MAR21.50",
+   "in_force_date": "2023-01-01",
+   "currency": "USD",
+   "sqrt2_division": true,
+   "sqrt2_label": "convention",
+   "sensitivities": [
+    0.0,
+    -1000000.0,
+    0.0,
+    0.0,
+    11600000.0,
+    -27000000.0,
+    80000000.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "weighted_sensitivities": [
+    0.0,
+    -12020.81528,
+    0.0,
+    0.0,
+    98429.263941,
+    -210010.714012,
+    622253.967444,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scenarios": [
+    {
+     "scenario": "low",
+     "k_b": 506396.079616
+    },
+    {
+     "scenario": "medium",
+     "k_b": 504595.280002
+    },
+    {
+     "scenario": "high",
+     "k_b": 502788.030635
+    }
+   ],
+   "delta_charge": {
+    "amount": 506396.079616,
+    "currency": "USD"
+   },
+   "delta_charge_undivided": {
+    "amount": 716152.203726,
+    "currency": "USD"
+   }
+  }
+ },
+ "single-swap": {
+  "sa_ccr": {
+   "paragraph": "CRE52",
+   "in_force_date": "2023-01-01",
+   "margined": false,
+   "v": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "c": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "th": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mta": {
+    "amount": 10000.0,
+    "currency": "USD"
+   },
+   "nica": {
+    "amount": 0.0,
+    "currency": "USD"
+   },
+   "mpor_business_days": null,
+   "rc": {
+    "amount": 80000.0,
+    "currency": "USD"
+   },
+   "trades": [
+    {
+     "trade_id": "SW-1",
+     "hedging_set": "USD",
+     "start_years": 0.0,
+     "end_years": 10.0,
+     "notional": {
+      "amount": 10000000.0,
+      "currency": "USD"
+     },
+     "supervisory_duration": 7.869386806,
+     "adjusted_notional": {
+      "amount": 78693868.057473,
+      "currency": "USD"
+     },
+     "delta": 1,
+     "maturity_factor": 1.0,
+     "bucket": "B3",
+     "effective_notional": 78693868.057473
+    }
+   ],
+   "hedging_sets": [
+    {
+     "hedging_set": "USD",
+     "d_b1": 0.0,
+     "d_b2": 0.0,
+     "d_b3": 78693868.057473,
+     "offset": true,
+     "effective_notional": 78693868.057473,
+     "supervisory_factor": 0.005,
+     "addon": 393469.340287
+    }
+   ],
+   "addon_by_class": {
+    "interest_rate": 393469.340287,
+    "fx": 0.0,
+    "credit": 0.0,
+    "equity": 0.0,
+    "commodity": 0.0
+   },
+   "addon_aggregate": {
+    "amount": 393469.340287,
+    "currency": "USD"
+   },
+   "multiplier_floor": 0.05,
+   "multiplier": 1.0,
+   "pfe": {
+    "amount": 393469.340287,
+    "currency": "USD"
+   },
+   "alpha": 1.4,
+   "ead": {
+    "amount": 662857.076402,
+    "currency": "USD"
+   }
+  },
+  "ba_cva": {
+   "paragraph": "MAR50.14 to MAR50.16",
+   "in_force_date": "2023-01-01",
+   "imm_bank": false,
+   "ds": 0.65,
+   "rho": 0.5,
+   "alpha": 1.4,
+   "counterparties": [
+    {
+     "counterparty_id": "CPTY-1",
+     "sector": "financials",
+     "rating_class": "investment-grade",
+     "risk_weight": 0.05,
+     "ead": {
+      "amount": 662857.076402,
+      "currency": "USD"
+     },
+     "m_years": 10.0,
+     "discount_factor": 0.786938681,
+     "scva": 186295.668969077
+    }
+   ],
+   "k_reduced": 186295.668969077,
+   "capital": {
+    "amount": 121092.18483,
+    "currency": "USD"
+   },
+   "limit": {
+    "en": "No official numeric example is verified; the tests rest on the invariants of dossier 01 M.1.",
+    "es": "No hay ejemplo numerico oficial verificado; las pruebas se apoyan en los invariantes."
+   }
+  },
+  "girr": {
+   "paragraph": "MAR21.42 to MAR21.50",
+   "in_force_date": "2023-01-01",
+   "currency": "USD",
+   "sqrt2_division": true,
+   "sqrt2_label": "convention",
+   "sensitivities": [
+    0.0,
+    -1000000.0,
+    0.0,
+    0.0,
+    11600000.0,
+    -27000000.0,
+    80000000.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "weighted_sensitivities": [
+    0.0,
+    -12020.81528,
+    0.0,
+    0.0,
+    98429.263941,
+    -210010.714012,
+    622253.967444,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "scenarios": [
+    {
+     "scenario": "low",
+     "k_b": 506396.079616
+    },
+    {
+     "scenario": "medium",
+     "k_b": 504595.280002
+    },
+    {
+     "scenario": "high",
+     "k_b": 502788.030635
+    }
+   ],
+   "delta_charge": {
+    "amount": 506396.079616,
+    "currency": "USD"
+   },
+   "delta_charge_undivided": {
+    "amount": 716152.203726,
+    "currency": "USD"
+   }
+  }
+ }
+}

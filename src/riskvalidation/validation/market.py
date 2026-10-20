@@ -25,6 +25,7 @@ import numpy as np
 from scipy import optimize, special, stats
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.market import frtb
 from riskvalidation.market.caviar import dq_statistic_unchecked, dynamic_quantile_statistic
@@ -127,6 +128,14 @@ def _pof_lr(t: int, x: int, p: float) -> float:
     return max(0.0, lr)
 
 
+@register(
+    "market.kupiec_pof",
+    family="market",
+    name="Kupiec proportion of failures",
+    h0="the exceedance probability equals alpha",
+    reference=KUPIEC_1995,
+    decision="p_value",
+)
 def kupiec_pof(exceedances: np.ndarray, alpha: float, model_id: str | None = None, alpha_amber: float = 0.10,
                alpha_red: float = 0.05) -> TestResult:
     """Kupiec proportion-of-failures test (dossier 05 B.1).
@@ -179,6 +188,14 @@ def _ind_lr(tr: tuple[int, int, int, int]) -> float:
     return max(0.0, -2.0 * (null - alt))
 
 
+@register(
+    "market.christoffersen_independence",
+    family="market",
+    name="Christoffersen independence",
+    h0="the exceedances are independent over time",
+    reference=CHRISTOFFERSEN_1998,
+    decision="p_value",
+)
 def christoffersen_independence(exceedances: np.ndarray, alpha: float, model_id: str | None = None,
                                 alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
     """Christoffersen independence test (dossier 05 B.2): statistic `LR_ind` (chi-square(1), `0^0 = 1`),
@@ -211,6 +228,14 @@ def christoffersen_independence(exceedances: np.ndarray, alpha: float, model_id:
         inputs_hash=inputs_hash(ex), extras={"transitions": list(tr)})
 
 
+@register(
+    "market.christoffersen_conditional_coverage",
+    family="market",
+    name="Christoffersen conditional coverage",
+    h0="the exceedance probability equals alpha and the exceedances are independent",
+    reference=CHRISTOFFERSEN_1998,
+    decision="p_value",
+)
 def christoffersen_conditional_coverage(exceedances: np.ndarray, alpha: float, model_id: str | None = None,
                                         alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
     """Christoffersen conditional coverage (dossier 05 B.2): `LR_cc = LR_POF + LR_ind`, chi-square(2). not_evaluated
@@ -277,6 +302,14 @@ def _weibull_lr(completed: np.ndarray, censored: np.ndarray) -> tuple[float, flo
     return max(0.0, 2.0 * (best - profile(1.0))), b_hat
 
 
+@register(
+    "market.duration_test",
+    family="market",
+    name="Christoffersen-Pelletier duration test",
+    h0="the no-hit durations are memoryless (Weibull b = 1)",
+    reference=CHRISTOFFERSEN_PELLETIER_2004,
+    decision="p_value",
+)
 def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = None, n_mc: int = 10000, seed: int = 0,
                   alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
     """Duration-based test of Christoffersen and Pelletier (2004) (dossier 05 B.3).
@@ -335,6 +368,14 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
 # Basel traffic light
 
 
+@register(
+    "market.basel_traffic_light",
+    family="market",
+    name="Basel traffic light",
+    h0="the model's exception count is consistent with its coverage (green zone)",
+    reference=BASEL_1996,
+    decision="metric",
+)
 def basel_traffic_light(exceedances: np.ndarray, model_id: str | None = None, coverage: float = 0.99,
                         window: int = 250) -> TestResult:
     """Basel traffic light (MAR32.9 Table 1, dossier 01 D.4 and dossier 05 B.4) on the last `window` days.
@@ -379,6 +420,14 @@ def _z_statistic(loss: np.ndarray, var: np.ndarray, es: np.ndarray, alpha: float
     return contrib / (loss.size * alpha) + 1.0
 
 
+@register(
+    "market.acerbi_szekely",
+    family="market",
+    name="Acerbi-Szekely ES back-test",
+    h0="the ES forecasts are correct (the statistic has the simulated null distribution)",
+    reference=ACERBI_SZEKELY_2014,
+    decision="p_value",
+)
 def acerbi_szekely(loss: np.ndarray, var: np.ndarray, es: np.ndarray, alpha: float,
                    simulate_null: Callable[[np.random.Generator], np.ndarray], model_id: str | None = None,
                    statistic: str = "Z2", n_sim: int = 10000, seed: int = 0, alpha_amber: float = 0.05,
@@ -472,6 +521,14 @@ def _h(u: np.ndarray, alpha: float) -> np.ndarray:
     return np.where(u <= alpha, (alpha - u) / alpha, 0.0)
 
 
+@register(
+    "market.du_escanciano_unconditional",
+    family="market",
+    name="Du-Escanciano unconditional ES back-test",
+    h0="the PITs are uniform in the tail (the ES forecasts are correct): E[H] = alpha/2",
+    reference=DU_ESCANCIANO_2017,
+    decision="p_value",
+)
 def du_escanciano_unconditional(pit: np.ndarray, alpha: float, model_id: str | None = None, alpha_amber: float = 0.10,
                                 alpha_red: float = 0.05) -> TestResult:
     """Du and Escanciano unconditional ES test (dossier 05 B.5): `E[H] = alpha/2`, `Var(H) = alpha (1/3 - alpha/4)`,
@@ -503,6 +560,14 @@ def du_escanciano_unconditional(pit: np.ndarray, alpha: float, model_id: str | N
         notes="asymptotic version: parameter estimation uncertainty is ignored (dossier 05 B.5)", **kw)
 
 
+@register(
+    "market.du_escanciano_conditional",
+    family="market",
+    name="Du-Escanciano conditional ES back-test",
+    h0="the cumulative violations H_t have no autocorrelation up to lag m",
+    reference=DU_ESCANCIANO_2017,
+    decision="p_value",
+)
 def du_escanciano_conditional(pit: np.ndarray, alpha: float, lags: int = 5, model_id: str | None = None,
                               alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
     """Du and Escanciano conditional ES test (dossier 05 B.5): the Box-Pierce statistic `C_ES(m) = T sum_{j=1}^m
@@ -540,6 +605,14 @@ def du_escanciano_conditional(pit: np.ndarray, alpha: float, lags: int = 5, mode
         light=_p_light(pv, alpha_amber, alpha_red), statistic=stat, p_value=pv, inputs_hash=inputs_hash(u, a), **kw)
 
 
+@register(
+    "market.mcneil_frey_residual_test",
+    family="market",
+    name="McNeil-Frey ES residual test",
+    h0="the exceedance residuals (L - ES) / sigma have mean zero",
+    reference=MCNEIL_FREY_2000,
+    decision="p_value",
+)
 def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray, sigma: np.ndarray, alpha: float,
                               model_id: str | None = None, n_boot: int = 10000, seed: int = 0,
                               alpha_amber: float = 0.10, alpha_red: float = 0.05) -> TestResult:
@@ -596,6 +669,14 @@ def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray,
 # dynamic quantile, PLA and the desk back-test
 
 
+@register(
+    "market.dynamic_quantile_test",
+    family="market",
+    name="Engle-Manganelli dynamic quantile test",
+    h0="the hits are unpredictable from their past and from the VaR (conditional coverage holds)",
+    reference=ENGLE_MANGANELLI_2004,
+    decision="p_value",
+)
 def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags: int = 4, model_id: str | None = None,
                           n_mc: int = 10000, seed: int = 0, alpha_amber: float = 0.10,
                           alpha_red: float = 0.05) -> TestResult:
@@ -645,6 +726,14 @@ def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags:
         inputs_hash=inputs_hash(hit, v, a), **kw)
 
 
+@register(
+    "market.pla_test",
+    family="market",
+    name="Profit and loss attribution test",
+    h0="the risk-theoretical P&L is a good attribution of the hypothetical P&L",
+    reference=PLA_REFERENCE,
+    decision="metric",
+)
 def pla_test(hpl: np.ndarray, rtpl: np.ndarray, model_id: str | None = None) -> TestResult:
     """The profit-and-loss attribution test (MAR32.36 to MAR32.42, dossier 01 D.4): statistic = the Spearman
     correlation of `hpl` and `rtpl`, metric = the KS statistic (an exact step count over 250), p_value null; the light
@@ -681,6 +770,14 @@ def pla_test(hpl: np.ndarray, rtpl: np.ndarray, model_id: str | None = None) -> 
         extras={"zone": zone, "thresholds": thresholds})
 
 
+@register(
+    "market.desk_backtest",
+    family="market",
+    name="Desk backtest",
+    h0="the desk's exception count in the last 250 days does not exceed the limit",
+    reference=DESK_REFERENCE,
+    decision="metric",
+)
 def desk_backtest(loss: np.ndarray, var: np.ndarray, alpha: float, model_id: str | None = None,
                   basis: str = "HPL") -> TestResult:
     """The desk-level VaR back-test (MAR32.18 to MAR32.19): the exceptions of the last 250 days against the desk VaR
