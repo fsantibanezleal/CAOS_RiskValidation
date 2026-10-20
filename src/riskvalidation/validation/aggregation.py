@@ -20,6 +20,7 @@ import numpy as np
 
 from riskvalidation.aggregation import simple as _simple
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import scalar, vec
 
@@ -65,6 +66,14 @@ def _three_light(value: float, green: float, amber: float) -> Light:
     return Light.AMBER if value <= amber + EPS else Light.RED
 
 
+@register(
+    "aggregation.simple_sum_and_variance_covariance",
+    family="aggregation",
+    name="Simple sum and variance covariance",
+    h0="the aggregate is not above the simple sum and agrees with the variance-covariance formula",
+    reference=f"{G5}; {G1}",
+    decision="metric",
+)
 def simple_sum_and_variance_covariance(ec: np.ndarray, corr: np.ndarray, aggregate: float, amber: float = 0.10,
                                        tolerance: float = 1e-9, model_id: str | None = None,
                                        segment: str | None = None) -> TestResult:
@@ -106,6 +115,16 @@ def simple_sum_and_variance_covariance(ec: np.ndarray, corr: np.ndarray, aggrega
                       extras={**extras, "thresholds": thresholds}, **kw)
 
 
+@register(
+    "aggregation.copula_choice_sensitivity",
+    family="aggregation",
+    name="Copula choice sensitivity",
+    h0=(
+        "the choice between the Gaussian and the t copula over the stated nu set moves the capital by less than the "
+        "thresholds"),
+    reference=f"{G5}; {G2}",
+    decision="metric",
+)
 def copula_choice_sensitivity(gaussian: float, t_capitals: Sequence[tuple[float, float]], amber: float = 0.05,
                               red: float = 0.15, model_id: str | None = None,
                               segment: str | None = None) -> TestResult:
@@ -152,6 +171,14 @@ def copula_choice_sensitivity(gaussian: float, t_capitals: Sequence[tuple[float,
                 "thresholds": thresholds}, **kw)
 
 
+@register(
+    "aggregation.worst_case_bracket",
+    family="aggregation",
+    name="Worst case bracket",
+    h0="every row of the band lies between the lower bound and the worst case",
+    reference=f"{G5}; {G3}",
+    decision="metric",
+)
 def worst_case_bracket(lower: float, rows: Sequence[float], worst: float, tolerance: float = 1e-9,
                        model_id: str | None = None, segment: str | None = None) -> TestResult:
     """Every row of the band lies between the lower bound and the worst case (dossier 05 G.3 and G.5: report worst-case
@@ -186,6 +213,14 @@ def worst_case_bracket(lower: float, rows: Sequence[float], worst: float, tolera
         notes="" if not red else "a row lies outside the bracket, or the lower bound is above the worst case", **kw)
 
 
+@register(
+    "aggregation.correlation_stress",
+    family="aggregation",
+    name="Correlation stress",
+    h0="raising the market-credit correlation does not lower the capital and raises it by less than the amber gate",
+    reference=G5,
+    decision="metric",
+)
 def correlation_stress(base: float, stressed: float, amber: float = 0.10, tolerance: float = 1e-9,
                        model_id: str | None = None, segment: str | None = None) -> TestResult:
     """Raising the market-credit correlation to 0.8 (dossier 05 G.5) does not lower the capital and raises it by less
@@ -221,6 +256,14 @@ def correlation_stress(base: float, stressed: float, amber: float = 0.10, tolera
                       extras={"thresholds": thresholds}, **kw)
 
 
+@register(
+    "aggregation.diversification_sign",
+    family="aggregation",
+    name="Diversification sign",
+    h0="every diversification benefit has the right sign (DF <= 1)",
+    reference=f"{G5}; {G3}",
+    decision="metric",
+)
 def diversification_sign(factors: Sequence[float], tolerance: float = 1e-9, model_id: str | None = None,
                          segment: str | None = None) -> TestResult:
     """Every diversification benefit has the right sign, DF <= 1 (dossier 05 G.5: "the sign of every diversification
@@ -251,6 +294,14 @@ def diversification_sign(factors: Sequence[float], tolerance: float = 1e-9, mode
         **kw)
 
 
+@register(
+    "aggregation.horizon_confidence_consistency",
+    family="aggregation",
+    name="Horizon confidence consistency",
+    h0="one risk horizon and one confidence level apply across the marginals",
+    reference=f"{G5}; dossier 01 l.837-839 (one horizon and one confidence level for the aggregation)",
+    decision="metric",
+)
 def horizon_confidence_consistency(horizons: Sequence[float], levels: Sequence[float], expected_horizon: float = 1.0,
                                    expected_level: float = 0.999, model_id: str | None = None,
                                    segment: str | None = None) -> TestResult:
@@ -285,6 +336,16 @@ def horizon_confidence_consistency(horizons: Sequence[float], levels: Sequence[f
         **kw)
 
 
+@register(
+    "aggregation.elliptical_mc_agreement",
+    family="aggregation",
+    name="Elliptical MC agreement",
+    h0=(
+        "the Monte Carlo capital agrees with the variance-covariance anchor within z standard errors in the "
+        "elliptical case"),
+    reference=f"{G5}; {G1}",
+    decision="metric",
+)
 def elliptical_mc_agreement(mc_capital: float, mc_se: float, vc_capital: float, z: float = 3.0,
                             model_id: str | None = None, segment: str | None = None) -> TestResult:
     """In the elliptical case (normal marginals, Gaussian copula) the Monte Carlo capital agrees with the
@@ -319,6 +380,14 @@ def elliptical_mc_agreement(mc_capital: float, mc_se: float, vc_capital: float, 
         inputs_hash=inputs_hash(np.array([mc, se, vc])), extras={"thresholds": thresholds}, **kw)
 
 
+@register(
+    "aggregation.rosenberg_schuermann_reference",
+    family="aggregation",
+    name="Rosenberg schuermann reference",
+    h0="none to reject: the additive approximation typically overestimates risk by about 30 to 40 percent",
+    reference=f"{G2}; the figure is a reference beside the result, never a gate",
+    decision="metric",
+)
 def rosenberg_schuermann_reference(simple_sum: float, gaussian: float, low: float = 0.30, high: float = 0.40,
                                    model_id: str | None = None, segment: str | None = None) -> TestResult:
     """The additive approximation overestimates risk by about 30 to 40 percent (Rosenberg and Schuermann 2006; dossier

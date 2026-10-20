@@ -24,6 +24,7 @@ from scipy import stats
 
 from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.policy import Policy, Threshold
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.fairness import metrics as _metrics
 from riskvalidation.fairness._checks import InsufficientData, binary, group_labels, group_names, same_rows
@@ -112,6 +113,14 @@ def _check_rates(rates: Any, reference: str) -> None:
 # Selection-rate tests
 
 
+@register(
+    "fair.demographic_parity",
+    family="fairness",
+    name="Demographic parity",
+    h0="descriptive: every group's selection rate equals the reference group's rate",
+    reference=f"{DOSSIER_06_C7}: demographic (statistical) parity difference and ratio; {HARDT}",
+    decision="metric",
+)
 def demographic_parity(model_id: str, rates: Mapping[str, SelectionRate], reference: str,
                        policy: Policy | None = None) -> TestResult:
     """Demographic (statistical) parity as an indicator. metric = the largest absolute difference of a group's
@@ -148,6 +157,16 @@ def demographic_parity(model_id: str, rates: Mapping[str, SelectionRate], refere
                 "thresholds": _threshold_extras(test_id, th)})
 
 
+@register(
+    "fair.adverse_impact",
+    family="fairness",
+    name="Adverse impact",
+    h0="no group's selection rate is below four-fifths of the highest-rate group's",
+    reference=(
+        f"{CFR_1607}, labelled an {EMPLOYMENT_BENCHMARK}, never a credit-law threshold; {DOSSIER_06_C7} "
+        "l.1033-1037 and I.6 l.1268-1270"),
+    decision="metric",
+)
 def adverse_impact(model_id: str, rates: Mapping[str, SelectionRate], reference: str) -> TestResult:
     """The four-fifths flag on the exact counts. metric = the lowest ratio of a group's selection rate to the
     highest-rate group's. Light: amber when `four_fifths_flag` raises a flag for any group (5 x_g n_h < 4 x_h n_g,
@@ -212,6 +231,14 @@ def _two_group_result(test_id: str, model_id: str, x1: int, n1: int, x2: int, n2
                 "thresholds": _threshold_extras(test_id, th)})
 
 
+@register(
+    "fair.two_proportion_z",
+    family="fairness",
+    name="Two-proportion z-test",
+    h0="the favourable-decision rate of group 1 equals that of group 2",
+    reference=f"{DOSSIER_06_C7} l.1036-1039: two-sample test of proportions",
+    decision="p_value",
+)
 def two_proportion_z(model_id: str, x1: int, n1: int, x2: int, n2: int, policy: Policy | None = None) -> TestResult:
     """The pooled two-sided z-test on the favourable-decision rates of two groups (dossier 06 C.7 l.1038-1039).
     statistic = z (group 1 minus group 2), metric = the rate difference. Light (policy key `fair.two_proportion_z`,
@@ -226,6 +253,14 @@ def two_proportion_z(model_id: str, x1: int, n1: int, x2: int, n2: int, policy: 
         alt="the rates differ (two-sided)", ref=f"{DOSSIER_06_C7} l.1036-1039: two-sample test of proportions", run=run)
 
 
+@register(
+    "fair.fisher_exact",
+    family="fairness",
+    name="Fisher exact test",
+    h0="the favourable-decision rate of group 1 equals that of group 2",
+    reference=f"{DOSSIER_06_C7} l.1038-1039: Fisher exact test",
+    decision="p_value",
+)
 def fisher_exact(model_id: str, x1: int, n1: int, x2: int, n2: int, policy: Policy | None = None) -> TestResult:
     """Fisher's exact test on the same 2 x 2 table (dossier 06 C.7 l.1038-1039). statistic = the sample odds ratio
     (None when undefined), metric = the rate difference. Light (policy key `fair.fisher_exact`, p_value): red below
@@ -283,6 +318,14 @@ def _error_rate_test(test_id: str, model_id: str, y: Any, decision: Any, group: 
         notes=f"{what}; y = 1 is the outcome the favourable decision should predict")
 
 
+@register(
+    "fair.equalized_odds",
+    family="fairness",
+    name="Equalized odds",
+    h0="descriptive: the true and the false positive rates are equal across groups",
+    reference=f"{HARDT}; {DOSSIER_06_C7} l.1029-1033",
+    decision="metric",
+)
 def equalized_odds(model_id: str, y: np.ndarray | None, decision: np.ndarray, group: np.ndarray,
                    policy: Policy | None = None) -> TestResult:
     """Equalized odds (Hardt, Price and Srebro 2016): metric = the larger of the true positive rate gap and the false
@@ -296,6 +339,14 @@ def equalized_odds(model_id: str, y: np.ndarray | None, decision: np.ndarray, gr
         ref=f"{HARDT}; {DOSSIER_06_C7} l.1029-1033", what="the largest gap in the true or the false positive rate")
 
 
+@register(
+    "fair.equal_opportunity",
+    family="fairness",
+    name="Equal opportunity",
+    h0="descriptive: the true positive rate is equal across groups",
+    reference=f"{HARDT}; {DOSSIER_06_C7} l.1029-1033",
+    decision="metric",
+)
 def equal_opportunity(model_id: str, y: np.ndarray | None, decision: np.ndarray, group: np.ndarray,
                       policy: Policy | None = None) -> TestResult:
     """Equal opportunity (Hardt, Price and Srebro 2016): metric = the true positive rate gap across groups.
@@ -313,6 +364,14 @@ def _omitted(groups: np.ndarray, kept: Mapping[str, float]) -> list[str]:
     return [g for g in group_names(groups) if g not in kept]
 
 
+@register(
+    "fair.calibration_within_groups",
+    family="fairness",
+    name="Calibration within groups",
+    h0="descriptive: the PD is as well calibrated within each group as within any other",
+    reference=f"{DOSSIER_04_J3}; Naeini, Cooper and Hauskrecht (2015), doi:10.1609/aaai.v29i1.9602",
+    decision="metric",
+)
 def calibration_within_groups(model_id: str, p: np.ndarray, y: np.ndarray | None, group: np.ndarray,
                               policy: Policy | None = None) -> TestResult:
     """Calibration within groups (dossier 04 J.3 l.904-905): metric = the largest expected calibration error (`pd_ece`,
@@ -342,6 +401,14 @@ def calibration_within_groups(model_id: str, p: np.ndarray, y: np.ndarray | None
                            notes="the largest expected calibration error over the groups; y = 1 is a default")
 
 
+@register(
+    "fair.auc_by_group",
+    family="fairness",
+    name="AUC by group",
+    h0="descriptive: the score discriminates as well within each group as within any other",
+    reference=f"{DOSSIER_04_J3}; Hanley and McNeil (1982), doi:10.1148/radiology.143.1.7063747",
+    decision="metric",
+)
 def auc_by_group(model_id: str, score: np.ndarray, y: np.ndarray | None, group: np.ndarray,
                  policy: Policy | None = None) -> TestResult:
     """AUC by group (dossier 04 J.3 l.904-905): metric = the largest AUC gap between two groups (`disc_auc` within each
@@ -422,6 +489,17 @@ def _interval_test(test_id: str, model_id: str, effect: Effect | None, controls:
         extras=extras)
 
 
+@register(
+    "fair.conditional_disparity",
+    family="fairness",
+    name="Conditional disparity",
+    h0="the protected indicator has no effect on the decision once the permitted controls are held fixed",
+    reference=(
+        f"decision Q4 of the Contraste U14 sizing: logistic decision model with Wald interval; {COMPANION}; "
+        "the Interagency Fair Lending Examination Procedures (gross HMDA disparities are not an adverse impact "
+        f"analysis); {NO_LEGAL_CLAIM}"),
+    decision="metric",
+)
 def conditional_disparity(model_id: str, effect: Effect, controls: Sequence[str],
                           missing_controls: Sequence[str]) -> TestResult:
     """The disparity of the decision that persists after the permitted controls (dossier 08 l.839; decision Q4): the
@@ -439,6 +517,14 @@ def conditional_disparity(model_id: str, effect: Effect, controls: Sequence[str]
             f"analysis); {NO_LEGAL_CLAIM}")
 
 
+@register(
+    "fair.rate_spread_disparity",
+    family="fairness",
+    name="Rate spread disparity",
+    h0="the protected indicator has no effect on the rate spread once the permitted controls are held fixed",
+    reference=f"decision Q4 of the Contraste U14 sizing: linear rate-spread model with Wald interval; {NO_LEGAL_CLAIM}",
+    decision="metric",
+)
 def rate_spread_disparity(model_id: str, effect: Effect, controls: Sequence[str],
                           missing_controls: Sequence[str]) -> TestResult:
     """The pricing disparity on the rate spread by the same construction (a linear model, `fit_rate_spread_model`):
@@ -452,6 +538,14 @@ def rate_spread_disparity(model_id: str, effect: Effect, controls: Sequence[str]
         ref=f"decision Q4 of the Contraste U14 sizing: linear rate-spread model with Wald interval; {NO_LEGAL_CLAIM}")
 
 
+@register(
+    "fair.replication",
+    family="fairness",
+    name="Replication",
+    h0="the estimate fitted on year t has the same sign on year t+1",
+    reference="decision Q4 of the Contraste U14 sizing; dossier 08 l.839 (is the finding stable year to year)",
+    decision="metric",
+)
 def replication(model_id: str, replication: Replication) -> TestResult:
     """Replication of an estimate on the next year by sign and size (decision Q4). metric = the size ratio, confirm
     over fit. Light: amber when the sign differs between year t and year t+1, green otherwise; `not_evaluated` when the
@@ -477,6 +571,14 @@ def replication(model_id: str, replication: Replication) -> TestResult:
         extras={**extras, "thresholds": {"rule": "amber when the sign differs between year t and year t+1"}})
 
 
+@register(
+    "fair.situation_testing",
+    family="fairness",
+    name="Situation testing",
+    h0="descriptive: no complainant of the protected group is treated worse than a comparable one of the others",
+    reference=f"{COMPANION}; dossier 07 A.3 l.158-177",
+    decision="metric",
+)
 def situation_testing(model_id: str, result: SituationResult, policy: Policy | None = None) -> TestResult:
     """Situation testing as an individual-level indicator (dossier 07 A.3 l.158-177). metric = n_significant over
     n_complainants. Light (policy key `fair.situation_testing`, upper_bad, inclusive): amber when the significant share
