@@ -302,9 +302,7 @@ def test_importing_the_validation_package_alone_registers_the_inventory():
         "print(sorted(m for m in ('arch', 'statsmodels', 'pandas', 'fairlearn', 'mapie') if m in sys.modules))"
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True).stdout.splitlines()
-    # `validation/__init__.py` does not import `validation.ml` (it is imported by path, as `riskvalidation.ml` states),
-    # so the ml ids register on `import riskvalidation.validation.ml` and are not counted here
-    assert int(out[0]) == sum(1 for v in INVENTORY.values() if v[0] != "ml") + 27
+    assert int(out[0]) == len(INVENTORY) + 27
     assert out[1] == "[]"
 
 
