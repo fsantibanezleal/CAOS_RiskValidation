@@ -42,7 +42,8 @@ def test_fair_policy_rows_match_the_contract():
     for key, th in base.thresholds.items():
         assert pol.threshold(key) == th
     assert pol.policy_id.startswith(base.policy_id)
-    assert "fair" in pol.version
+    # integrated (U14 decision G5): the rows sit in policies/default.json, so the fairness policy is the default one
+    assert pol.label == base.label and "fair-1.0.0" not in pol.label
 
 
 def test_strict_row_boundary_is_green():
@@ -101,7 +102,7 @@ def test_fairness_default_policy_returns_the_default_policy_when_it_holds_every_
         fp.default_policy = original
         fp.fairness_default_policy.cache_clear()
     assert got is full and got.label == full.label and "fair-1.0.0" not in got.label
-    assert "fair-1.0.0" in fairness_default_policy().label  # the packaged policy has no `fair.` rows yet
+    assert fairness_default_policy().label == default_policy().label  # the packaged policy holds every `fair.` row (G5)
 
 
 def test_situation_testing_amber_cut_is_0_20():

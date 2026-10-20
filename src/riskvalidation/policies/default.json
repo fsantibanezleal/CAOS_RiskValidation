@@ -128,6 +128,54 @@
       "amber": 0.05,
       "red": 0.01,
       "source": "convention: 5% and 1% significance levels; no supervisory text sets thresholds for these tests"
+    },
+    "fair.demographic_parity": {
+      "kind": "upper_bad",
+      "amber": 0.05000000000000001,
+      "red": 2.0,
+      "source": "convention: the amber tolerance 0.05 on the largest absolute selection-rate gap is proposed, no dossier value; strict (a gap equal to the tolerance is green); red 2.0 is a sentinel above the metric's range: never red"
+    },
+    "fair.two_proportion_z": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+    },
+    "fair.fisher_exact": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+    },
+    "fair.equalized_odds": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+    },
+    "fair.equal_opportunity": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+    },
+    "fair.calibration_within_groups": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+    },
+    "fair.auc_by_group": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.1,
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+    },
+    "fair.situation_testing": {
+      "kind": "upper_bad",
+      "amber": 0.2,
+      "red": 2.0,
+      "source": "convention: the amber share 0.20 of significant complainants, set on the measured size 0.039 and power 1.000 at n 400 and k 30 (docs/fairness/06), no source value; red 2.0 is a sentinel above the metric's range: never red"
     }
   },
   "descriptive_without_thresholds": [
