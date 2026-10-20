@@ -86,9 +86,15 @@ def _check_nu_set(nu_set: Sequence[float]) -> tuple[float, ...]:
     return nus
 
 
+# A convention, not a derived constant: `marginal_ppf_sample` interpolates while `var_from_sample` takes the order
+# statistic, so ec and ppf(level) - el agree only to sampling resolution; 1 % relative (absolute below 1).
+EC_CONSISTENCY_TOLERANCE = 0.01
+
+
 def dependence_band(ppfs: Sequence[Ppf], ec: np.ndarray, el: np.ndarray, corr: np.ndarray, nu_set: Sequence[float],
                     level: float = 0.999, horizon_years: int = 1, n_draws: int = 1_000_000, seed: int = 0,
-                    chunk_size: int = DEFAULT_CHUNK, bounds_n: int = 100_000, bounds_epsilon: float = 1e-3) -> Band:
+                    chunk_size: int = DEFAULT_CHUNK, bounds_n: int = 100_000, bounds_epsilon: float = 1e-3,
+                    ec_consistency_tolerance: float = EC_CONSISTENCY_TOLERANCE) -> Band:
     """The band on the marginals `ppfs` (money quantile functions), their economic capital `ec` and expected loss `el`
     (K,), the correlation `corr` of the copulas and the t degrees of freedom `nu_set` (above 2, ascending, distinct).
 
@@ -118,6 +124,14 @@ def dependence_band(ppfs: Sequence[Ppf], ec: np.ndarray, el: np.ndarray, corr: n
     headline = simple_sum(capital_ec)
     if not headline > 0.0:
         raise ValueError("ec must have a positive sum: the diversification factors are undefined")
+    tol = float(ec_consistency_tolerance)
+    if not (math.isfinite(tol) and tol >= 0.0):
+        raise ValueError(f"ec_consistency_tolerance must be a nonnegative number, got {ec_consistency_tolerance}")
+    for idx, ppf in enumerate(ppfs):
+        implied = float(np.ravel(ppf(np.array([lv])))[0]) - float(losses[idx])
+        if not abs(float(capital_ec[idx]) - implied) <= tol * max(1.0, abs(float(capital_ec[idx]))):
+            raise ValueError(f"ec does not match the marginals: marginal {idx} has ec {float(capital_ec[idx])} but "
+                             f"ppf(level) - el is {implied} (tolerance {tol})")
     el_total = float(losses.sum())
     bounds = worst_var_bounds(ppfs, lv, bounds_n, bounds_epsilon, seed=seed)
     rows: list[tuple[str, float | None, float, float | None]] = [

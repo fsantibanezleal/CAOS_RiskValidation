@@ -70,7 +70,7 @@ def _calls():
         (bounds.comonotonic_var, ([_pareto, _pareto], 0.99)),
         (bounds.rearrangement_algorithm, (m, "max-min-row-sum", 1e-6, 50, 4)),
         (bounds.worst_var_bounds, ([_pareto] * 3, 0.9, 200, 1e-3, 50, 5)),
-        (band.dependence_band, ([_pareto, _pareto], arr(3, 4), arr(0, 0), r5, [4.0], 0.99, 1, 1000, 6, 500, 100, 1e-3)),
+        (band.dependence_band, ([_pareto, _pareto], arr(9, 9), arr(0, 0), r5, [4.0], 0.99, 1, 1000, 6, 500, 100, 1e-3)),
         (model_risk.barrieu_scandolo, ((100.0, 130.0, 90.0), 0)),
         (model_risk.glasserman_xu_worst_case, (samples[:, 0], 0.1)),
         (val.simple_sum_and_variance_covariance, (arr(3, 4), r5, 6.0)),

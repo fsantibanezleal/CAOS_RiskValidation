@@ -23,7 +23,7 @@ unexpected-loss basis of the BCBS 2005 explanatory note, section 4.4, "$EC_q = \
 - `hybrid_quantile(samples, q)` is the "H-VaR" of Rosenberg and Schuermann (dossier 05 G.1 item 4): $\sqrt{v^\top R_{emp}\,v}$ with
   $v_k=\mathrm{VaR}_q(\text{column }k)$ from `portfolio.portfolio.var_from_sample` and $R_{emp}$ the Pearson correlation of the
   columns. The dossier names the approach and not the estimator: the Pearson correlation is the contract's definition, UNVERIFIED
-  against the paper. It is at most $\sum_k v_k$ and refuses fewer than two rows and a constant column.
+  against the paper. It is at most $\sum_k v_k$ and refuses fewer than two rows, a constant column and a negative column quantile (the square-root formula needs nonnegative quantiles).
 
 ## Diversification and allocation
 

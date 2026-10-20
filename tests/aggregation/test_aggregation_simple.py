@@ -144,3 +144,10 @@ def test_std_contributions_golden_and_full_allocation():
         s.std_contributions(np.array([[1.0, 2.0], [2.0, 1.0]]))
     with pytest.raises(ValueError, match="variance"):
         s.std_contributions(np.zeros((2, 2)))
+
+
+def test_hybrid_quantile_refuses_a_negative_column_quantile():
+    # review F5: z - 10 and z + 1 (correlation 1) at 0.99 have quantiles about -7.66 and 3.30
+    z = np.random.default_rng(0).normal(size=2000)
+    with pytest.raises(ValueError, match="nonnegative quantiles"):
+        s.hybrid_quantile(np.column_stack([z - 10.0, z + 1.0]), 0.99)
