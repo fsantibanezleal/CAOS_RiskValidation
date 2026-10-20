@@ -1,4 +1,4 @@
-"""The fix round of the Opus review of U14-E1 (engine-ml-api 1.0.0 to 1.1.0): one test per decision and finding.
+"""The fix round of the Opus review of U14-E1 (engine-ml-api 1.0.0 to 2.0.0): one test per decision and finding.
 
 Q1 the Beta-Binomial null of the conformal coverage test (M-2), Q2 the CBPE row is not_evaluated (M-4), Q3 the reason
 codes by signed attribution, Q4 the exact permutation reference of the shift resilience test (M-3), m3 the 12-decimal
