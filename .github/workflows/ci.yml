@@ -26,8 +26,8 @@ jobs:
           pip install -e ".[dev,market]"
       - name: Lint
         run: ruff check src tests scripts
-      - name: Unit tests (closed-form and published worked examples; no training, no data)
-        run: pytest -q
+      - name: Unit tests (closed-form and published worked examples; no training, no data; the sizepower studies run locally)
+        run: pytest -q -m "not sizepower"
       - name: Smoke (wheel builds and imports clean)
         run: |
           python -m build
