@@ -4,6 +4,19 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.08.001] - 2026-10-20
+
+A correction of 0.08.000's fairness rows, and the PyPI publication route.
+
+- The outcome-conditioned fairness tests (`fair.equalized_odds`, `fair.equal_opportunity`, `fair.calibration_within_groups`,
+  `fair.auc_by_group`) decide their light on a metric, so their `alpha_amber` and `alpha_red` are null, as the `ml.` metric rows
+  and the three fairness rows of `engine-fairness-api` 1.2.0 already are; the metric's cut points stay in
+  `extras["thresholds"]`. The alpha fields are p-value cut points, and a consumer that read them as such misread these rows.
+  The statistic, the metric and the light are unchanged.
+- The publish workflow tests the built wheel as CI tests the source (the `dev` and `market` extras, `-m "not sizepower"`), and
+  the session-wide registry check recognises engine frames by the imported package's folder, so it holds on an installed wheel.
+  0.8.0 was published to PyPI from this route.
+
 ## [0.08.000] - 2026-10-20
 
 Liquidity, aggregation and stress testing, the regulatory calculators and counterparty credit risk, machine-learning model validation and fair lending (Contraste wave 2 batch 3: units U11, U13, U9 and U14).
