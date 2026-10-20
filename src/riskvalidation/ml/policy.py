@@ -17,8 +17,8 @@ import math
 
 from riskvalidation.core.policy import Policy, Threshold, default_policy
 
-CONVENTION = "convention (engine-ml-api 1.1.0, Policy thresholds)"
-RULE = "rule, not a convention (engine-ml-api 1.1.0, Policy thresholds)"
+CONVENTION = "convention (engine-ml-api 2.0.0, Policy thresholds)"
+RULE = "rule, not a convention (engine-ml-api 2.0.0, Policy thresholds)"
 
 ML_KEYS = (
     "ml.robustness",
@@ -176,7 +176,7 @@ def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
     return Policy(
         policy_id=b.policy_id,
         version=b.version,
-        description=(f"{b.description} The ml. rows are those of engine-ml-api 1.1.0 where it holds none or holds the "
+        description=(f"{b.description} The ml. rows are those of engine-ml-api 2.0.0 where it holds none or holds the "
                      "packaged default.").strip(),
         thresholds=rows,
     )

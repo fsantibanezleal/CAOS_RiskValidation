@@ -41,7 +41,7 @@ BATTERY = "ml-battery-1.1.0"
 
 DOSSIER_06_C7 = (
     "dossier 06 (model risk management and validation) C.7 ML/AI validation and I.1, the validation engine "
-    "catalogue; contract engine-ml-api 1.1.0"
+    "catalogue; contract engine-ml-api 2.0.0"
 )
 SR_11_7 = (
     "SR 11-7 sensitivity analysis (historical reference text, superseded in the US by SR 26-2; dossier 06 A.1): "

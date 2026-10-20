@@ -1,5 +1,5 @@
 """RV-1437: the size under the null and the power against the planted defect of each `ml.` validation test, by
-`harness.run.simulate` over no fewer than 4,000 repetitions (contract engine-ml-api 1.1.0, SDD l.335). The measured
+`harness.run.simulate` over no fewer than 4,000 repetitions (contract engine-ml-api 2.0.0, SDD l.335). The measured
 rates are reported in `docs/ml/08_size-and-power.md`.
 
 History of the bounds (the review of unit U14-E1, majors M-2 and M-3). The first design bounded the size of
