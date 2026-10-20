@@ -295,7 +295,7 @@ def test_girr_delta_charge_reproduces_the_c12_blocks():
 
 def _ref_curvature(plus, minus, rho_delta, gamma, scenario):
     rho = f.scenario_correlation(np.array(rho_delta) ** 2, scenario).tolist()
-    gam = f.scenario_correlation(np.array(gamma), scenario).tolist()
+    gam = f.scenario_correlation(np.array(gamma) ** 2, scenario).tolist()  # MAR21.101: squared, like rho
     psi = lambda x, y: 0.0 if (x < 0 and y < 0) else 1.0  # noqa: E731
     kb, sb = [], []
     for b in range(len(plus)):
@@ -305,7 +305,7 @@ def _ref_curvature(plus, minus, rho_delta, gamma, scenario):
             tot = sum(max(c, 0.0) ** 2 for c in cvr)
             tot += sum(rho[i][j] * cvr[i] * cvr[j] * psi(cvr[i], cvr[j]) for i in range(n) for j in range(n) if i != j)
             roots.append(math.sqrt(max(0.0, tot)))
-        up = roots[0] > roots[1]
+        up = roots[0] > roots[1] or (roots[0] == roots[1] and sum(plus[b]) > sum(minus[b]))  # MAR21.5(3)(a)(iii)
         kb.append(max(roots))
         sb.append(sum(plus[b]) if up else sum(minus[b]))
     tot = sum(k * k for k in kb)
@@ -431,3 +431,33 @@ def test_liquidity_cascade_invariants_and_refusals():
         f.liquidity_cascade_es(float("nan"), {})
     with pytest.raises(ValueError, match="base_horizon"):
         f.liquidity_cascade_es(10.0, {}, base_horizon=0)
+
+
+def test_curvature_cross_bucket_gamma_is_squared():
+    # MAR21.101: the cross-bucket curvature correlation is the square of the delta gamma (0.5 -> 0.25)
+    one = np.array([[1.0]])
+    plus = np.array([[3.0], [4.0]])
+    minus = np.array([[-1.0], [-1.0]])
+    got = f.curvature_charge(plus, minus, one, _gamma(2, 0.5))
+    assert got == pytest.approx(math.sqrt(9.0 + 16.0 + 2 * 0.25 * 3.0 * 4.0), rel=1e-13)
+    # a single bucket does not depend on gamma
+    assert f.curvature_charge(plus[:1], minus[:1], one, np.array([[1.0]])) == pytest.approx(3.0)
+
+
+def test_curvature_tie_selects_the_scenario_with_the_larger_cvr_sum():
+    # MAR21.5(3)(a)(iii): K+ = K- selects the upward scenario if sum CVR+ > sum CVR-, otherwise the downward one
+    rho = np.eye(2)
+    other_plus, other_minus = [4.0, 0.0], [-1.0, -1.0]
+    expected = math.sqrt(9.0 + 16.0 + 2 * 0.64 * 2.0 * 4.0)  # S_0 = 2 in both branches, gamma 0.8 squared
+    up = f.curvature_charge(
+        np.array([[3.0, -1.0], other_plus]), np.array([[3.0, -4.0], other_minus]), rho, _gamma(2, 0.8)
+    )
+    assert up == pytest.approx(expected, rel=1e-13)  # tie, sums 2 > -1: upward
+    down = f.curvature_charge(
+        np.array([[3.0, -4.0], other_plus]), np.array([[3.0, -1.0], other_minus]), rho, _gamma(2, 0.8)
+    )
+    assert down == pytest.approx(expected, rel=1e-13)  # tie, sums -1 < 2: downward
+    equal = f.curvature_charge(
+        np.array([[3.0, -1.0], other_plus]), np.array([[3.0, -1.0], other_minus]), rho, _gamma(2, 0.8)
+    )
+    assert equal == pytest.approx(math.sqrt(9.0 + 16.0 + 2 * 0.64 * 2.0 * 4.0), rel=1e-13)
