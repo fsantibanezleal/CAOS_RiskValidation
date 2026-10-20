@@ -93,13 +93,22 @@ DOCUMENTED_SIZE = {tid: MARKOV_PAGE for tid in ("rating.time_homogeneity", "rati
                                                 "rating.matrix_reference", "rating.momentum")}
 
 
-# registered p-value tests whose size is measured in a named suite of the `sizepower` tier instead of NULL_SCENARIOS:
-# test id -> "tests/<path>.py::<test function>"; the suite's test must exist, carry the sizepower marker and name the
-# test (by its id or by its function name, which is how the fairness suite labels its rows)
+# registered p-value tests whose size is measured in a named suite instead of NULL_SCENARIOS (a `sizepower` study, or a
+# size test of the CI suite such as the market backtests'): test id -> "tests/<path>.py::<test function>"; the suite's
+# test must exist and name the test (by its id or by its function name, which is how the fairness suite labels its rows)
 _FAIRNESS_SIZE = "tests/fairness/test_fairness_size_power.py::test_size_and_power_two_proportion_z_and_fisher"
+_MARKET_SIZE = "tests/validation_market/test_market_size.py::"
 SIZE_SUITES = {
     "fair.two_proportion_z": _FAIRNESS_SIZE,
     "fair.fisher_exact": _FAIRNESS_SIZE,
+    "market.kupiec_pof": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.christoffersen_independence": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.christoffersen_conditional_coverage": _MARKET_SIZE + "test_size_of_the_var_backtests",
+    "market.duration_test": _MARKET_SIZE + "test_size_of_the_duration_test",
+    "market.acerbi_szekely": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.du_escanciano_unconditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.du_escanciano_conditional": _MARKET_SIZE + "test_size_of_the_es_backtests",
+    "market.dynamic_quantile_test": _MARKET_SIZE + "test_size_of_the_dq_test_at_production_configurations",
 }
 # registered p-value tests whose size has no measurement in either place yet. Each is a finding, not a pass: the list
 # is pinned (a test below fails when an entry is measured, so it leaves the list, and when a new p-value test is
@@ -110,24 +119,7 @@ SIZE_GAPS = {
     "lgd_ead.lgd_calibration_by_segment": "no size study of the paired t-test of mean LGD",
     "lgd_ead.lgd_calibration_over_time": "no size study of the Bonferroni-adjusted per-period t-tests",
     "lgd_ead.downturn_coverage": "no size study of the one-sided downturn t-test",
-    "market.kupiec_pof": "size measured in tests/validation_market/test_market_size.py::"
-                         "test_size_of_the_var_backtests, which is not marked sizepower",
-    "market.christoffersen_independence": "size measured in tests/validation_market/test_market_size.py::"
-                                          "test_size_of_the_var_backtests, which is not marked sizepower",
-    "market.christoffersen_conditional_coverage": "size measured in tests/validation_market/test_market_size.py::"
-                                                  "test_size_of_the_var_backtests, which is not marked sizepower",
-    "market.duration_test": "size measured in tests/validation_market/test_market_size.py::"
-                            "test_size_of_the_duration_test, which is not marked sizepower",
-    "market.acerbi_szekely": "size measured in tests/validation_market/test_market_size.py::"
-                             "test_size_of_the_es_backtests, which is not marked sizepower",
-    "market.du_escanciano_unconditional": "size measured in tests/validation_market/test_market_size.py::"
-                                          "test_size_of_the_es_backtests, which is not marked sizepower",
-    "market.du_escanciano_conditional": "size measured in tests/validation_market/test_market_size.py::"
-                                        "test_size_of_the_es_backtests, which is not marked sizepower",
     "market.mcneil_frey_residual_test": "no size study of the bootstrap residual test",
-    "market.dynamic_quantile_test": "size measured in tests/validation_market/test_market_size.py::"
-                                    "test_size_of_the_var_backtests and "
-                                    "test_size_of_the_dq_test_at_production_configurations, not marked sizepower",
     "portfolio.tail_backtest": "no size study of the binomial exceedance count",
     "portfolio.mc_convergence": "no size study of the Monte Carlo z-test against the anchor",
     "portfolio.crp_recursion_vs_mc": "no size study of the Kolmogorov distance test",
@@ -161,8 +153,9 @@ def test_every_registered_p_value_test_has_its_size_measured_or_named_as_a_gap()
     assert not set(SIZE_SUITES) & set(SIZE_GAPS), "a measured test is no gap"
 
 
-def test_every_size_suite_exists_is_marked_sizepower_and_names_its_test():
-    """Read from the source, not imported: the suite is a 4,000-repetition study that is not executed here."""
+def test_every_size_suite_exists_and_names_its_test():
+    """Read from the source, not imported: the suite is a size study (a 4,000-repetition `sizepower` study or a CI size
+    test) that is not executed here."""
     import ast
 
     registered = {s.test_id: s for s in catalogue()}
@@ -174,10 +167,6 @@ def test_every_size_suite_exists_is_marked_sizepower_and_names_its_test():
         tree = ast.parse(text)
         funcs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
         assert name in funcs, (tid, target, "no such test")
-        marked = [ast.unparse(d) for d in funcs[name].decorator_list]
-        module_marks = [ast.unparse(n.value) for n in tree.body
-                        if isinstance(n, ast.Assign) and any(getattr(t, "id", "") == "pytestmark" for t in n.targets)]
-        assert any(m.endswith("mark.sizepower") for m in marked + module_marks), (tid, target, "not marked sizepower")
         source = ast.get_source_segment(text, funcs[name])
         assert tid in source or registered[tid].func.__name__ in source, (tid, target, "does not name the test")
 
