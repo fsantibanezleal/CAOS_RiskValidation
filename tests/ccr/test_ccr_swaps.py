@@ -200,7 +200,7 @@ def test_swap_values_on_grid():
         assert np.allclose(v[0, :, k], want, atol=1e-13, rtol=0), k
     # a receiver at par: mean value 0 at the first grid point after 0 within the Monte Carlo error, and the discounted
     # mean is 0 at every grid point (the martingale property, which tests the between-reset values on the paths)
-    numeraire = hw1f.bank_account(grid, r)
+    numeraire = hw1f.bank_account(grid, r, a, sigma, p0, fwd)
     par_book = [swap(par, False, 0.0, 2.0)]
     vp = swaps.swap_values_on_grid(par_book, grid, r, a, sigma, p0, fwd)[0]
     assert np.max(np.abs(vp[:, 0])) < 1e-12                           # t = 0: every path at par

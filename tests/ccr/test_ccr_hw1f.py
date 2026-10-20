@@ -151,15 +151,70 @@ def test_simulate_state_golden_and_invariants():
 # ---------------------------------------------------------------------------------------------------- RV-953
 
 
-def test_bank_account_is_the_trapezoid_of_the_short_rate():
-    grid = arr(0.0, 0.5, 1.0, 2.0)
-    r = np.array([[0.02, 0.02, 0.02, 0.02], [0.0, 0.01, 0.02, 0.03]])
-    n = hw1f.bank_account(grid, r)
-    assert np.allclose(n[0], np.exp(0.02 * grid), atol=1e-15, rtol=0)
-    want = np.exp(np.array([0.0, 0.5 * (0.0 + 0.01) / 2, 0.5 * 0.005 + 0.5 * (0.01 + 0.02) / 2,
-                            0.5 * 0.005 + 0.5 * 0.015 + 1.0 * (0.02 + 0.03) / 2]))
-    assert np.allclose(n[1], want, atol=1e-15, rtol=0)
-    assert np.all(n[:, 0] == 1.0)
+def test_bank_account_sigma_zero_is_the_discount_curve_on_any_grid():
+    """H6 (review F1): the deterministic part of the numeraire is integrated exactly, so at sigma = 0 on any grid
+    1 / N(t) is P(0, t) to 1e-12, also where the forward of the linear zero curve jumps (the pillars)."""
+    p0, fwd = curve()
+    for a in (0.0, 0.1, 0.5):
+        for grid in (np.arange(0, 11) / 2.0, np.arange(0, 61) / 12.0, arr(0.0, 0.3, 1.7, 5.0, 12.0)):
+            r = np.tile(hw1f.phi(grid, a, 0.0, fwd), (3, 1))
+            n = hw1f.bank_account(grid, r, a, 0.0, p0, fwd)
+            assert n.shape == r.shape and np.all(n[:, 0] == 1.0)
+            assert np.max(np.abs(1.0 / n - p0(grid)[None, :])) <= 1e-12, (a, grid.size)
+
+
+def test_bank_account_integral_of_phi_closed_form_and_limit():
+    """The exact integral of phi: -ln P(0, t) + sigma^2 / (2 a^2) [t - 2 (1 - e^-at)/a + (1 - e^-2at)/(2a)]. It is
+    recomputed here by a fine trapezoid of phi, in the numeraire at x = 0 (r = phi), and through the limit
+    sigma^2 t^3 / 6 as a tends to 0, continuous across the series threshold (a t = 0.5)."""
+    p0, fwd = curve()
+    grid = arr(0.0, 1.0, 4.0, 9.0)
+    sigma = 0.012
+    fine = np.linspace(0.0, 9.0, 900_001)
+    for a in (0.0, 1e-9, 1e-5, 2e-4, 0.05, 0.2, 0.5 / 9.0, 1.5):
+        n = hw1f.bank_account(grid, hw1f.phi(grid, a, sigma, fwd)[None, :], a, sigma, p0, fwd)
+        log_n = np.log(n[0])
+        det = -np.log(p0(grid)) + sigma**2 * hw1f._phi_integral_term(grid, a)
+        assert np.allclose(log_n, det, atol=1e-13, rtol=0), a
+        phi_f = hw1f.phi(fine, a, sigma, fwd)
+        cum = np.concatenate([[0.0], np.cumsum(0.5 * (phi_f[1:] + phi_f[:-1]) * np.diff(fine))])
+        idx = np.searchsorted(fine, grid)
+        # the trapezoid of the fine grid differs from the exact integral only through the forward kinks
+        assert np.allclose(cum[idx], log_n, atol=2e-6, rtol=0), a
+    # closed form against the limit, and continuity across the threshold a t = 0.5
+    t = arr(0.5, 4.0, 9.0)
+    assert np.allclose(hw1f._phi_integral_term(t, 0.0), t**3 / 6.0, atol=0, rtol=1e-15)
+    from decimal import Decimal, getcontext
+    getcontext().prec = 60
+
+    def exact(tt, aa):                                                  # the closed form in 60 digits: no cancellation
+        tt, aa = Decimal(repr(tt)), Decimal(repr(aa))
+        return float((tt - 2 * (1 - (-aa * tt).exp()) / aa + (1 - (-2 * aa * tt).exp()) / (2 * aa)) / (2 * aa * aa))
+
+    for a in (0.5 / 9.0 * 0.9999, 0.5 / 9.0 * 1.0001, 1e-6, 0.05, 1.5):
+        want = np.array([exact(float(x), a) for x in t])
+        assert np.allclose(hw1f._phi_integral_term(t, a), want, atol=0, rtol=1e-12), a
+
+
+def test_bank_account_martingale_semiannual_grid_100k_paths():
+    """H6, the review's scenario 2: a = 0.1, sigma = 0.01, 100,000 paths, the semiannual grid 0 to 5, bonds to T = 10.
+    Before the fix max z was 5.22 (red); after it 0.18."""
+    from riskvalidation.core.result import Light
+    from riskvalidation.validation import ccr as v
+
+    p0, fwd = curve()
+    a, sigma, n = 0.1, 0.01, 100_000
+    grid = np.arange(0, 11) / 2.0
+    r = hw1f.simulate_short_rate(grid, a, sigma, fwd, n, 7)
+    numeraire = hw1f.bank_account(grid, r, a, sigma, p0, fwd)
+    means, ses = [], []
+    for k in range(1, grid.size):
+        price = hw1f.bond_price(r[:, k], float(grid[k]), 10.0, a, sigma, p0, fwd) / numeraire[:, k]
+        means.append(float(price.mean()))
+        ses.append(float(price.std(ddof=1)) / math.sqrt(n))
+    res = v.martingale_discounted_bonds(np.array(means), np.full(len(means), float(p0(10.0))), np.array(ses))
+    assert res.light is Light.GREEN, res.statistic
+    assert res.statistic < 1.5
 
 
 def test_simulate_short_rate_martingale_and_mean():
@@ -173,7 +228,7 @@ def test_simulate_short_rate_martingale_and_mean():
     assert np.all(np.abs(r.mean(axis=0) - phi) <= 4.0 * np.maximum(se, 1e-12))
     assert np.all(r[:, 0] == phi[0])                                 # x(0) = 0
     # martingale: E[exp(-integral r) P(t, T; r_t)] = P(0, T) at every grid point
-    numeraire = hw1f.bank_account(grid, r)
+    numeraire = hw1f.bank_account(grid, r, a, sigma, p0, fwd)
     for big_t in (5.0, 7.0, 10.0):
         for k in range(1, grid.size, 6):
             price = hw1f.bond_price(r[:, k], float(grid[k]), big_t, a, sigma, p0, fwd) / numeraire[:, k]
@@ -215,7 +270,7 @@ def test_bond_option_golden_parity_and_monte_carlo():
     grid = np.linspace(0.0, t, 25)
     r = hw1f.simulate_short_rate(grid, a, sigma, fwd, n, 21)
     price = hw1f.bond_price(r[:, -1], t, s, a, sigma, p1, fwd)
-    numeraire = hw1f.bank_account(grid, r)[:, -1]
+    numeraire = hw1f.bank_account(grid, r, a, sigma, p1, fwd)[:, -1]
     strike = p0s / p0t
     pay = np.maximum(price - strike, 0.0) / numeraire
     mc, se = float(pay.mean()), float(pay.std(ddof=1)) / math.sqrt(n)
@@ -265,7 +320,7 @@ def test_swaption_jamshidian_parity_and_monte_carlo():
     grid = np.linspace(0.0, expiry, 25)
     r = hw1f.simulate_short_rate(grid, a, sigma, fwd, n, 33)
     bonds = np.stack([hw1f.bond_price(r[:, -1], expiry, float(tt), a, sigma, p0, fwd) for tt in times], axis=1)
-    numeraire = hw1f.bank_account(grid, r)[:, -1]
+    numeraire = hw1f.bank_account(grid, r, a, sigma, p0, fwd)[:, -1]
     for is_payer in (True, False):
         value = 1.0 - bonds @ amounts if is_payer else bonds @ amounts - 1.0
         pay = np.maximum(value, 0.0) / numeraire
@@ -335,6 +390,69 @@ def test_calibrate_ar1_golden_and_recovery():
         hw1f.calibrate_ar1(dates[:60][::-1], series[:60], "2100-01-01", dt=1.0 / 12.0)
     with pytest.raises(ValueError, match="short_rate"):
         hw1f.calibrate_ar1(dates[:60], series[:59], "2100-01-01", dt=1.0 / 12.0)
+
+
+def _ols_delta_method(series, step):
+    """Typed recomputation of ``calibrate_ar1`` for one series: OLS of x_i on x_{i-1} by the normal equations, the
+    residual spread by ``ddof = 1`` (the listing of addendum R6), a = -ln b / dt and sigma of equations 55 to 57, and
+    the standard errors by the delta method with numerical derivatives of the map (b, delta) to (a, sigma)."""
+    x = np.asarray(series, dtype=float)
+    y, xl = x[1:], x[:-1]
+    m = y.size
+    sxx = float(np.sum((xl - xl.mean()) ** 2))
+    b = float(np.sum((xl - xl.mean()) * (y - y.mean())) / sxx)
+    c = float(y.mean() - b * xl.mean())
+    resid = y - c - b * xl
+    delta = float(np.std(resid, ddof=1))
+    s2 = float(np.sum(resid**2)) / (m - 2)                                # the OLS variance of b
+    se_b = math.sqrt(s2 / sxx)
+    se_delta = delta / math.sqrt(2.0 * (m - 2))
+
+    def sig(bb, dd):
+        return hw1f.ar1_to_hw1f(bb, dd, step)[1]
+
+    h = 1e-7
+    d_sig_db = (sig(b + h, delta) - sig(b - h, delta)) / (2 * h)
+    d_sig_dd = (sig(b, delta + h * delta) - sig(b, delta - h * delta)) / (2 * h * delta)
+    a_se = se_b / (b * step)
+    sigma_se = math.sqrt((d_sig_db * se_b) ** 2 + (d_sig_dd * se_delta) ** 2)
+    a, sigma = hw1f.ar1_to_hw1f(b, delta, step)
+    return a, sigma, a_se, sigma_se, c / (1.0 - b)
+
+
+def test_calibrate_ar1_standard_errors_pinned_to_a_typed_delta_method():
+    """H7 (review F2, mutants 7 and 8) and H9 (F4): a, sigma, a_se and sigma_se equal a recomputation typed out here,
+    which uses ddof = 1 on the residuals as the source's listing does (addendum R6), not the divisor m - 2."""
+    n = 600
+    dates = _monthly_dates(n)
+    x = 0.03 + hw1f.simulate_state(np.arange(n) / 12.0, 0.4, 0.01, 2, 4)[0]
+    fit = hw1f.calibrate_ar1(dates, x, "2100-01-01", dt=1.0 / 12.0)
+    a, sigma, a_se, sigma_se, theta = _ols_delta_method(x, 1.0 / 12.0)
+    assert fit.a == pytest.approx(a, rel=1e-9) and fit.sigma == pytest.approx(sigma, rel=1e-9)
+    assert fit.a_se == pytest.approx(a_se, rel=1e-6)
+    assert fit.sigma_se == pytest.approx(sigma_se, rel=1e-6)
+    assert fit.theta == pytest.approx(theta, abs=1e-12)
+    # the divisor: SSE / (m - 1), distinguishable from SSE / (m - 2) on a short series
+    short_n = 64
+    xs = x[:short_n]
+    fs = hw1f.calibrate_ar1(dates[:short_n], xs, "2100-01-01", min_years=1.0, dt=1.0 / 12.0)
+    assert fs.sigma == pytest.approx(_ols_delta_method(xs, 1.0 / 12.0)[1], rel=1e-9)
+    assert fs.sigma != pytest.approx(fs.sigma * math.sqrt((short_n - 2) / (short_n - 1)) ** -1, rel=1e-6)
+
+
+def test_calibrate_ar1_standard_errors_cover_the_estimate_spread():
+    """H7: over about 200 seeds the empirical standard deviation of the estimates is within 20 percent of the mean
+    standard error (the review measured 0.1696 against 0.1613 and 3.37e-4 against 3.31e-4)."""
+    true_a, true_sigma, n = 0.4, 0.01, 480
+    dates = _monthly_dates(n)
+    fits = []
+    for seed in range(1, 201):
+        x = hw1f.simulate_state(np.arange(n) / 12.0, true_a, true_sigma, 2, seed)[0]
+        fits.append(hw1f.calibrate_ar1(dates, 0.03 + x, "2100-01-01", dt=1.0 / 12.0))
+    a_hat, s_hat = np.array([f.a for f in fits]), np.array([f.sigma for f in fits])
+    mean_a_se, mean_s_se = float(np.mean([f.a_se for f in fits])), float(np.mean([f.sigma_se for f in fits]))
+    assert abs(float(a_hat.std(ddof=1)) / mean_a_se - 1.0) <= 0.20
+    assert abs(float(s_hat.std(ddof=1)) / mean_s_se - 1.0) <= 0.20
 
 
 # ---------------------------------------------------------------------------------------------------- RV-984

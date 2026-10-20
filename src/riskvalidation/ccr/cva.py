@@ -174,6 +174,10 @@ def wwr_cva(w: np.ndarray, exposure_discounted: np.ndarray, survival_target: np.
     lg = _lgd(lgd, "lgd")
     tgt = vec(survival_target, "survival_target")
     p = w_.shape[0]
+    d = vec(dt, "dt")
+    if d.size != w_.shape[1] or np.any(d <= 0.0):
+        raise ValueError(f"dt must have {w_.shape[1]} positive entries, got {d.size} entries with a minimum of "
+                         f"{float(d.min()) if d.size else float('nan')}")
     if scalar(b, "b") == 0.0:
         if tgt.size != w_.shape[1]:
             raise ValueError(f"survival_target must have {w_.shape[1]} entries, got {tgt.size}")
@@ -182,7 +186,7 @@ def wwr_cva(w: np.ndarray, exposure_discounted: np.ndarray, survival_target: np.
         per_path = lg * (e @ pd)
     else:
         _, h = wwr_calibrate_a(w_, tgt, dt, b)
-        surv = np.exp(-np.cumsum(h * vec(dt, "dt")[None, :], axis=1))
+        surv = np.exp(-np.cumsum(h * d[None, :], axis=1))
         full = np.hstack([np.ones((p, 1)), surv])
         per_path = lg * np.sum((full[:, :-1] - full[:, 1:]) * e, axis=1)
         value = float(per_path.mean())
