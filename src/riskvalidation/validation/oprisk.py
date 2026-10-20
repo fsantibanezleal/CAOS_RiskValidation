@@ -21,6 +21,7 @@ from typing import Any
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.oprisk._checks import positive, scalar, vec
 from riskvalidation.oprisk.sma import OPE25_MINIMUM_YEARS, ilm, loss_component
@@ -86,6 +87,17 @@ def _quantile_deviation(method: str, q: float) -> float:
     return (lo - q if q < lo else q - hi) / BENCHMARK_QUANTILE_SCALE
 
 
+@register(
+    "oprisk.benchmark_reproduction",
+    family="oprisk",
+    name="Benchmark reproduction",
+    h0=(
+        "the engine reproduces Shevchenko's benchmark, Poisson(100) with LN(0, 2): E[Z] = 738.9056, "
+        "Var[Z] = 298095.7987, skewness 40.3428, a 99.9 percent quantile of 5849 to 5850 by Panjer and FFT and "
+        "5853.1 by Monte Carlo"),
+    reference=f"{SHEVCHENKO_2010}; {LADDER}",
+    decision="metric",
+)
 def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mapping[str, float],
                            moment_rel_tol: float = 1e-5, quantile_rel_tol: float = 0.01,
                            model_id: str | None = None) -> TestResult:
@@ -145,6 +157,14 @@ def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mappi
 # threshold stability of the fitted tail index
 
 
+@register(
+    "oprisk.threshold_stability",
+    family="oprisk",
+    name="Threshold stability",
+    h0="the fitted tail index is stable across thresholds",
+    reference=f"{LADDER}; Chavez-Demoulin, Embrechts and Neslehova (2006), doi:10.1016/j.jbankfin.2005.11.008",
+    decision="metric",
+)
 def threshold_stability(thresholds: np.ndarray, xi_hat: np.ndarray, model_id: str | None = None,
                         tol_green: float = 0.10, tol_amber: float = 0.25) -> TestResult:
     """The fitted GPD tail index is stable across thresholds (the threshold-stability plot of dossier 05, ladder rungs 2
@@ -189,6 +209,14 @@ def threshold_stability(thresholds: np.ndarray, xi_hat: np.ndarray, model_id: st
 # capital stability across independent histories
 
 
+@register(
+    "oprisk.capital_stability",
+    family="oprisk",
+    name="Capital stability",
+    h0="the capital is stable across independent histories and unbiased against the truth",
+    reference=f"{LADDER}; Shevchenko (2010), arXiv 1008.1108 (Monte Carlo quantile error O(K^-1/2))",
+    decision="metric",
+)
 def capital_stability(capitals: np.ndarray, truth: float, model_id: str | None = None, dispersion_green: float = 0.25,
                       dispersion_amber: float = 0.50, bias_green: float = 0.10, bias_amber: float = 0.25) -> TestResult:
     """The 99.9 percent capital is stable across independent loss histories and unbiased against the truth. `capitals`
@@ -232,6 +260,14 @@ def capital_stability(capitals: np.ndarray, truth: float, model_id: str | None =
 # the SMA's response to one large loss
 
 
+@register(
+    "oprisk.sma_ilm_response",
+    family="oprisk",
+    name="SMA ILM response to a large loss",
+    h0="the ILM does not jump when one large loss is added to the loss history",
+    reference=f"{OPE25} (OPE25.8, OPE25.9, OPE25.15); {LADDER}",
+    decision="metric",
+)
 def sma_ilm_response(bic_value: float, annual_losses: np.ndarray, added_loss: float, model_id: str | None = None,
                      jump_green: float = 0.05, jump_amber: float = 0.15) -> TestResult:
     """The ILM does not jump when one large loss is added to the history (the SMA's response to a single large loss).
@@ -279,6 +315,16 @@ def sma_ilm_response(bic_value: float, annual_losses: np.ndarray, added_loss: fl
 # scenario influence
 
 
+@register(
+    "oprisk.scenario_influence",
+    family="oprisk",
+    name="Scenario influence",
+    h0="no single scenario point moves the 99.9 percent capital by more than the tolerance",
+    reference=(
+        "dossier 05 F.5 (scenario analysis and its combination with loss data); Shevchenko and Wuthrich "
+        "(2006), J. Operational Risk 1(3):3-26, doi:10.21314/JOP.2006.016"),
+    decision="metric",
+)
 def scenario_influence(influences: np.ndarray, model_id: str | None = None, influence_amber: float = 0.10,
                        influence_red: float = 0.25) -> TestResult:
     """No single scenario point moves the capital by more than the tolerance (dossier 05 F.5: validation must test the

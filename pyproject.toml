@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "riskvalidation"
 # PEP 440 form of the display version X.XX.XXX in VERSION (see CHANGELOG.md and riskvalidation.__version__).
-version = "0.7.0"
+version = "0.8.0"
 description = "Validation tests, regulatory calculators and reference engines for financial risk models: the toolkit of an independent model validator."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -34,6 +34,14 @@ dev = ["pytest>=8", "ruff>=0.6,<0.17", "build>=1.2", "pypdf>=4"]
 # U8 market: arch (GARCH family, the Model Confidence Set) is optional; its own bounds (numpy<3,>=1.22.3, scipy>=1.8, Python >=3.10) sit
 # inside the engine pins above, and it brings pandas and statsmodels, which the engine core never imports.
 market = ["arch>=8.0,<9"]
+# U14 ml: fairlearn and MAPIE reconcile the fairness metrics and the split-conformal quantile, in the tests only (U14 sizing Q11);
+# the engine core never imports them.
+ml = ["fairlearn>=0.15,<0.16", "mapie>=1.5,<2"]
+# U13 stress: statsmodels is the independent reference of the VAR and the growth-at-risk regressions, in the tests only (U13 sizing R2).
+stress = ["statsmodels>=0.15,<0.16"]
+# BL-083 transitions: Open Risk's transitionMatrix (Apache-2.0) is the independent reference of the cohort estimator, in the tests only;
+# the engine core never imports it. Pinned to the version the reconciliation was measured against.
+transitions = ["transitionMatrix==0.5.1"]
 
 [project.urls]
 Homepage = "https://github.com/fsantibanezleal/CAOS_RiskValidation"
@@ -49,6 +57,9 @@ riskvalidation = ["policies/*.json"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+    "sizepower: a size and power study at 4,000 repetitions or more; deselected in CI, run locally as the release gate (ADR-0074, U14 decision G7)",
+]
 
 [tool.ruff]
 line-length = 120

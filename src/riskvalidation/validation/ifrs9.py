@@ -19,6 +19,7 @@ import numpy as np
 from scipy import stats
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.harness.rates import wilson_interval
 from riskvalidation.provisions import reconciliation as _rc
@@ -105,6 +106,16 @@ def _mixture_quantile(q: float, n: int, pd: float, rho: float) -> int:
     return lo
 
 
+@register(
+    "ifrs9.lifetime_pd_backtest",
+    family="ifrs9",
+    name="Lifetime PD backtest",
+    h0=LIFETIME_H0,
+    reference=(
+        f"{EBA_2023}, paras 114 to 118; {VASICEK}; Kaplan-Meier product-limit and Aalen-Johansen cumulative incidence "
+        "estimators (dossier 02 B.2, C.2)"),
+    decision="metric",
+)
 def lifetime_pd_backtest(months: np.ndarray, predicted_cumulative: np.ndarray, observed_cumulative: np.ndarray,
                          n_at_risk: np.ndarray, n_events: np.ndarray, rho: float | None = None,
                          competing_prepayment: bool = False,
@@ -197,6 +208,14 @@ def _wilson(k: int, n: int) -> list[float] | None:
     return list(wilson_interval(int(k), int(n))) if n > 0 else None
 
 
+@register(
+    "ifrs9.sicr_effectiveness",
+    family="ifrs9",
+    name="SICR effectiveness",
+    h0=SICR_H0,
+    reference=f"{EBA_2023}, paras 94 to 99 and Figure 42; {D350}, A38; dossier 02 I.2",
+    decision="metric",
+)
 def sicr_effectiveness(stage_at_origination_view: np.ndarray, defaulted_within_k: np.ndarray, k_months: int,
                        months_in_stage2_before_default: np.ndarray, stage3_from_stage1: np.ndarray,
                        backstop_only: np.ndarray, model_id: str | None = None, *,
@@ -285,6 +304,16 @@ def sicr_effectiveness(stage_at_origination_view: np.ndarray, defaulted_within_k
     )
 
 
+@register(
+    "ifrs9.sicr_threshold_stability",
+    family="ifrs9",
+    name="SICR threshold stability",
+    h0="the SICR threshold does not loosen in the periods in which conditions worsen",
+    reference=(
+        f"{EBA_2023}, paras 29 to 33; EBA (2021), IFRS 9 implementation by EU institutions, Monitoring report, "
+        "EBA/Rep/2021/35, doi:10.2853/631076"),
+    decision="metric",
+)
 def sicr_threshold_stability(implied_multiplier: np.ndarray, condition_index: np.ndarray,
                              model_id: str | None = None) -> TestResult:
     """Thresholds must not loosen when conditions worsen (EBA/Rep/2023/36 paras 29 to 33; EBA/Rep/2021/35).
@@ -323,6 +352,14 @@ def sicr_threshold_stability(implied_multiplier: np.ndarray, condition_index: np
 # stage migration and ECL backtests
 
 
+@register(
+    "ifrs9.stage_migration_backtest",
+    family="ifrs9",
+    name="Stage migration backtest",
+    h0="the observed stage transitions are drawn from the predicted transition matrix",
+    reference=f"{EBA_2023}, para 97; Anderson and Goodman (1957), doi:10.1214/aoms/1177707039, equation (3.1)",
+    decision="p_value",
+)
 def stage_migration_backtest(predicted_matrix: np.ndarray, observed_counts: np.ndarray,
                              model_id: str | None = None, *, alpha_amber: float = 0.05,
                              alpha_red: float = 0.01) -> TestResult:
@@ -375,6 +412,14 @@ def stage_migration_backtest(predicted_matrix: np.ndarray, observed_counts: np.n
     )
 
 
+@register(
+    "ifrs9.ecl_backtest",
+    family="ifrs9",
+    name="ECL backtest",
+    h0="the discounted realised losses within the horizon equal the model ECL for the same accounts",
+    reference=f"IFRS 9 B5.5.52; {EBA_2023}, paras 100 to 104",
+    decision="metric",
+)
 def ecl_backtest(realised_pv_losses: np.ndarray, ecl_horizon: np.ndarray, horizon_months: int,
                  model_id: str | None = None, *, r_green: tuple[float, float] = (0.8, 1.25),
                  r_amber: tuple[float, float] = (0.5, 2.0)) -> TestResult:
@@ -421,6 +466,14 @@ def ecl_backtest(realised_pv_losses: np.ndarray, ecl_horizon: np.ndarray, horizo
 # scenario sensitivity, non-linearity, overlays, reconciliation
 
 
+@register(
+    "ifrs9.scenario_sensitivity",
+    family="ifrs9",
+    name="Scenario sensitivity",
+    h0="the probability-weighted ECL equals the ECL at the probability-weighted mean path (a linear ECL)",
+    reference=f"{D350}, para 36(a); {GPPC}, 2.8.1.2; IFRS 9 5.5.17(a), B5.5.42",
+    decision="metric",
+)
 def scenario_sensitivity(ecl_by_scenario: np.ndarray, weights: np.ndarray, ecl_at_mean_path: float,
                          model_id: str | None = None, *, nl_amber: float = 1.0, nl_red: float = 3.0) -> TestResult:
     """The non-linearity index NL = ECL_weighted / ECL(mean path) - 1 (d350 para 36(a); GPPC 2.8.1.2).
@@ -460,6 +513,16 @@ def scenario_sensitivity(ecl_by_scenario: np.ndarray, weights: np.ndarray, ecl_a
     )
 
 
+@register(
+    "ifrs9.nonlinearity",
+    family="ifrs9",
+    name="Non-linearity of the weighted PD",
+    h0="the weighted PD equals the PD at the weighted mean factor (a linear PD in the systematic factor)",
+    reference=(
+        "dossier 02 B.4 and C.1 (BCBS 2005 explanatory note; Vasicek 2002; Gordy 2003, "
+        "doi:10.1016/S1042-9573(03)00040-8)"),
+    decision="metric",
+)
 def nonlinearity_test(pd_ttc: float, rho: float, z: np.ndarray, weights: np.ndarray,
                       model_id: str | None = None, *, gh_tolerance: float = 1e-9) -> TestResult:
     """The PD-level non-linearity index with the Gauss-Hermite cross check (dossier 02 B.4, C.1, I.1 item 6).
@@ -495,6 +558,14 @@ def nonlinearity_test(pd_ttc: float, rho: float, z: np.ndarray, weights: np.ndar
     )
 
 
+@register(
+    "ifrs9.overlay_diagnostics",
+    family="ifrs9",
+    name="Overlay diagnostics",
+    h0="overlays are a small, attributed, directionally consistent part of the allowance",
+    reference=f"{ECB_2024}; ECB letter SSM-2020-0744 (2020-12-04); {D350}, paras 50 and 51",
+    decision="metric",
+)
 def overlay_diagnostics(overlays: Sequence[Overlay], allowance_by_stage: Mapping[str, float],
                         scenario_direction: int, model_id: str | None = None, *,
                         share_amber: float = 0.10, share_red: float = 0.25) -> TestResult:
@@ -562,6 +633,14 @@ def overlay_diagnostics(overlays: Sequence[Overlay], allowance_by_stage: Mapping
     )
 
 
+@register(
+    "ifrs9.reconciliation_identities",
+    family="ifrs9",
+    name="Reconciliation identities",
+    h0="opening plus movements equals closing, by stage, and the waterfall opens into the stage tables",
+    reference="IFRS 7 35H and 35I; dossier 02 I.1 items 9 and 10 and I.2",
+    decision="metric",
+)
 def reconciliation_identities(allowance: Sequence[RollForwardRow], gca: Sequence[RollForwardRow],
                               waterfall_lines: Sequence[dict], stage_ecl: Mapping[str, float],
                               model_id: str | None = None, *, tolerance: float = 1e-6) -> TestResult:
