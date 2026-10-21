@@ -1,0 +1,100 @@
+{
+  "policy_id": "contraste-market-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste market-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "market.acerbi_szekely": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.0001,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.acerbi_szekely; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Acerbi and Szekely (2014), Backtesting expected shortfall, Risk, December 2014 (primary text not retrieved); the reference point -0.70 and -1.8 through Moldenhauer and Pitera, arXiv 1709.01337, section 6",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.0001
+      }
+    },
+    "market.christoffersen_conditional_coverage": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.christoffersen_conditional_coverage; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Christoffersen (1998), Int. Economic Review 39(4):841-862, doi:10.2307/2527341",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.christoffersen_independence": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.christoffersen_independence; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Christoffersen (1998), Int. Economic Review 39(4):841-862, doi:10.2307/2527341",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.desk_backtest": {
+      "kind": "upper_bad",
+      "amber": 12.0,
+      "red": 12.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.desk_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.18 to MAR32.19 (dossier 01 D.4)",
+      "rule": "upper_le:statistic",
+      "by": "segment",
+      "cases": {
+        "alpha=0.01": {
+          "amber": 12.0,
+          "red": 12.0,
+          "limit": 12.0
+        },
+        "alpha=0.025": {
+          "amber": 30.0,
+          "red": 30.0,
+          "limit": 30.0
+        }
+      }
+    },
+    "market.duration_test": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.duration_test; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Christoffersen and Pelletier (2004), J. Financial Econometrics 2(1):84-108, doi:10.1093/jjfinec/nbh004",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.dynamic_quantile_test": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.dynamic_quantile_test; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Engle and Manganelli (2004), J. Business and Economic Statistics 22(4):367-381, doi:10.1198/073500104000000370",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.kupiec_pof": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.kupiec_pof; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Kupiec (1995), J. Derivatives 3(2):73-84, doi:10.3905/jod.1995.407942",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.pla_test": {
+      "kind": "lower_bad",
+      "amber": 0.8,
+      "red": 0.7,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.pla_test; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.36 to MAR32.42 and MAR32.20 (dossier 01 D.4)",
+      "rule": "market_pla_zone",
+      "parameters": {
+        "ks_green": 0.09,
+        "ks_red": 0.12,
+        "spearman_green": 0.8,
+        "spearman_red": 0.7
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "policy_id": "contraste-ccr-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste ccr-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "ccr.cva_recomputed": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.cva_recomputed; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: dossier 05 C.2, CVA = sum PD LGD EPE (ORE xva.tex, the advanced discretisation)",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "rel_tol": 1e-09
+      }
+    },
+    "ccr.ee_analytic_vs_simulated": {
+      "kind": "upper_bad",
+      "amber": 3.0,
+      "red": 3.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.ee_analytic_vs_simulated; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: dossier 05 C.4 and the U9 research addendum R4: the Hull-White one-factor closed forms (QuantLib 1.44 hullwhite.cpp and jamshidianswaptionengine.cpp); ladder rung 2 against rung 3 (dossier 05, counterparty ladder)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 3.0
+      }
+    },
+    "ccr.eepe_recomputed": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.eepe_recomputed; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: BCBS CRE53.12 and CRE53.13, Effective EE and Effective EPE (addendum R9); dossier 05 C.1",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "rel_tol": 1e-09
+      }
+    },
+    "ccr.martingale_discounted_bonds": {
+      "kind": "upper_bad",
+      "amber": 3.0,
+      "red": 3.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.martingale_discounted_bonds; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: U9 research addendum R4: the theta fit reprices today's curve, so discounted bond prices are martingales (QuantLib 1.44 hullwhite.hpp)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 3.0
+      }
+    },
+    "ccr.path_convergence": {
+      "kind": "upper_bad",
+      "amber": 3.0,
+      "red": 6.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.path_convergence; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: dossier 05, counterparty ladder: convergence in the number of paths; ORE xva.tex",
+      "rule": "ccr_path_convergence",
+      "parameters": {
+        "k_se": 3.0
+      }
+    },
+    "ccr.pfe_exceedance_backtest": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.pfe_exceedance_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: BCBS 185 (2010), Sound practices for backtesting counterparty credit risk models, paragraphs 25 to 31; CRE53.33 (addendum R5)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "ccr.pit_exposure_backtest": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.pit_exposure_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: BCBS 185 paragraph 25 (reliability); Formenti, Spadafora, Terraneo and Ramponi, arXiv 1505.04593 (PIT and Anderson-Darling); critical values simulated under the model (addendum R5; Ruiz 2014 and Anfuso et al. 2014 not read)",
+      "rule": "ccr_pit_simulated"
+    },
+    "ccr.reconcile_ee_profile": {
+      "kind": "upper_bad",
+      "amber": 2.0,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ccr.reconcile_ee_profile; producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: dossier 05, counterparty ladder: the engine's EE profile matches ORE 1.8.17.0 within Monte Carlo error at each grid point",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 2.0
+      }
+    }
+  }
+}
