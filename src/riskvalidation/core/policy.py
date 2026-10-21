@@ -36,13 +36,15 @@ class Threshold:
     classifier of ``riskvalidation.policies.rules`` for a light that is not two cut points on one value), and
     ``by`` with ``cases`` (the entry is keyed by a field of the row: ``segment`` or ``extras.<key>``; ``cases`` maps
     each field value to the cut points that override ``amber``, ``red`` and ``parameters`` for that value).
+    ``parameters`` name the cut points an entry already holds (or add the ones beyond the pair), so two thresholds
+    with the same pair, rule and cases are equal whatever names they give their cut points.
     """
 
     kind: str
     amber: float
     red: float
     source: str = ""
-    parameters: Mapping[str, float] = field(default_factory=dict)
+    parameters: Mapping[str, float] = field(default_factory=dict, compare=False)
     rule: str = ""
     by: str = ""
     cases: Mapping[str, Mapping[str, float]] = field(default_factory=dict)
@@ -115,10 +117,10 @@ class Threshold:
 
 def _row_field(row: Any, name: str) -> Any:
     """A field of a result row (a mapping or an object): ``statistic``, ``segment``, ``extras.<key>``, and so on."""
-    head, _, rest = name.partition(".")
+    head, *rest = name.split(".")
     value = row.get(head) if isinstance(row, Mapping) else getattr(row, head, None)
-    if rest:
-        return value.get(rest) if isinstance(value, Mapping) else None
+    for key in rest:
+        value = value.get(key) if isinstance(value, Mapping) else None
     return value
 
 
@@ -152,15 +154,44 @@ class Policy:
         """Light for a result row (a mapping or a ``TestResult``), through the entry's rule and its keyed case.
 
         ``NOT_EVALUATED`` with the entry (or ``None``) when the test has no entry or a keyed entry has no case for
-        the row's field value.
+        the row's field value. A test whose policy states no threshold by contract (``rules.RULE_ONLY``: the fairness
+        flags and the ml estimate rows) is classified by its rule whatever the policy holds.
         """
         th = self.threshold(test_id)
         if th is None:
-            return Light.NOT_EVALUATED, None
+            from riskvalidation.policies.rules import RULE_ONLY, classify_rule
+
+            if test_id not in RULE_ONLY:
+                return Light.NOT_EVALUATED, None
+            rule, constants = RULE_ONLY[test_id]  # no policy row by contract: the rule is the whole classification
+            if rule == "worst_of_screens":
+                return self._worst_of_screens(row), None
+            return classify_rule(rule, Threshold("upper_bad", 0.0, 0.0, parameters=constants), row), None
         eff = th.for_row(row)
         if eff is None:
             return Light.NOT_EVALUATED, th
+        if eff.rule == "worst_of_screens":
+            return self._worst_of_screens(row), eff
         return eff.classify_row(row), eff
+
+    def _worst_of_screens(self, row: Any) -> Light:
+        """The worst light over the screens of a row (``extras.screens``: ``key`` and ``value`` each), each read by the
+        entry of its own key (``ml.leakage_screen.temporal_order`` and so on)."""
+        screens = _row_field(row, "extras.screens")
+        if not isinstance(screens, Mapping) or not screens:
+            return Light.NOT_EVALUATED
+        order = {Light.GREEN: 0, Light.AMBER: 1, Light.RED: 2}
+        worst = Light.GREEN
+        for screen in screens.values():
+            th = self.threshold(str(screen.get("key")))
+            if th is None:
+                return Light.NOT_EVALUATED
+            light = th.classify(screen.get("value"))
+            if light is Light.NOT_EVALUATED:
+                return light
+            if order[light] > order[worst]:
+                worst = light
+        return worst
 
 
 def policy_from_mapping(data: Mapping[str, Any]) -> Policy:

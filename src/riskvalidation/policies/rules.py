@@ -26,10 +26,10 @@ G, A, R, N = Light.GREEN, Light.AMBER, Light.RED, Light.NOT_EVALUATED
 
 
 def _get(row: Any, name: str) -> Any:
-    head, _, rest = name.partition(".")
+    head, *rest = name.split(".")
     value = row.get(head) if isinstance(row, Mapping) else getattr(row, head, None)
-    if rest:
-        return value.get(rest) if isinstance(value, Mapping) else None
+    for key in rest:
+        value = value.get(key) if isinstance(value, Mapping) else None
     return value
 
 
@@ -363,6 +363,44 @@ def liquidity_haircut(th: Any, row: Any, field: str = "") -> Light:
     return G if (stat <= _p(th, "tolerance") + EPS and wrong == 0) else R
 
 
+def amber_if_nonempty(th: Any, row: Any, field: str) -> Light:
+    """Amber when the field (a list of flagged groups) is not empty, green when it is an empty list; never red."""
+    v = _get(row, field)
+    return N if v is None else (A if len(v) else G)
+
+
+def amber_if_false(th: Any, row: Any, field: str) -> Light:
+    """Amber when the field (a boolean, for example ``same_sign``) is false, green when it is true; never red."""
+    v = _get(row, field)
+    return N if v is None else (G if v else A)
+
+
+def fair_interval_excludes_zero(th: Any, row: Any, field: str = "") -> Light:
+    """``fair.conditional_disparity`` and ``fair.rate_spread_disparity``: amber when the Wald interval of the effect
+    (``extras.effect.lo`` and ``hi``, at the level the row states) excludes zero; never red."""
+    lo, hi = _num(row, "extras.effect.lo"), _num(row, "extras.effect.hi")
+    if lo is None or hi is None:
+        return N
+    return A if (lo > 0.0 or hi < 0.0) else G
+
+
+def ml_interval_above_zero(th: Any, row: Any, field: str = "") -> Light:
+    """``ml.challenger_brier``: amber when the lower end of the paired-Brier interval (``extras.lo``) is above zero (the
+    challenger is worse); green otherwise, a better challenger is not a finding."""
+    lo = _num(row, "extras.lo")
+    return N if lo is None else (A if lo > 0.0 else G)
+
+
+def always_not_evaluated(th: Any, row: Any, field: str = "") -> Light:
+    """``ml.cbpe_estimate``: an estimate, never a test, so never a colour."""
+    return N
+
+
+def worst_of_screens(th: Any, row: Any, field: str = "") -> Light:
+    """``ml.leakage_screen`` needs the sub-entries of its policy: see ``Policy.classify_row``."""
+    raise ValueError("the rule worst_of_screens reads the policy sub-entries: call Policy.classify_row")
+
+
 GENERIC: dict[str, Callable[[Any, Any, str], Light]] = {
     "upper_le": upper_le,
     "lower_ge": lower_ge,
@@ -370,6 +408,8 @@ GENERIC: dict[str, Callable[[Any, Any, str], Light]] = {
     "red_if_positive": red_if_positive,
     "red_if_nonempty": red_if_nonempty,
     "always_green": always_green,
+    "amber_if_nonempty": amber_if_nonempty,
+    "amber_if_false": amber_if_false,
 }
 
 NAMED: dict[str, Callable[[Any, Any, str], Light]] = {
@@ -379,8 +419,21 @@ NAMED: dict[str, Callable[[Any, Any, str], Light]] = {
         ccr_pit_simulated, ifrs9_lifetime_pd, ifrs9_nonlinearity, ifrs9_sicr_effectiveness, ifrs9_sicr_stability,
         ifrs9_scenario_sensitivity, ifrs9_ecl_backtest, ifrs9_overlay, irrbb_eve_with_without, irrbb_srp31_92,
         p_value_negative_red, portfolio_size_power, market_pla_zone, oprisk_capital_stability, stress_satellite,
-        stress_severity, stress_reverse_solution, liquidity_htm_loss, liquidity_haircut,
+        stress_severity, stress_reverse_solution, liquidity_htm_loss, liquidity_haircut, fair_interval_excludes_zero,
+        ml_interval_above_zero, always_not_evaluated, worst_of_screens,
     )
+}
+
+# Tests whose policy states no threshold (contracts engine-fairness-api 1.0.0 and engine-ml-api 2.0.0): the rule is the
+# whole classification, so the packaged default holds no entry for them. test id -> (rule, the rule's constants)
+RULE_ONLY: dict[str, tuple[str, dict[str, float]]] = {
+    "fair.adverse_impact": ("amber_if_nonempty:extras.flagged_groups", {"four_fifths": 0.8}),
+    "fair.conditional_disparity": ("fair_interval_excludes_zero", {}),
+    "fair.rate_spread_disparity": ("fair_interval_excludes_zero", {}),
+    "fair.replication": ("amber_if_false:extras.same_sign", {}),
+    "ml.challenger_brier": ("ml_interval_above_zero", {}),
+    "ml.cbpe_estimate": ("always_not_evaluated", {}),
+    "ml.leakage_screen": ("worst_of_screens", {}),
 }
 
 RULES = tuple(sorted({*GENERIC, *NAMED}))

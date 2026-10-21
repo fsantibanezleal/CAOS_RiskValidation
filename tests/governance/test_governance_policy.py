@@ -153,3 +153,20 @@ def test_inline_battery_strings_keep_resolving_including_the_hyphenated_and_c12_
         identity, reason = resolve_policy(text, "lgd_ead.downturn_coverage")
         assert reason is None and identity["source"] == "inline-battery" and identity["version"] == version, text
         assert identity["direction"] is None and identity["direction_reason"] == "no policy file (BL-085)"
+
+
+def test_the_packaged_label_with_appended_parameters_resolves_as_the_bare_label():
+    """Before U16-E3 the fairness and ml tests wrote `<label>; key=value; ...`; those documents stay readable."""
+    identity, reason = resolve_policy(f"{PACKAGED}; alpha_amber=0.05; alpha_red=0.01", "fair.fisher_exact", 0.05, 0.01)
+    assert reason is None and identity["source"] == "packaged-policy" and identity["version"] == "2026.10.1"
+    assert identity["label"] == f"{PACKAGED}; alpha_amber=0.05; alpha_red=0.01"
+    assert identity["parameters"] == {"alpha_amber": 0.05, "alpha_red": 0.01}
+    assert identity["kind"] == "p_value" and identity["direction"] is None
+    old = f"{PACKAGED}; ml-battery-1.1.0; additivity_tolerance=1e-09"
+    identity, reason = resolve_policy(old, "ml.additivity")
+    assert reason is None and identity["parameters"] == {"additivity_tolerance": 1e-09}
+    assert identity["battery"] == "ml-battery-1.1.0" and identity["direction"] == "upper_bad"
+    identity, reason = resolve_policy(f"{PACKAGED}; ml-battery-1.1.0", "ml.data_quality")
+    assert reason is None and identity["parameters"] == {} and identity["battery"] == "ml-battery-1.1.0"
+    identity, reason = resolve_policy("other-policy 1.0; a=1", "fair.fisher_exact")  # not a packaged label
+    assert identity is None and reason

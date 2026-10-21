@@ -28,6 +28,9 @@ _INLINE = re.compile(
     r"contraste-(?P<family>(?!battery-)[a-z0-9]+(?:-[a-z0-9]+)*?)(?:-battery)?-(?P<version>\d+\.\d+\.\d+)"
     r"(?P<params>(?:; [a-z0-9_]+=[^;]+)*)"
 )
+# the form before U16-E3: the packaged label with the parameters of the test appended, `<label>; key=value; ...`
+# (and, for the ml tests, the battery token `ml-battery-1.1.0`); it resolves as the bare label with the parameters read
+_APPENDED = re.compile(r"(?P<label>[A-Za-z][\w.-]* \d[\w.]*(?:\+[\w.-]+)?)(?P<rest>(?:; [^;]+)+)")
 _NUMBER = re.compile(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")
 
 
@@ -85,6 +88,15 @@ def resolve_policy(
     identity that is neither a packaged label nor an inline battery string returns ``(None, reason)``.
     """
     text = (policy_version or "").strip()
+    appended = _APPENDED.fullmatch(text)
+    if appended and not _INLINE.fullmatch(text):
+        identity, reason = resolve_policy(appended.group("label"), test_id, alpha_amber, alpha_red)
+        if identity is None:
+            return None, reason
+        parts = [p for p in appended.group("rest").split("; ") if p]
+        params = _parameters("; ".join(p for p in parts if "=" in p))
+        battery = [p for p in parts if "=" not in p]
+        return {**identity, "label": text, "parameters": params, **({"battery": battery[0]} if battery else {})}, None
     inline = _INLINE.fullmatch(text)
     if inline:
         kind, kind_reason = _kind(test_id)
