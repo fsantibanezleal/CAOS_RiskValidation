@@ -4,6 +4,46 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [0.09.000] - 2026-10-21
+
+Model governance (Contraste wave 3: unit U15).
+
+- New `riskvalidation.governance` (U15-E, contract `engine-governance-api` 1.0.0): `scope` (the B.1 scope test over the profiles `us-2026`, `pra`,
+  `osfi-2027` and `ecb`), `inventory` (entries keyed `case_id/fit_id` with the forty B.2 attributes as value, status and basis, components,
+  edges, `assign_variant`, `build_inventory` refusing a repeated key, an absent entry and a cycle named in dependency order, Kahn generations,
+  depth, fan-in and fan-out, completeness), `tiering` (exposure band, materiality, complexity as the mean rounded half up in integer
+  arithmetic or the maximum, the 4 by 4 matrix, the override with its rationale and approver, `tier_sensitivity` under the four readings,
+  reproducing the tiers of the nineteen built cases), `lifecycle` (the twelve B.4 states, use before validation only with an exception
+  record), `findings` (severity and status maps, deadline, due date, ageing and overdue at `due = as_of`, the seven states and their
+  transitions, the quantitative anchor, the RWEA share, register counts), `schedule` (calendar months with the day clamped, the next review,
+  revalidation and monitoring dates, the ECB minimums), `opinion` (the level as the maximum of the severity level and the RWEA level with the
+  ECB 5 and 10 percent cut points, so an anchor can only raise a level; the recommendation labelled the rule's output), `appetite` (the seven
+  B.6 metrics counting distinct findings with the register rows beside them), `policy` (`resolve_policy`: a packaged label or an inline battery
+  string, the kind from the registry, the direction null with "no policy file (BL-085)") and `report` (the twelve sections of the I.3
+  validation report, filled or absent with their reason, bilingual, deterministic). Every tier count, band, deadline, frequency and
+  threshold is a named convention with the label `convention` (`riskvalidation.governance.CONVENTIONS`), never a regulatory value; no text
+  states an approval or a certification. `riskvalidation.validation.governance` returns the five `gov.` tests (`gov.inventory_completeness`,
+  `gov.findings_overdue`, `gov.validation_due`, `gov.tier_override_documented`, `gov.edges_acyclic`) registered in the family `governance`,
+  with their rows in `GOV_ROWS` and `gov_default_policy()` until `policies/default.json` holds them. The four contract fixtures (C01/german,
+  C07/banco-andino, C18/banco-andino, C22/generators) are reproduced field by field, the 81 register rows included. Documentation in
+  `docs/governance/`.
+- Additive to the contract (U15-E, to be taken into `engine-governance-api` 1.1.0): `build_inventory(..., related=())` validates the related
+  links named by the golden `related link A and Z: unknown entry Z`; `anchor_from_test_row(..., document="")` prefixes the basis pointer; a test
+  row may state its own `unit`; `appetite_population`; `find_cycle` and `nodes_on_cycles`; the `gov.` functions accept `policy`, `model_id`
+  and `segment` keywords so that `run_suite` can call them.
+- U15-E fix round after the Opus review: a null, numeric or blank rationale or approver of a tier override is undocumented (`apply_override`
+  refuses it, `gov.tier_override_documented` counts it); `import riskvalidation.validation` registers the `gov.` tests; a non-finite RWEA
+  share, amount or total is refused; `anchor_from_test_row` stops at the first row that matches the citation; `resolve_policy` gives a kind
+  `None` for an unregistered test (no fallback to a threshold) and resolves a `+gov-` label through `gov_default_policy`; `executive_counts`
+  is tested with the `error` light. No golden changes.
+- Engine 0.09.000 integration of the governance unit under the 0.08.000 catalogue rules: the five `gov.` tests (`gov.inventory_completeness`,
+  `gov.findings_overdue`, `gov.validation_due`, `gov.tier_override_documented`, `gov.edges_acyclic`; all decided by a metric gate, so none
+  needs a size suite) are in the registry inventory (family `governance`, prefix `gov`), and the five `gov.` rows are in the packaged
+  `policies/default.json`, written from `GOV_ROWS` and `gov_threshold` (30 lines added, no existing row changed, label 2026.10.1 unchanged).
+  `gov_default_policy()` now returns the default policy itself; the `+gov-` label branch of `resolve_policy` stays and is harmless.
+  The governance report keeps reproducing the Contraste fixtures except the `kind` and `kind_reason` of 11 (C07) and 17 (C18) report rows
+  whose test ids the fixture wrote as unregistered at the batch 3 head; the engine registers them since 0.08.000 and states the decision.
+
 ## [0.08.001] - 2026-10-20
 
 A correction of 0.08.000's fairness rows, and the PyPI publication route.
