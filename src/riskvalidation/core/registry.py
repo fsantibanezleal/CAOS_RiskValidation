@@ -53,6 +53,7 @@ def register(
 
 
 def spec(test_id: str) -> TestSpec:
+    """The registered :class:`TestSpec` of ``test_id``; ``KeyError`` naming the id when it is not registered."""
     try:
         return _CATALOGUE[test_id]
     except KeyError as exc:
@@ -63,3 +64,10 @@ def catalogue(family: str | None = None) -> list[TestSpec]:
     """Registered tests, optionally of one family, sorted by id."""
     items = (s for s in _CATALOGUE.values() if family is None or s.family == family)
     return sorted(items, key=lambda s: s.test_id)
+
+__all__ = [
+    "TestSpec",
+    "catalogue",
+    "register",
+    "spec",
+]

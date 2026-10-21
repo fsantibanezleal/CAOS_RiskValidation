@@ -381,3 +381,12 @@ def nii_out_of_sample(projected_delta_nii: float, realised_delta_nii: float | No
         light=_three_light(stat, err_green, err_amber), statistic=stat, metric=proj - real, n=1,
         inputs_hash=inputs_hash(np.array([proj, real])), extras={"thresholds": thresholds})
 
+__all__ = [
+    "behavioural_change_at_breach",
+    "cmf_annex1_goldens",
+    "eve_sum_of_parts",
+    "eve_with_without_behavioural",
+    "nii_out_of_sample",
+    "nmd_parameter_stability",
+    "srp31_92_goldens",
+]

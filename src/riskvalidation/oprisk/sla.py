@@ -78,3 +78,10 @@ def sla_var_mean_corrected(frequency_mean: float, sev_law: str, sev_params: Sequ
     correction = float(frequency_mean) * mean
     return SlaResult(level=float(level), var_first_order=first, mean_correction=correction, var=first + correction,
                      status="UNVERIFIED")
+
+__all__ = [
+    "SlaResult",
+    "sla_var",
+    "sla_var_mean_corrected",
+    "sla_var_poisson_gpd",
+]

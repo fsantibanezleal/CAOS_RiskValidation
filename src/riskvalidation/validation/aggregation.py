@@ -419,3 +419,14 @@ def rosenberg_schuermann_reference(simple_sum: float, gaussian: float, low: floa
         statistic=statistic, metric=statistic, inputs_hash=inputs_hash(np.array([ss, g])),
         extras={**role, "thresholds": thresholds},
         notes=f"the additive overestimate {statistic:.4f} lies {where} the published range [{lo}, {hi}]", **kw)
+
+__all__ = [
+    "copula_choice_sensitivity",
+    "correlation_stress",
+    "diversification_sign",
+    "elliptical_mc_agreement",
+    "horizon_confidence_consistency",
+    "rosenberg_schuermann_reference",
+    "simple_sum_and_variance_covariance",
+    "worst_case_bracket",
+]

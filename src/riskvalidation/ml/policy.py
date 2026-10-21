@@ -180,3 +180,10 @@ def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
                      "packaged default.").strip(),
         thresholds=rows,
     )
+
+__all__ = [
+    "ml_policy",
+    "ml_thresholds",
+    "strict",
+    "threshold_rows",
+]

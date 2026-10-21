@@ -284,3 +284,17 @@ def oot_window_performance(predict: Predict, X: np.ndarray, y: np.ndarray, windo
         out[str(int(label))] = auc_with_variance(p[m], yy[m])[0]
     out["omitted"] = float(omitted)
     return out
+
+__all__ = [
+    "RobustnessCurve",
+    "ShiftReference",
+    "SingleClassSubsampleError",
+    "SubsampleResult",
+    "oot_window_performance",
+    "perturb_features",
+    "robustness_curve",
+    "robustness_finding",
+    "shift_development_reference",
+    "shift_score_rank",
+    "worst_subsample_performance",
+]

@@ -149,3 +149,9 @@ def dependence_band(ppfs: Sequence[Ppf], ec: np.ndarray, el: np.ndarray, corr: n
         for method, nu, capital, se in rows)
     return Band(rows=band_rows, headline=headline, horizon_years=int(horizon_years), confidence_level=lv,
                 capital_basis=CAPITAL_BASIS)
+
+__all__ = [
+    "Band",
+    "BandRow",
+    "dependence_band",
+]

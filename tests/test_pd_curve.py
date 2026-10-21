@@ -4,9 +4,11 @@ computation starts from the S&P counts of its Table 2, never from a rounded inte
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
+import re
 from pathlib import Path
 
 import numpy as np
@@ -17,7 +19,8 @@ from riskvalidation.validation.calibration import pd_default_profile
 
 # Table 2: obligors rated at the start of the year and defaults during it, best grade (AAA) first. The S&P counts are
 # third-party data: they are read from the device data root (BL-049, decision D16-6), never committed. The file is
-# <RISKVALIDATION_DATA>/tasche2013/table2.json, {"years": {"2009": {"obligors": [...], "defaults": [...]}, ...}};
+# <RISKVALIDATION_DATA>/tasche2013/table2.json, {"years": {"2009": {"obligors": [...], "defaults": [...]}, ...},
+# "printed": {...}}, a transcription of Tables 2, 3 and 6 of arXiv 1212.3716 (the pd-curve doc page);
 # without it the tests that start from the counts are skipped with this reason.
 _DATA = os.environ.get("RISKVALIDATION_DATA")
 TABLE2 = Path(_DATA) / "tasche2013" / "table2.json" if _DATA else None
@@ -26,32 +29,29 @@ needs_table2 = pytest.mark.skipif(
     reason="the S&P Table 2 counts are read from RISKVALIDATION_DATA/tasche2013/table2.json (BL-049)")
 
 
-def _load_counts() -> dict[int, tuple[list[int], list[int]]]:
+#: the data file is pinned by its digest, so a hand-edited or partial file fails instead of passing
+TABLE2_SHA256 = "eb75a3c7250ec79b99607fb660057a92ddfba3a3ab3bc29808bc51d2e28d22ab"
+
+
+def _load() -> dict:
     if TABLE2 is None or not TABLE2.is_file():
         return {}
-    years = json.loads(TABLE2.read_text(encoding="utf-8"))["years"]
-    return {int(y): (v["obligors"], v["defaults"]) for y, v in years.items()}
+    raw = TABLE2.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == TABLE2_SHA256, f"{TABLE2} is not the pinned Table 2 file"
+    return json.loads(raw.decode("utf-8"))
 
 
-SP = _load_counts()
-# Table 2, the default rate columns (%)
-T2_DR = {
-    2009: [0.00, 0.00, 0.00, 0.00, 0.29, 0.39, 0.00, 0.40, 0.18, 1.09, 0.00, 1.02, 0.91, 5.48, 9.96, 17.16, 48.42],
-    2010: [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.79, 0.36, 0.53, 0.00, 0.69, 2.07, 22.27],
-    2011: [0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.20, 0.00, 0.00, 0.00, 0.39, 1.19, 3.99, 15.94],
-}
-# Table 3: rating profiles at the start of each year (%)
-T3 = {
-    2009: [1.38, 0.63, 3.21, 4.18, 5.80, 8.70, 9.32, 8.50, 9.23, 7.83, 4.54, 5.03, 7.53, 7.47, 8.23, 5.17, 3.24],
-    2010: [1.30, 0.45, 2.59, 3.78, 6.39, 8.58, 9.56, 8.28, 10.56, 7.79, 4.60, 5.00, 6.86, 7.12, 7.90, 5.25, 3.98],
-    2011: [0.87, 0.62, 2.05, 3.54, 6.11, 8.04, 9.58, 8.09, 9.39, 8.69, 4.45, 5.46, 6.89, 8.71, 10.02, 5.15, 2.36],
-}
+_DOC = _load()
+SP = {int(y): (v["obligors"], v["defaults"]) for y, v in _DOC.get("years", {}).items()}
+# the printed columns derived from the counts (Table 2 default rates, Table 3 profiles, Table 6 empirical profile,
+# in %) rebuild the counts, so they are read from the same file and never committed
+_PRINTED = _DOC.get("printed", {})
+T2_DR = {int(y): v for y, v in _PRINTED.get("table2_default_rate_pct", {}).items()}
+T3 = {int(y): v for y, v in _PRINTED.get("table3_profile_pct", {}).items()}
+T6_EMPIRICAL = _PRINTED.get("table6_empirical_profile_pct_2009")
 # Table 5: the 2009 PD curve smoothed by quasi moment matching (%)
 T5 = [0.003, 0.006, 0.012, 0.025, 0.047, 0.091, 0.173, 0.299, 0.495, 0.797, 1.138, 1.518, 2.280, 3.943, 7.999, 19.557,
       48.355]
-# Table 6: the empirical and the implied 2009 default profiles (%)
-T6_EMPIRICAL = [0.0000, 0.0000, 0.0000, 0.0000, 0.4274, 0.8547, 0.0000, 0.8547, 0.4274, 2.1368, 0.0000, 1.2821, 1.7094,
-                10.2564, 20.5128, 22.2222, 39.3162]
 T6_IMPLIED = [0.0010, 0.0009, 0.0094, 0.0261, 0.0685, 0.1989, 0.4041, 0.6355, 1.1436, 1.5642, 1.2934, 1.9143, 4.2968,
               7.3802, 16.4769, 25.3242, 39.2628]
 # Table 7: forecasts of the 2010 and 2011 grade default rates (%) and the p-values (%) of the default-profile tests
@@ -307,12 +307,31 @@ def test_inputs_validated():
 
 
 def test_table2_counts_are_not_tracked():
-    """BL-049: no row of the S&P Table 2 obligor or default counts is committed in the tests or the package."""
+    """BL-049: no row of the S&P Table 2 counts, and none of the printed columns that rebuild them (the default
+    rates, the Table 3 profile, the Table 6 empirical profile), is committed in the tests, the package, the docs, the
+    scripts or the examples. A file is searched for any four consecutive numbers whose digest is one of the rows' first
+    four cells; the digests are listed here instead of the cells, so this file holds no cell of them."""
     root = Path(__file__).resolve().parents[1]
-    # the first rows of the three printed years, built from parts so that this file does not contain them
-    needles = [", ".join(row.split()) for row in ("81 37 188 245", "72 25 143 209", "51 36 120 207")]
-    hits = [str(p.relative_to(root)) for base in ("tests", "src") for p in (root / base).rglob("*.py")
-            if any(n in p.read_text(encoding="utf-8", errors="replace") for n in needles)]
+    first_cells = {
+        "168accde60f049ffcaa908821835956501daafbf91a64c8f511c6737b7afe2b5",
+        "28d83bc204b17161fd26098d190437c87e643ac358f9f496f335de5248427b2a",
+        "60342c3bb6e839c1bf3935156a349d7fcf10788869399685ba1a99a8a2a27897",
+        "709181e41f08542d80d8bf36ebd77393aca654ea2e63f587e46f6db840a2c704",
+        "9b845557e10f6f19a78bae242eff8359c9091f864ef492b826301654995d0aaa",
+        "a0ed838d7ad2c97603a2c7b6e1df5a93f233818723ddbbda204eebe8c98d73d7",
+        "ae42e6dc075a9c5b95d3ace90a4520230e8cf9dc701841a204a3598a58135db5",
+        "b12ab470e6879f00494301860e053b98ee019a1abe18dd6a006178f54e88c6f1",
+        "b4f8a1367de78f4f6fdb535d9679fe22e7449d5b8ca41fbd22f79125ddb5d4cc",
+    }
+    hits = []
+    scanned = (("tests", "*.py"), ("src", "*.py"), ("examples", "*.py"), ("scripts", "*.py"), ("docs", "*.md"))
+    for base, pattern in scanned:
+        for p in (root / base).rglob(pattern):
+            numbers = re.sub(r"[^0-9.]+", " ", p.read_text(encoding="utf-8", errors="replace")).split()
+            for k in range(len(numbers) - 3):
+                if hashlib.sha256(" ".join(numbers[k : k + 4]).encode()).hexdigest() in first_cells:
+                    hits.append(f"{p.relative_to(root)}: numbers {k}")
+                    break
     assert hits == [], hits
 
 

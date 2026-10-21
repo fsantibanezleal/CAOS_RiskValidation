@@ -27,7 +27,7 @@ from typing import Any
 from riskvalidation.core.result import Light
 from riskvalidation.governance.findings import OPEN_STATES
 from riskvalidation.governance.opinion import LABEL, opinion_level, recommendation, rwea_level
-from riskvalidation.governance.policy import resolve_policy
+from riskvalidation.governance.policy import NO_POLICY_FILE, resolve_policy
 
 METHODOLOGY_PAGE = "frontend/src/pages/Methodology.tsx (Methodology page)"
 SECTION_KEYS = (
@@ -177,7 +177,7 @@ def _policy_row(row: Mapping[str, Any]) -> dict:
         "alpha_amber": row.get("alpha_amber"),
         "alpha_red": row.get("alpha_red"),
         "direction": None,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": NO_POLICY_FILE,
         "parameters": {},
         "version": None,
         "source": "unresolved",
@@ -442,13 +442,11 @@ def build_report(
                     f"the kind is spec(test_id).decision where the test is registered ({unresolved} of "
                     f"{len(outcomes)} rows are of tests "
                     f"that are not: spec() raises KeyError), and the direction is null for {no_direction} rows "
-                    f"until a policy file exists "
-                    f"(BL-085)",
+                    f"for an inline battery string, which has no policy file",
                     f"el tipo es spec(test_id).decision donde la prueba está registrada ({unresolved} de "
                     f"{len(outcomes)} filas son de "
                     f"pruebas que no lo están: spec() lanza KeyError), y la dirección es nula en {no_direction} "
-                    f"filas hasta que exista "
-                    f"un archivo de política (BL-085)",
+                    f"filas de una cadena de batería en línea, que no tiene archivo de política",
                 ),
             )
         )
@@ -642,9 +640,9 @@ def build_report(
                         "Versión y hash del archivo de política de las cadenas en línea",
                     ),
                     (
-                        "the contraste-*-battery strings have no policy file (backlog BL-085, done at the U16 re-bake)",
-                        "las cadenas contraste-*-battery no tienen archivo de política (BL-085, en la re-ejecución "
-                        "de U16)",
+                        "the inline contraste-*-battery strings have no policy file; a packaged battery label has one",
+                        "las cadenas en línea contraste-*-battery no tienen archivo de política; una etiqueta de "
+                        "batería empaquetada sí lo tiene",
                     ),
                 )
             ],
@@ -671,3 +669,8 @@ def build_report(
         "test_counts": counts,
         "sections": secs,
     }
+
+__all__ = [
+    "build_report",
+    "executive_counts",
+]

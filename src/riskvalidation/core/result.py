@@ -115,3 +115,8 @@ def _jsonable(v: Any) -> Any:
     if hasattr(v, "tolist"):  # numpy scalars and arrays
         return _jsonable(v.tolist())
     return v
+
+__all__ = [
+    "Light",
+    "TestResult",
+]

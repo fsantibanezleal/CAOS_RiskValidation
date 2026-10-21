@@ -8,7 +8,7 @@ import pytest
 
 from riskvalidation.core.policy import default_policy
 from riskvalidation.governance import policy as gpolicy
-from riskvalidation.governance.policy import resolve_policy
+from riskvalidation.governance.policy import NO_POLICY_FILE, resolve_policy
 
 PACKAGED = default_policy().label
 INLINE = "contraste-ifrs9-battery-1.0.0; nl_amber=1.0; nl_red=3.0"
@@ -69,13 +69,13 @@ def test_inline_battery_string_is_parsed(ifrs9_unregistered):
     assert identity["source"] == "inline-battery" and identity["version"] == "1.0.0" and identity["label"] == INLINE
     assert identity["parameters"] == {"nl_amber": 1.0, "nl_red": 3.0}
     assert identity["kind"] is None and "registry" in identity["kind_reason"]
-    assert identity["direction"] is None and identity["direction_reason"] == "no policy file (BL-085)"
+    assert identity["direction"] is None and identity["direction_reason"] == NO_POLICY_FILE
 
 
 def test_the_same_inline_string_for_a_registered_test_has_a_kind():
     identity, reason = resolve_policy(INLINE, "pd.jeffreys")
     assert reason is None and identity["kind"] == "p_value" and identity["kind_reason"] is None
-    assert identity["direction"] is None and identity["direction_reason"] == "no policy file (BL-085)"
+    assert identity["direction"] is None and identity["direction_reason"] == NO_POLICY_FILE
     identity, _ = resolve_policy(INLINE, "disc.auc")
     assert identity["kind"] == "metric"
 
@@ -152,7 +152,7 @@ def test_inline_battery_strings_keep_resolving_including_the_hyphenated_and_c12_
     ):
         identity, reason = resolve_policy(text, "lgd_ead.downturn_coverage")
         assert reason is None and identity["source"] == "inline-battery" and identity["version"] == version, text
-        assert identity["direction"] is None and identity["direction_reason"] == "no policy file (BL-085)"
+        assert identity["direction"] is None and identity["direction_reason"] == NO_POLICY_FILE
 
 
 def test_the_packaged_label_with_appended_parameters_resolves_as_the_bare_label():

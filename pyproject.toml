@@ -73,3 +73,5 @@ select = ["E", "F", "W", "I", "B", "UP"]
 [tool.ruff.lint.per-file-ignores]
 # Shared guard copied verbatim from the product line (OreFlow's check_sdd.py); kept identical across repos.
 "scripts/check_sdd.py" = ["E501"]
+# Prose tables of the generated API page.
+"scripts/make_api_policy.py" = ["E501"]

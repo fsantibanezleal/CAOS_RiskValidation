@@ -266,3 +266,12 @@ def project_scenario(
         values.append(float(value))
     lv = np.array(values)
     return SatelliteProjection(link_values=lv, rates=np.array(inverse_link(fit.link, lv)))
+
+__all__ = [
+    "SatelliteFit",
+    "SatelliteProjection",
+    "fit_satellite",
+    "inverse_link",
+    "link",
+    "project_scenario",
+]

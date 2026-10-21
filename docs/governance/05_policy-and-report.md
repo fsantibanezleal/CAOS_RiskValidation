@@ -15,14 +15,12 @@ is `{"label", "kind", "kind_reason", "direction", "direction_reason", "alpha_amb
 | an inline battery string, `contraste-ifrs9-battery-1.0.0; nl_amber=1.0; nl_red=3.0` | `inline-battery`: parsed | `1.0.0` | `{"nl_amber": 1.0, "nl_red": 3.0}` |
 | anything else, such as `x` | none: `(None, reason)` | | |
 
-- The **kind** is `spec(test_id).decision`, `p_value` or `metric` (W15-12); where the test is not registered (`spec` raises `KeyError`; at the
-  batch 3 head the `ifrs9`, `stress`, `aggregation` and `portfolio` tests are not) it is `None` with its `kind_reason`; there is no fallback
+- The **kind** is `spec(test_id).decision`, `p_value` or `metric` (W15-12); where the test is not registered (`spec` raises `KeyError`) it is `None` with its `kind_reason`; there is no fallback
   to a threshold. A label with the suffix `+gov-` (the governance policy, `gov_default_policy`) resolves through the `gov.` rows.
 - The **direction** (`upper_bad` or `lower_bad`) is read from the policy file where one resolves; a p-value threshold has none, and a test with
-  no packaged threshold has none, with the reason stated. For an inline battery string it is `None` with the reason "no policy file (BL-085)".
+  no packaged threshold has none, with the reason stated. For an inline battery string it is `None` with the reason "no policy file for an inline battery string".
 - A parameter value that is not a number stays a string (`rule=red-on-any`). The family of a test is the part of the id before the first dot.
-- The report states the source of every threshold. A packaged policy file per battery is backlog item BL-085, done when the cases are next
-  re-baked (U16). Until then an inline battery string is a **convention** the product wrote, not a file the engine can check.
+- The report states the source of every threshold. A packaged battery label (`contraste-<family>-battery <version>`) resolves through its packaged file; an inline battery string is a **convention** the product wrote, not a file the engine can check.
 
 ## The validation report
 

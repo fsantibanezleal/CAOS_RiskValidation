@@ -30,7 +30,7 @@ source's own tables, worked examples or published simulations. Further calculato
 pip install riskvalidation
 ```
 
-The public API, its semantic-versioning policy and its deprecation rule are in [docs/api-policy.md](docs/api-policy.md). From source:
+The public API, its semantic-versioning policy and its deprecation rule are in [docs/api-policy.md](https://github.com/fsantibanezleal/CAOS_RiskValidation/blob/main/docs/api-policy.md). From source:
 
 ```bash
 git clone https://github.com/fsantibanezleal/CAOS_RiskValidation.git

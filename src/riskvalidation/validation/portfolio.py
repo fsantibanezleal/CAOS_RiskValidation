@@ -351,3 +351,11 @@ def correlation_size_power(rejected: np.ndarray, known_rho: float, null_rho: flo
     z = (rate - alpha) / math.sqrt(alpha * (1.0 - alpha) / r)
     p = min(1.0, float(2.0 * stats.norm.sf(abs(z))))
     return TestResult(light=_p_light(p, alpha_amber, alpha_red), statistic=z, p_value=p, **common)
+
+__all__ = [
+    "correlation_size_power",
+    "crp_recursion_vs_mc",
+    "euler_additivity",
+    "mc_convergence",
+    "tail_backtest",
+]

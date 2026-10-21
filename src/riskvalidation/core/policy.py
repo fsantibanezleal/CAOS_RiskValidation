@@ -195,6 +195,7 @@ class Policy:
 
 
 def policy_from_mapping(data: Mapping[str, Any]) -> Policy:
+    """A :class:`Policy` from the mapping of a policy file (``policy_id``, ``version``, ``thresholds``)."""
     try:
         thresholds = {
             str(tid): Threshold(
@@ -276,3 +277,13 @@ def packaged_policy(label: str) -> Policy:
         )
     _PACKAGED_CACHE[label] = policy
     return policy
+
+__all__ = [
+    "Policy",
+    "Threshold",
+    "default_policy",
+    "load_policy",
+    "packaged_labels",
+    "packaged_policy",
+    "policy_from_mapping",
+]
