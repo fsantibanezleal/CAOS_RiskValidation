@@ -21,6 +21,7 @@ __all__ = [
     "lifecycle",
     "opinion",
     "policy",
+    "reasons",
     "report",
     "schedule",
     "scope",
