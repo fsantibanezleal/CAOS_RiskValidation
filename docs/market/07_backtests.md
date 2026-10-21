@@ -116,3 +116,9 @@ and McNeil and Frey (percentile bootstrap of a skewed mean, a documented band of
 Monte Carlo error of 5 percent. Limits: the asymptotic Kupiec test is not of nominal size at `T = 250` and `alpha = 0.01`
 (about 12 percent, computed exactly in the same file); the Weibull duration test and the DQ degrees of freedom are not checked
 against the primary papers; a back-test states a sample fact, never a verdict on the model.
+
+## Size and power of the p-value tests
+
+The p-value tests of this page, measured on a generator where each null holds at the boundary (U16-E2, BL-088; the harness is `riskvalidation.harness`, the null and the alternative of each are named in `riskvalidation.generators.size_studies`, the runs are the `sizepower` suites under `tests/`, a local release gate that CI deselects). Size is the rejection rate at the nominal level over 4,000 repetitions, accepted when it is within the binomial bound alpha plus 3.09 standard errors; power is the rejection rate at 5% against one stated alternative, with no pass threshold. The figures below are the numbers of the run; the suite fails when a page states other ones.
+
+**Size and power of `market.mcneil_frey_residual_test`** (2500 days at 5%, 125 exceedances expected; seed 5206, 4000 repetitions). Assumptions met: independent days of normal losses with a date-specific scale, the true VaR and ES at the 5% level (125 exceedances expected per run) and 999 bootstrap resamples inside each run (`n_boot`, the seed drawn by the harness from the repetition's stream). The test is conservative here; the exceedance residuals of a normal loss are right-skewed. The measured size is 3.25% at 5% (bound 6.06%) and 0.45% at 1% (bound 1.49%). Power at 5% against the alternative that the ES forecast is 95% of the true 5% expected shortfall of a normal loss (mean residual 0.103) (seed 5306, 4000 repetitions): 94.27%.
