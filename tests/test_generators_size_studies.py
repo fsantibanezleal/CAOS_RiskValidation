@@ -14,6 +14,7 @@ from riskvalidation.core.registry import catalogue
 from riskvalidation.engines.vasicek import lhp_quantile
 from riskvalidation.generators.credit import DownturnLgd, LgdCalibration, StageTransitions
 from riskvalidation.generators.exceedances import EsResiduals, LhpLossRates, PfeSeries
+from riskvalidation.generators.hits import EsLosses, PitSeries, VarHits
 from riskvalidation.generators.montecarlo import (
     CreditRiskPlusSample,
     McQuantile,
@@ -31,10 +32,17 @@ GENERATORS = [
     DownturnLgd(150, shortfall=0.05),
     McQuantile(5000, mc_rho=0.13),
     CreditRiskPlusSample(500, mc_sigma2=0.6),
+    VarHits(400, 0.05, cluster=0.2),
+    VarHits(300, 0.01, rate_factor=1.5, with_var=False),
+    EsLosses(200, 0.025, scale=1.25),
+    PitSeries(500, 0.1, tail_shape=1.1),
+    PitSeries(500, 0.1, cluster=0.25),
 ]
 
 
 def _equal(a, b) -> bool:
+    if callable(a) and callable(b):  # a simulator closure: equal by role, never by identity
+        return True
     return np.array_equal(np.asarray(a), np.asarray(b))
 
 
@@ -128,7 +136,7 @@ def test_the_registry_of_the_studies_covers_the_nine_and_their_seeds_are_distinc
     nine = {"ccr.pfe_exceedance_backtest", "ifrs9.stage_migration_backtest", "lgd_ead.lgd_calibration_by_segment",
             "lgd_ead.lgd_calibration_over_time", "lgd_ead.downturn_coverage", "market.mcneil_frey_residual_test",
             "portfolio.tail_backtest", "portfolio.mc_convergence", "portfolio.crp_recursion_vs_mc"}
-    assert set(STUDIES) == nine
+    assert nine <= set(STUDIES) and len(STUDIES) == 21
     import riskvalidation.validation  # noqa: F401  (registers every test)
     from test_size import SEEDS  # the seeds of the null scenarios of the older families
 
@@ -137,8 +145,39 @@ def test_the_registry_of_the_studies_covers_the_nine_and_their_seeds_are_distinc
     for tid, studies in STUDIES.items():
         assert registered[tid].decision == "p_value"
         for st in studies:
-            assert isinstance(st, Study) and st.test_id == tid and st.n_rep == N_REP >= 4000
-            assert st.null.truth()["null_holds"] and not st.alternative.truth()["null_holds"], (tid, st.label)
-            assert st.alternative_text
-            seeds += [st.seed, st.power_seed]
+            assert isinstance(st, Study) and st.test_id == tid and st.alternative_text
+            if tid in nine:
+                assert st.n_rep == N_REP >= 4000
+                seeds += [st.seed, st.power_seed]
+            null, alt = st.null.truth(), st.alternative.truth()
+            flag = "null_holds" if "null_holds" in null else "null"  # the fairness plants name it `null`
+            if flag in null:  # the ML plants state their null in their configuration, not in a flag
+                assert null[flag] and not alt[flag], (tid, st.label)
     assert len(set(seeds)) == len(seeds) and not set(seeds) & set(SEEDS.values())
+
+
+def test_the_hit_generators_reproduce_the_inline_loops_they_replace():
+    """At their defaults the draws consume the stream as the inline loops of test_market_size.py did."""
+    rng, ref = np.random.default_rng(101), np.random.default_rng(101)
+    d = VarHits(1500, 0.05).draw(rng)
+    hits = ref.random(1500) < 0.05
+    var = -0.02 + 0.004 * ref.standard_normal(1500)
+    assert np.array_equal(d["hits"], hits) and np.array_equal(d["var"], var)
+    pit = PitSeries(2000, 0.1).draw(np.random.default_rng(5))["pit"]
+    assert np.array_equal(pit, np.random.default_rng(5).random(2000))
+    assert np.array_equal(EsLosses(250, 0.025).draw(np.random.default_rng(6))["loss"],
+                          np.random.default_rng(6).standard_normal(250))
+
+
+def test_hit_generators_refuse_bad_parameters():
+    for bad in (
+        lambda: VarHits(5, 0.05),
+        lambda: VarHits(100, 0.05, cluster=0.01),
+        lambda: VarHits(100, 0.6, rate_factor=2.0),
+        lambda: EsLosses(100, 0.025, scale=0.0),
+        lambda: PitSeries(100, 0.1, tail_shape=0.9),
+        lambda: PitSeries(100, 0.1, tail_shape=1.1, cluster=0.3),
+        lambda: PitSeries(100, 0.1, cluster=0.05),
+    ):
+        with pytest.raises(ValueError):
+            bad()

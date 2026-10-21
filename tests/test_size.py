@@ -262,3 +262,22 @@ def test_size_gaps_is_empty_and_documented_excess_of_the_studies_has_its_page():
     assert set(STUDY_EXCESS) <= set(SIZE_SUITES)
     for tid, page in STUDY_EXCESS.items():
         assert "measured size" in page.read_text(encoding="utf-8"), tid
+
+
+# the families of Contraste's C22 whose null scenarios are NULL_SCENARIOS above (the older families); every other
+# registered p-value test is a named study of `riskvalidation.generators.size_studies`
+C22_FAMILIES = {"discrimination", "pd-calibration", "rating-system", "stability", "transitions"}
+
+
+def test_every_p_value_test_outside_the_c22_families_has_a_named_study():
+    """U16-E2 follow-up: Contraste's C22 imports each null scenario from the engine and never rebuilds one, so a
+    registered p-value test outside the five older families without a STUDIES entry fails here with its id."""
+    from riskvalidation.generators.size_studies import STUDIES
+
+    _p_value_tests()
+    wanted = {s.test_id for s in catalogue()
+              if s.decision == "p_value" and s.family != "selftest" and s.family not in C22_FAMILIES}
+    assert len(wanted) == 21, sorted(wanted)
+    assert not wanted - set(STUDIES), f"p-value tests with no named study: {sorted(wanted - set(STUDIES))}"
+    assert set(STUDIES) <= wanted, f"studies of tests outside this set: {sorted(set(STUDIES) - wanted)}"
+    assert not set(STUDIES) & set(NULL_SCENARIOS), "a null scenario of the older families or a study, not both"
