@@ -24,7 +24,7 @@ from riskvalidation.irrbb import eve_nii as _eve_nii
 from riskvalidation.irrbb import shocks as _shocks
 from riskvalidation.lgd_ead._checks import mat, same_length, scalar, vec
 
-POLICY_LABEL = "contraste-irrbb-battery-1.0.0"
+POLICY_LABEL = "contraste-irrbb-battery 1.0.0"
 NAN = float("nan")
 EPS = 1e-12             # tolerance on a gate comparison, so that a value exactly on a gate is not moved by rounding
 
@@ -47,10 +47,6 @@ SRP31_82 = (
 DOSSIER_05_D7 = ("dossier 05 D.7: flag any change in NMD behavioural parameters that coincides with a limit breach "
                  "(the SVB lesson)")
 DOSSIER_05_OOS = "dossier 05, IRRBB acceptance: the 2022 hiking cycle as the out-of-sample test of an NII projection"
-
-
-def _version(**params: Any) -> str:
-    return "; ".join([POLICY_LABEL, *(f"{k}={v}" for k, v in params.items())])
 
 
 def _not_evaluated(test_id: str, h0: str, alternative: str, reference: str, version: str, reason: str, *,
@@ -111,8 +107,7 @@ def srp31_92_goldens(tolerance_scalar: float = 5e-4, tolerance_bp: float = 5e-2)
     dev = {k: abs(v - printed) for k, (v, printed, _) in got.items()}
     ok = all(dev[k] <= got[k][2] + EPS for k in got)
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=SRP31_92, policy_version=_version(
-            tolerance_scalar=tol_s, tolerance_bp=tol_b),
+        test_id=test_id, h0=h0, alternative=alt, reference=SRP31_92, policy_version=POLICY_LABEL,
         light=Light.GREEN if ok else Light.RED, statistic=max(dev.values()), n=len(got),
         extras={"thresholds": {"tolerance_scalar": tol_s, "tolerance_bp": tol_b},
                 "values": {k: v for k, (v, _, _) in got.items()}, "printed": {k: p for k, (_, p, _) in got.items()},
@@ -173,8 +168,7 @@ def cmf_annex1_goldens() -> TestResult:
                      lambda: abs(float(_shocks.shock_curve("short-up", 100, 100, 100, t35)[0]) - 41.7) <= 5e-2))
     failed = [name for name, ok in cases if not ok]
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=RAN_21_13, policy_version=_version(
-            tolerance=1e-12, tolerance_printed="alpha_short 5e-4, bp 5e-2"),
+        test_id=test_id, h0=h0, alternative=alt, reference=RAN_21_13, policy_version=POLICY_LABEL,
         light=Light.RED if failed else Light.GREEN, statistic=float(len(failed)), n=len(cases),
         n_events=len(failed),
         extras={"failed": failed,
@@ -219,7 +213,7 @@ def eve_sum_of_parts(item_flows: np.ndarray, rates: np.ndarray, midpoints: np.nd
     scale = abs(whole) if whole != 0.0 else abs(parts)
     rel = 0.0 if resid == 0.0 else resid / scale
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=SRP31_82, policy_version=_version(rel_tol=tol),
+        test_id=test_id, h0=h0, alternative=alt, reference=SRP31_82, policy_version=POLICY_LABEL,
         light=Light.GREEN if rel <= tol else Light.RED, statistic=resid, metric=rel, n=int(items.shape[0]),
         inputs_hash=inputs_hash(items, r, t, whole), extras={"thresholds": {"rel_tol": tol}, "sum_of_parts": parts,
                                                               "whole_eve": whole})
@@ -249,7 +243,7 @@ def nmd_parameter_stability(window_weights: np.ndarray, maturities: np.ndarray, 
     m = vec(maturities, "maturities")
     if w.shape[1] != m.size:
         raise ValueError(f"window_weights has {w.shape[1]} columns for {m.size} maturities")
-    version = _version(gap_amber=gap_amber, gap_red=gap_red)
+    version = POLICY_LABEL
     thresholds = {"gap_amber": gap_amber, "gap_red": gap_red}
     if w.shape[0] < 2:
         return _not_evaluated(test_id, h0, alt, BCBS_368, version, "fewer than 2 estimation windows", n=int(w.shape[0]),
@@ -299,7 +293,7 @@ def eve_with_without_behavioural(measure_behavioural: float, measure_contractual
                   "ratio_contractual": oc.ratio}
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=SRP31_82,
-        policy_version=_version(diff_amber=diff_amber, diff_red=diff_red, threshold=th), light=light, statistic=stat,
+        policy_version=POLICY_LABEL, light=light, statistic=stat,
         metric=con - beh, n=2, inputs_hash=inputs_hash(np.array([beh, con, t1])),
         extras={"thresholds": thresholds, "hidden_breach": hidden},
         notes="the behavioural assumptions hide an outlier breach" if hidden else "")
@@ -335,7 +329,7 @@ def behavioural_change_at_breach(values: np.ndarray, dates: np.ndarray, breach: 
     same_length(values=v, dates=d.astype(float), breach=b.astype(float))
     if np.any(np.diff(d.astype("int64")) <= 0):
         raise ValueError("dates must be strictly increasing")
-    version = _version(rule="red when a change coincides with a breach")
+    version = POLICY_LABEL
     if v.size < 2:
         return _not_evaluated(test_id, h0, alt, DOSSIER_05_D7, version, "fewer than 2 dates", n=int(v.size),
                               extras={"thresholds": {}})
@@ -371,7 +365,7 @@ def nii_out_of_sample(projected_delta_nii: float, realised_delta_nii: float | No
     alt = "the projected change of NII departs from the realised change"
     proj = scalar(projected_delta_nii, "projected_delta_nii")
     _check_gates(scalar(err_green, "err_green"), scalar(err_amber, "err_amber"), "err_green", "err_amber")
-    version = _version(err_green=err_green, err_amber=err_amber)
+    version = POLICY_LABEL
     thresholds = {"err_green": err_green, "err_amber": err_amber}
     if realised_delta_nii is None:
         return _not_evaluated(test_id, h0, alt, DOSSIER_05_OOS, version, "the realised change in NII is not available",

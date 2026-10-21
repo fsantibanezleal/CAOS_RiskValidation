@@ -239,7 +239,7 @@ def test_every_result_serialises_with_its_reference_and_the_common_fields():
     for r in results:
         row = serialised(r)
         assert set(row) == fields and row["model_id"] == "m1"
-        assert row["reference"] and row["h0"] and row["policy_version"].startswith("contraste-oprisk-battery-")
+        assert row["reference"] and row["h0"] and row["policy_version"] == "contraste-oprisk-battery 1.0.0"
         assert row["p_value"] is None and row["alpha_amber"] is None and row["alpha_red"] is None
         assert row["test_id"].startswith("oprisk.") and "thresholds" in row["extras"]
         assert "compliance" not in row["h0"].lower()

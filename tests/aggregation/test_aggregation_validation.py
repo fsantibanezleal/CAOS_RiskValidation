@@ -189,7 +189,7 @@ def test_every_result_serialises_with_its_reference():
         assert set(row) == ROW_FIELDS
         assert row["test_id"].startswith("aggregation.")
         assert row["reference"].strip() and row["h0"].strip()
-        assert row["policy_version"].startswith("contraste-aggregation-battery-1.0.0")
+        assert row["policy_version"] == "contraste-aggregation-battery 1.0.0"
         assert isinstance(row["extras"].get("thresholds"), dict), r.test_id
         assert row["alpha_amber"] is None and row["alpha_red"] is None
     assert v.correlation_stress(100.0, 105.0).inputs_hash == v.correlation_stress(100.0, 105.0).inputs_hash
