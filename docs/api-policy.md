@@ -228,23 +228,43 @@ Names: `SituationResult`, `bonferroni_alpha`, `gower_distance`, `k_nearest`, `si
 
 The known-truth generators and the helpers that feed their data to the validation tests.
 
-Names, imported from the package (`from riskvalidation.generators import <name>`): `DEMLER`, `HANLEY_MCNEIL`, `WP14`, `YURDAKUL_NARANJO`, `BinormalScores`, `Check`, `DefaultCounts`, `GeneratorBase`, `GradeFrequencies`, `LogisticPortfolio`, `Migrations`, `NestedLda`, `TwoSample`, `binormal_auc`, `binormal_auc_variance`, `break_monotonicity`, `bvn_equal`, `concentrate`, `decaying_matrix`, `default_correlation`, `feed_cell`, `feed_grades`, `feed_portfolio`, `feed_series`, `joint_default_probability`, `jsonable`, `lda_auc`, `monotone_cells`, `population_psi`.
+Names, imported from the package (`from riskvalidation.generators import <name>`): `CreditRiskPlusSample`, `DownturnLgd`, `EsLosses`, `EsResiduals`, `LgdCalibration`, `LhpLossRates`, `McQuantile`, `PfeSeries`, `PitSeries`, `StageTransitions`, `VarHits`, `DEMLER`, `HANLEY_MCNEIL`, `WP14`, `YURDAKUL_NARANJO`, `BinormalScores`, `Check`, `DefaultCounts`, `GeneratorBase`, `GradeFrequencies`, `LogisticPortfolio`, `Migrations`, `NestedLda`, `TwoSample`, `binormal_auc`, `binormal_auc_variance`, `break_monotonicity`, `bvn_equal`, `concentrate`, `decaying_matrix`, `default_correlation`, `feed_cell`, `feed_grades`, `feed_portfolio`, `feed_series`, `joint_default_probability`, `jsonable`, `lda_auc`, `monotone_cells`, `population_psi`.
 
 ### `riskvalidation.generators.counts`
 
 Names: `WP14`, `DefaultCounts`, `default_correlation`, `feed_cell`, `feed_grades`, `feed_portfolio`, `feed_series`, `joint_default_probability`.
 
+### `riskvalidation.generators.credit`
+
+Names: `DownturnLgd`, `LgdCalibration`, `StageTransitions`.
+
 ### `riskvalidation.generators.drift`
 
 Names: `TwoSample`, `YURDAKUL_NARANJO`, `population_psi`.
+
+### `riskvalidation.generators.exceedances`
+
+Names: `EsResiduals`, `LhpLossRates`, `PfeSeries`.
 
 ### `riskvalidation.generators.framingham`
 
 Names: `DEMLER`, `FRAMINGHAM_CORRELATION`, `FRAMINGHAM_EFFECTS`, `NestedLda`, `lda_auc`.
 
+### `riskvalidation.generators.hits`
+
+Names: `EsLosses`, `PitSeries`, `VarHits`.
+
+### `riskvalidation.generators.montecarlo`
+
+Names: `CreditRiskPlusSample`, `McQuantile`, `lhp_quantile_closed_form`, `sample_quantile_with_se`.
+
 ### `riskvalidation.generators.paths`
 
 Names: `RatingPaths`.
+
+### `riskvalidation.generators.pipelines`
+
+Names: `SHIFT_N`, `SHIFT_PERMUTATIONS`, `run_conformal`, `run_shift`.
 
 ### `riskvalidation.generators.ratings`
 
@@ -253,6 +273,10 @@ Names: `ECB_2019`, `GradeFrequencies`, `Migrations`, `break_monotonicity`, `conc
 ### `riskvalidation.generators.scores`
 
 Names: `BinormalScores`, `HANLEY_MCNEIL`, `LogisticPortfolio`, `binormal_auc`, `binormal_auc_variance`.
+
+### `riskvalidation.generators.size_studies`
+
+Names: `N_REP`, `RULES`, `STAGE_MATRIX`, `STAGE_SHIFT`, `STAGE_ROWS`, `STUDIES`, `Study`, `rejection_label`, `simulate_study`, `study`.
 
 ## `riskvalidation.governance`
 
