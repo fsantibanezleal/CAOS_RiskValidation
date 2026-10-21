@@ -19,7 +19,7 @@ in its own `__all__` (the full list is in [api-policy.md](api-policy.md)):
 | Module | Holds |
 |---|---|
 | `result` | `TestResult` and the `Light` enumeration |
-| `policy` | `Policy`, `Threshold`, `default_policy`, `load_policy`, `policy_from_mapping` (a policy from the mapping of a policy file), `packaged_policy` and `packaged_labels` (the policies packaged with the engine) |
+| `policy` | `Policy`, `Threshold`, `default_policy`, `load_policy`, `policy_from_mapping` (a policy from the mapping of a policy file), `packaged_policy` and `packaged_labels` (the policies packaged with the engine), `FORMAT_VERSION` (the policy file format this engine reads, see [policies](policies.md)) |
 | `registry` | the test catalogue: `register`, `spec`, `catalogue` |
 | `suite` | `run_suite` and `SuiteRun` |
 | `hashing` | the deterministic fingerprint of the inputs of a test |

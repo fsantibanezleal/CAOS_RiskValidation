@@ -19,6 +19,11 @@ SHIFT_N = 2000  # development rows of the shift plant; the evaluation set is its
 
 
 def run_shift(plant: CovariateShiftPlant, share: float, shift_permutations: int = SHIFT_PERMUTATIONS):
+    """The pipeline of the shift resilience test: a runner ``run(X_dev, y_dev, X_eval, y_eval, seed)`` that ranks the
+    evaluation rows by their shift score, takes the worst ``share`` of them, compares its performance with the
+    permutation reference of ``shift_permutations`` draws from the development sample and returns the
+    ``ml.shift_resilience`` result."""
+
     def run(X_dev, y_dev, X_eval, y_eval, seed):
         X_eval, y_eval = X_eval[: len(X_dev) // 2], y_eval[: len(X_dev) // 2]  # dev >= 2 x eval
         score = robustness.shift_score_rank(X_dev, X_eval, seed)

@@ -157,3 +157,26 @@ def test_the_installed_distribution_lists_py_typed():
     from importlib.metadata import files
 
     assert any(str(f).replace("\\", "/").endswith("riskvalidation/py.typed") for f in files("riskvalidation"))
+
+
+DOCUMENTED_ON_A_PAGE = (
+    "riskvalidation.core.build", "riskvalidation.core.deprecation", "riskvalidation.core.hashing",
+    "riskvalidation.core.policy", "riskvalidation.core.registry", "riskvalidation.core.result",
+    "riskvalidation.core.suite", "riskvalidation.engines.low_default", "riskvalidation.engines.pd_curve",
+    "riskvalidation.engines.vasicek", "riskvalidation.generators.credit", "riskvalidation.generators.exceedances",
+    "riskvalidation.generators.hits", "riskvalidation.generators.montecarlo", "riskvalidation.generators.pipelines",
+    "riskvalidation.generators.size_studies", "riskvalidation.transitions.em", "riskvalidation.transitions.embedding",
+    "riskvalidation.transitions.estimators", "riskvalidation.transitions.intervals",
+    "riskvalidation.transitions.mobility", "riskvalidation.transitions.ttc",
+)
+
+
+@pytest.mark.skipif(not (ROOT / "docs").is_dir(), reason="the docs folder is not in the tree this test runs from")
+@pytest.mark.parametrize("modname", DOCUMENTED_ON_A_PAGE)
+def test_the_names_of_these_modules_are_stated_on_a_docs_page_besides_the_api_page(modname):
+    """The modules of core, engines, transitions and the size-study generators have a docs page that names every
+    public name (the API page lists them too, but a reader of the topic must find them where the topic is)."""
+    text = "\n".join(p.read_text(encoding="utf-8") for p in (ROOT / "docs").rglob("*.md") if p.name != "api-policy.md")
+    mod = importlib.import_module(modname)
+    missing = [n for n in mod.__all__ if not re.search(r"\b" + re.escape(n) + r"\b", text)]
+    assert not missing, f"{modname}: not stated on any docs page: {missing}"
