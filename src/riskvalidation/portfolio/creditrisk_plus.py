@@ -230,3 +230,10 @@ def measures_from_pmf(pmf: np.ndarray, loss_unit: float, levels: Sequence[float]
             raise ValueError(f"the VaR {var} at level {q} is below the expected loss {e}: no capital to report")
         out.append(LossMeasures(level=q, el=e, var=var, es=float(es), ec=var - e, var_se=None, es_se=None))
     return tuple(out)
+
+__all__ = [
+    "CreditRiskPlusInput",
+    "measures_from_pmf",
+    "pmf_panjer",
+    "pmf_stable",
+]

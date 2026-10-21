@@ -9,3 +9,18 @@ inputs and raises ``ValueError`` naming the field when data is missing or invali
 points are conventions, never regulatory thresholds. The engine computes and states no compliance claim. The
 ``TestResult`` functions are in ``riskvalidation.validation.ml``. Contract: ``engine-ml-api`` 1.1.0.
 """
+
+__all__ = [
+    "cbpe",
+    "challenger",
+    "conformal",
+    "dataquality",
+    "effects",
+    "explanations",
+    "generalisation",
+    "leakage",
+    "plants",
+    "policy",
+    "robustness",
+    "seeds",
+]

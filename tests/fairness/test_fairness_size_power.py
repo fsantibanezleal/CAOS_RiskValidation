@@ -23,6 +23,7 @@ from riskvalidation.fairness.plants import LabelNoiseBiasPlant, ProxyFeaturePlan
 from riskvalidation.fairness.replication import replicate_effect
 from riskvalidation.fairness.situation import situation_test
 from riskvalidation.generators import GeneratorBase
+from riskvalidation.generators.size_studies import simulate_study, study
 from riskvalidation.harness.run import light_not_green, simulate
 from riskvalidation.validation import fairness as fv
 
@@ -49,16 +50,6 @@ def se_of(rate: float) -> float:
 
 
 # ----- adapters: a draw of a plant to the arguments of one test
-
-
-def z_adapter(decision, group):
-    rates = group_selection_rates(decision, group)
-    return fv.two_proportion_z("sp", rates["0"].favourable, rates["0"].n, rates["1"].favourable, rates["1"].n)
-
-
-def fisher_adapter(decision, group):
-    rates = group_selection_rates(decision, group)
-    return fv.fisher_exact("sp", rates["0"].favourable, rates["0"].n, rates["1"].favourable, rates["1"].n)
 
 
 def parity_adapter(decision, group):
@@ -93,18 +84,22 @@ def go(test, plant, seed, rules=()):
 
 
 def test_size_and_power_two_proportion_z_and_fisher():
-    null, alt = ThresholdBiasPlant(n=2000, gap=0.0, seed=1), ThresholdBiasPlant(n=2000, gap=0.3, seed=1)
-    z_size = record("two_proportion_z size [p]", go(z_adapter, null, 101))
-    z_power = record("two_proportion_z power [p]", go(z_adapter, alt, 102))
+    """fair.two_proportion_z and fair.fisher_exact: the scenarios are the named studies of
+    `riskvalidation.generators.size_studies` (the null and the planted threshold gap, the seeds, the table feed)."""
+    zs, fs = study("fair.two_proportion_z"), study("fair.fisher_exact")
+    null, alt = zs.null, zs.alternative
+    z_size = record("two_proportion_z size [p]", simulate_study(zs, "null"))
+    z_power = record("two_proportion_z power [p]", simulate_study(zs, "alternative"))
     se = se_of(0.05)
     assert abs(z_size - 0.05) <= 3.3 * se, (z_size, se)  # the pooled z-test holds its 5 percent level
     assert z_power >= 0.85
-    f_size = record("fisher_exact size [p]", go(fisher_adapter, null, 103))
-    f_power = record("fisher_exact power [p]", go(fisher_adapter, alt, 104))
+    f_size = record("fisher_exact size [p]", simulate_study(fs, "null"))
+    f_power = record("fisher_exact power [p]", simulate_study(fs, "alternative"))
     assert f_size <= 0.05 + 3.1 * se  # exact: conservative, never above the level beyond Monte Carlo error
     assert f_size < z_size + 3 * se and f_power >= 0.80
     # the planted gap is a real selection-rate gap of the stated size
     assert alt.truth()["selection_rate_gap"] > 0.08
+    assert fs.null == null and fs.alternative == alt
 
 
 def test_size_and_power_parity_and_adverse_impact():

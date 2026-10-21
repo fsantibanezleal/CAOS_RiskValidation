@@ -312,3 +312,11 @@ def el_versus_provisions(
         "references": "CRE35.2 to CRE35.4; CAP30.13 (shortfall deducted from CET1); CAP10.19 (excess in Tier 2 up to "
         "0.6% of IRB credit RWA)",
     }
+
+__all__ = [
+    "IRBResult",
+    "Regime",
+    "capital_requirement",
+    "correlation",
+    "el_versus_provisions",
+]

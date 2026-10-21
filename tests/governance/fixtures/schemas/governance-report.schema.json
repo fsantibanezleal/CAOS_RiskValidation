@@ -714,6 +714,7 @@
           "type": "string",
           "enum": [
             "packaged-policy",
+            "packaged-policy-overridden",
             "inline-battery",
             "unresolved"
           ],

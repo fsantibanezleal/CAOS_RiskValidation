@@ -18,6 +18,8 @@ import numpy as np
 from scipy import special
 
 from riskvalidation.generators import GeneratorBase
+from riskvalidation.generators.pipelines import SHIFT_N, SHIFT_PERMUTATIONS, run_conformal, run_shift  # noqa: F401
+from riskvalidation.generators.size_studies import study as size_study
 from riskvalidation.harness.run import Simulation, light_not_green, simulate
 from riskvalidation.ml import (  # noqa: F401  (the sub-modules the pipelines use)
     cbpe,
@@ -32,7 +34,6 @@ from riskvalidation.ml import (  # noqa: F401  (the sub-modules the pipelines us
     seeds,
 )
 from riskvalidation.ml.plants import (
-    CovariateShiftPlant,
     ExchangeabilityBreakPlant,
     LeakPlant,
     NoiseSensitivityPlant,
@@ -43,8 +44,6 @@ from riskvalidation.validation.discrimination import auc_with_variance
 
 N_REP = 4000  # no fewer than 4,000 repetitions (contract engine-ml-api 1.0.0, SDD l.335)
 SEED = 20261019
-SHIFT_PERMUTATIONS = 99  # R of the size study (the engine default is 199)
-SHIFT_N = 2000  # development rows of the shift plant; the evaluation set is its first SHIFT_N // 2 rows (docs/ml/08)
 
 
 def study(test, generator, *, seed: int = SEED, n_rep: int = N_REP, test_kwargs=None) -> Simulation:
@@ -65,19 +64,6 @@ def run_robustness(plant: NoiseSensitivityPlant, grid, tolerance: float, preset_
     return run
 
 
-def run_shift(plant: CovariateShiftPlant, share: float, shift_permutations: int = SHIFT_PERMUTATIONS):
-    def run(X_dev, y_dev, X_eval, y_eval, seed):
-        X_eval, y_eval = X_eval[: len(X_dev) // 2], y_eval[: len(X_dev) // 2]  # dev >= 2 x eval
-        score = robustness.shift_score_rank(X_dev, X_eval, seed)
-        res = robustness.worst_subsample_performance(plant.predict, X_eval, y_eval, score, share)
-        ref = robustness.shift_development_reference(
-            plant.predict, X_dev, y_dev, X_eval, y_eval, score, share, shift_permutations, seed
-        )
-        return v.shift_resilience("m", res, ref)
-
-    return run
-
-
 def run_seeds(plant: SeedUnstablePlant, n_seeds: int):
     def run(X, y):
         return v.seed_stability("m", seeds.seed_auc_dispersion(plant.train, X, y, list(range(n_seeds))))
@@ -89,21 +75,6 @@ def run_leak(X, y):
     half = len(y) // 2
     res = leakage.resemblance_auc(X[:half], X[half:], seed=1)
     return v.leakage_screen("m", 0, leakage.single_feature_auc(X, y), 0.0, res)
-
-
-def run_conformal(n_alpha: float = 0.10, n_cal: int | None = None):
-    """The pipeline of the conformal coverage test; `n_cal` keeps only the first `n_cal` calibration points (the plant
-    draws ten times the test window), so the three split ratios of the size study share one generator."""
-
-    def run(p_cal, y_cal, p_test, y_test):
-        if n_cal is not None:
-            p_cal, y_cal = p_cal[:n_cal], y_cal[:n_cal]
-        scores = np.where(y_cal == 1, 1.0 - p_cal, p_cal)
-        q = conformal.split_conformal_quantile(scores, n_alpha)
-        cov = conformal.conformal_coverage(conformal.conformal_sets(p_test, q), y_test, n_alpha, n_cal=len(p_cal))
-        return v.conformal_coverage("m", cov)
-
-    return run
 
 
 # -------------------------------------------------------------------------------------------- the fixtures
@@ -282,11 +253,17 @@ def run_challenger(p_champion, p_challenger, y, seed):
 # -------------------------------------------------------------------------------------------- the conditions
 
 
+def _from_study(test_id: str):
+    """The condition of a p-value test whose scenario is a named study of `generators.size_studies`."""
+    st = size_study(test_id)
+    text = {"null": st.null_text, "defect": st.alternative_text}
+    return (st.null_runner, st.null, st.alternative, st.alt_runner, text)
+
+
 def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
     """name: (test callable, null generator, defect generator, feed or None, description)."""
     grid = (0.0, 0.25, 0.5, 1.0)
     noise_null, noise_def = NoiseSensitivityPlant(2000, 0.25, 1), NoiseSensitivityPlant(2000, 2.5, 1)
-    shift_null, shift_def = CovariateShiftPlant(SHIFT_N, 0.0, [0], 1), CovariateShiftPlant(SHIFT_N, 3.0, [0], 1)
     seed_null, seed_def = SeedUnstablePlant(4000, 0.2, 1), SeedUnstablePlant(4000, 1.0, 1)
     return {
         "ml.robustness": (
@@ -296,13 +273,7 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
             run_robustness(noise_def, grid, 0.02, 0.5),
             {"null": "sensitivity 0.25", "defect": "sensitivity 2.5"},
         ),
-        "ml.shift_resilience": (
-            run_shift(shift_null, 0.25),
-            shift_null,
-            shift_def,
-            run_shift(shift_def, 0.25),
-            {"null": "shift 0", "defect": "a quarter of the rows shifted 3 sd on feature 0"},
-        ),
+        "ml.shift_resilience": _from_study("ml.shift_resilience"),
         "ml.seed_stability": (
             run_seeds(seed_null, 10),
             seed_null,
@@ -345,13 +316,7 @@ def conditions() -> dict[str, tuple[Any, Any, Any, Any, dict[str, Any]]]:
             None,
             {"null": "calibrated slices", "defect": "slice 0 predicts 1 - p"},
         ),
-        "ml.conformal_coverage": (
-            run_conformal(),
-            ExchangeabilityBreakPlant(2000, 0.0, 1),
-            ExchangeabilityBreakPlant(2000, 0.5, 1),
-            None,
-            {"null": "drift 0", "defect": "log-odds drift 0.5"},
-        ),
+        "ml.conformal_coverage": _from_study("ml.conformal_coverage"),
         "ml.conformal_coverage (n_cal 2000, m 2000)": (
             run_conformal(n_cal=2000),
             ExchangeabilityBreakPlant(2000, 0.0, 1),

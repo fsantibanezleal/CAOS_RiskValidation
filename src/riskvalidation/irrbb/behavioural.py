@@ -204,3 +204,13 @@ def fit_prepayment_logit(incentive: np.ndarray, seasoning_months: np.ndarray, pr
     except np.linalg.LinAlgError:
         return failed
     return LogitFit(a @ beta, np.sqrt(np.diag(cov)), n, True)
+
+__all__ = [
+    "LogitFit",
+    "ReplicatingPortfolio",
+    "deposit_beta_passthrough",
+    "fit_prepayment_logit",
+    "prepayment_logit",
+    "replicating_portfolio",
+    "weighted_average_maturity",
+]

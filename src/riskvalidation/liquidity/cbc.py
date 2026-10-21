@@ -5,7 +5,7 @@ Sources: dossier 05 E.1 line 238 (ECB LiST 2019 methodological note, paras 73 to
 of an asset is its market value less a haircut, the haircut order, the equity table, 30 and 50 percent for the rest),
 lines 263 and 480 (held-to-maturity unrealised losses reduce the effective CBC), 276 (the monetisation schedule); the
 U11 research addendum L1.6 (the exact order of para 74) and L4 (the Federal Reserve margins, the central bank's haircut
-is 1 minus the margin). Contract `engine-liquidity-api` 1.2.0, module cbc.
+is 1 minus the margin). Contract `engine-liquidity-api` 2.0.0, module cbc.
 
 The LCR haircut is taken from `regulatory.lcr_nsfr.HQLA_HAIRCUTS`, never a second table (decision Q1); the central
 bank's

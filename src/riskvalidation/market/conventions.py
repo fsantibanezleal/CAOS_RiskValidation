@@ -29,6 +29,7 @@ def vec(x: Any, name: str, *, allow_empty: bool = False) -> np.ndarray:
 
 
 def check_alpha(alpha: float, *, upper_inclusive: bool = False) -> float:
+    """``alpha`` as a float in (0, 0.5) (0.5 included with ``upper_inclusive``); ``ValueError`` otherwise."""
     a = float(alpha)
     if not (0.0 < a < 0.5 or (upper_inclusive and a == 0.5)):
         raise ValueError(f"alpha must lie in (0, 0.5{']' if upper_inclusive else ')'}, got {alpha}")
@@ -81,3 +82,12 @@ def var_es_from_distribution(ppf: Callable[[np.ndarray], np.ndarray], alpha: flo
     es = float(np.sum(ws * q * 3.0 * s**2))
     var = float(np.asarray(ppf(np.array([alpha])), dtype=float)[0])
     return var, es
+
+__all__ = [
+    "check_alpha",
+    "from_loss_numbers",
+    "to_loss_numbers",
+    "var_es_from_distribution",
+    "var_es_from_sample",
+    "vec",
+]

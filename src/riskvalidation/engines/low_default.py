@@ -168,3 +168,10 @@ def most_prudent_pd_multiperiod(obligors: Sequence[int], defaults: Sequence[int]
         "seed": int(seed),
         "reference": f"{PLUTO_TASCHE}, section 6, equations 6.1 to 6.8",
     }
+
+__all__ = [
+    "most_prudent_pd",
+    "most_prudent_pd_multiperiod",
+    "most_prudent_pd_scaled",
+    "scale_bounds",
+]

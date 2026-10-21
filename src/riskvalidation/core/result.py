@@ -71,6 +71,10 @@ class TestResult:
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"TestResult.{name} must be a non-empty string")
+        override = getattr(self.policy_version, "override", None)
+        if override is not None:  # a "+custom" label carries the cut points the row used: keep them in the row
+            object.__setattr__(self, "policy_version", str(self.policy_version))
+            object.__setattr__(self, "extras", {**dict(self.extras), "policy_override": dict(override)})
         if not isinstance(self.light, Light):
             raise TypeError("TestResult.light must be a Light")
         if self.p_value is not None and not (0.0 <= self.p_value <= 1.0):
@@ -115,3 +119,8 @@ def _jsonable(v: Any) -> Any:
     if hasattr(v, "tolist"):  # numpy scalars and arrays
         return _jsonable(v.tolist())
     return v
+
+__all__ = [
+    "Light",
+    "TestResult",
+]

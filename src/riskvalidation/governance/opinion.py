@@ -65,3 +65,10 @@ def recommendation(level: int) -> tuple[str, str, str]:
         raise ValueError(f"level must be 1 to 4, got {level!r}")
     outcome = RECOMMENDATION_RULE[level]
     return outcome, _TEXT[outcome], LABEL
+
+__all__ = [
+    "finding_level",
+    "opinion_level",
+    "recommendation",
+    "rwea_level",
+]

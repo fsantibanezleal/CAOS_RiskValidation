@@ -127,3 +127,10 @@ def mc_standard_errors(losses: np.ndarray, q: float, n_batches: int = 20) -> tup
     e = np.array([es_from_sample(b, q) for b in batches])
     root = math.sqrt(nb)
     return float(np.std(v, ddof=1) / root), float(np.std(e, ddof=1) / root)
+
+__all__ = [
+    "LossSample",
+    "mc_standard_errors",
+    "simulate_gaussian",
+    "simulate_student_t",
+]

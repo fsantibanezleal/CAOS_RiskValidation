@@ -30,7 +30,9 @@ def make_result(
     """Build the result of a registered test, classifying it under ``policy`` (the default when ``None``)."""
     s = get_spec(test_id)
     pol = policy if policy is not None else default_policy()
-    light, th = pol.classify(test_id, p_value=p_value, metric=metric)
+    row = {"statistic": statistic, "p_value": p_value, "metric": metric, "segment": segment,
+           "extras": dict(extras or {})}
+    light, th = pol.classify(test_id, p_value=p_value, metric=metric, row=row)
     if th is not None and light is Light.NOT_EVALUATED and not notes:
         notes = "statistic undefined for this sample; no light assigned"
     elif th is None and not notes:
@@ -55,3 +57,7 @@ def make_result(
         notes=notes,
         extras=dict(extras or {}),
     )
+
+__all__ = [
+    "make_result",
+]

@@ -168,7 +168,7 @@
  "entry_key": "C07/banco-andino",
  "title": {
   "en": "Validation report: Chile provisions trilogy: CMF B-1 vs IFRS 9 vs BdE Annex 9",
-  "es": "Informe de validacion: Trilogía de provisiones en Chile: CMF B-1 vs IFRS 9 vs Anexo 9 del BdE"
+  "es": "Informe de validación: Trilogía de provisiones en Chile: CMF B-1 vs IFRS 9 vs Anexo 9 del BdE"
  },
  "tier": 1,
  "test_counts": {
@@ -214,7 +214,7 @@
      "kind": "text",
      "text": {
       "en": "Scope: the fit banco-andino of case C07; the full battery of the default variant (11 test rows) and the findings of its 6 variants.",
-      "es": "Alcance: el ajuste banco-andino del caso C07; la bateria completa de la variante por defecto (11 filas de prueba) y los hallazgos de sus 6 variantes."
+      "es": "Alcance: el ajuste banco-andino del caso C07; la batería completa de la variante por defecto (11 filas de prueba) y los hallazgos de sus 6 variantes."
      }
     },
     {
@@ -260,7 +260,7 @@
      "kind": "text",
      "text": {
       "en": "Overall opinion: level 3 of 4 on the ECB scale (major deficiencies); see section 11.",
-      "es": "Opinion global: nivel 3 de 4 en la escala del BCE (deficiencias mayores); ver seccion 11."
+      "es": "Opinión global: nivel 3 de 4 en la escala del BCE (deficiencias mayores); ver sección 11."
      }
     }
    ],
@@ -272,7 +272,7 @@
      },
      "reason": {
       "en": "no structured list of conditions of use exists (A D5 section 1)",
-      "es": "no existe una lista estructurada de condiciones de uso (A D5 seccion 1)"
+      "es": "no existe una lista estructurada de condiciones de uso (A D5 sección 1)"
      }
     }
    ],
@@ -283,7 +283,7 @@
    "key": "model_description",
    "title": {
     "en": "Model description and intended use",
-    "es": "Descripcion del modelo y uso previsto"
+    "es": "Descripción del modelo y uso previsto"
    },
    "status": "filled",
    "inputs": [
@@ -326,7 +326,7 @@
       },
       {
        "en": "Rung",
-       "es": "Peldano"
+       "es": "Peldaño"
       }
      ],
      "rows": [
@@ -392,11 +392,11 @@
     {
      "element": {
       "en": "Intended use and operating boundaries",
-      "es": "Uso previsto y limites de operacion"
+      "es": "Uso previsto y límites de operación"
      },
      "reason": {
       "en": "no intended-use field exists; the boundaries are not stated for this case (A D5 section 2)",
-      "es": "no existe campo de uso previsto; los limites no se declaran para este caso (A D5 seccion 2)"
+      "es": "no existe campo de uso previsto; los límites no se declaran para este caso (A D5 sección 2)"
      }
     }
    ]
@@ -425,7 +425,7 @@
      "kind": "text",
      "text": {
       "en": "The design alternatives are the rungs of the ladder in the models document: G0-banco-andino, B1-standard, IFRS9-ecl, BDE-annex9.",
-      "es": "Las alternativas de diseno son los peldanos de la escalera del documento de modelos: G0-banco-andino, B1-standard, IFRS9-ecl, BDE-annex9."
+      "es": "Las alternativas de diseño son los peldaños de la escalera del documento de modelos: G0-banco-andino, B1-standard, IFRS9-ecl, BDE-annex9."
      }
     }
    ],
@@ -433,11 +433,11 @@
     {
      "element": {
       "en": "Written soundness assessment and explainability rating",
-      "es": "Evaluacion escrita de solidez y calificacion de explicabilidad"
+      "es": "Evaluación escrita de solidez y calificación de explicabilidad"
      },
      "reason": {
       "en": "no written assessment and no rating exist per case (A D5 section 3)",
-      "es": "no existe evaluacion escrita ni calificacion por caso (A D5 seccion 3)"
+      "es": "no existe evaluación escrita ni calificación por caso (A D5 sección 3)"
      }
     }
    ]
@@ -478,7 +478,7 @@
      },
      "reason": {
       "en": "only C01-style drift tests and C21 examine them (A D5 section 4)",
-      "es": "solo las pruebas de deriva estilo C01 y C21 las examinan (A D5 seccion 4)"
+      "es": "solo las pruebas de deriva estilo C01 y C21 las examinan (A D5 sección 4)"
      }
     }
    ]
@@ -488,7 +488,7 @@
    "key": "implementation",
    "title": {
     "en": "Implementation and process verification",
-    "es": "Implementacion y verificacion del proceso"
+    "es": "Implementación y verificación del proceso"
    },
    "status": "filled",
    "inputs": [
@@ -503,7 +503,7 @@
      "kind": "text",
      "text": {
       "en": "Seed 42, code version 0.07.000, riskvalidation 0.5.0; every document records them.",
-      "es": "Semilla 42, version de codigo 0.07.000, riskvalidation 0.5.0; cada documento las registra."
+      "es": "Semilla 42, versión de código 0.07.000, riskvalidation 0.5.0; cada documento las registra."
      }
     }
    ],
@@ -511,11 +511,11 @@
     {
      "element": {
       "en": "Independent replication of the pipeline",
-      "es": "Replicacion independiente del pipeline"
+      "es": "Replicación independiente del pipeline"
      },
      "reason": {
       "en": "no independent replication statement exists (A D5 section 5)",
-      "es": "no existe declaracion de replicacion independiente (A D5 seccion 5)"
+      "es": "no existe declaración de replicación independiente (A D5 sección 5)"
      }
     }
    ]
@@ -525,7 +525,7 @@
    "key": "outcomes_analysis",
    "title": {
     "en": "Outcomes analysis",
-    "es": "Analisis de resultados"
+    "es": "Análisis de resultados"
    },
    "status": "filled",
    "inputs": [
@@ -558,11 +558,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; nl_amber=1.0; nl_red=3.0",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "nl_amber": 1.0,
          "nl_red": 3.0
@@ -586,11 +586,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -614,11 +614,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -642,11 +642,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -670,11 +670,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -698,11 +698,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -726,11 +726,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -754,11 +754,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; share_amber=0.1; share_red=0.25",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "share_amber": 0.1,
          "share_red": 0.25
@@ -782,11 +782,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; green_ratio=2.0; amber_ratio=1.0; direct_share_amber=0.5; min_months=1",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "green_ratio": 2.0,
          "amber_ratio": 1.0,
@@ -812,11 +812,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; r_green=0.8-1.25; r_amber=0.5-2.0",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "r_green": "0.8-1.25",
          "r_amber": "0.5-2.0"
@@ -840,11 +840,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; tolerance=1e-06; basis=tolerance * max(1, G)",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "tolerance": 1e-06,
          "basis": "tolerance * max(1, G)"
@@ -861,7 +861,7 @@
     {
      "element": {
       "en": "Threshold kind for rows without a policy file",
-      "es": "Tipo de umbral para filas sin archivo de politica"
+      "es": "Tipo de umbral para filas sin archivo de política"
      },
      "reason": {
       "en": "the kind is spec(test_id).decision where the test is registered (these tests are not: spec() raises KeyError at the batch 3 head), and the direction is null for an inline battery string until a policy file exists (BL-085)",
@@ -875,7 +875,7 @@
    "key": "sensitivity_robustness_stress",
    "title": {
     "en": "Sensitivity, robustness and stress",
-    "es": "Sensibilidad, robustez y estres"
+    "es": "Sensibilidad, robustez y estrés"
    },
    "status": "filled",
    "inputs": [
@@ -970,11 +970,11 @@
     {
      "element": {
       "en": "Monitoring pack and overrides analysis",
-      "es": "Paquete de monitoreo y analisis de overrides"
+      "es": "Paquete de monitoreo y análisis de overrides"
      },
      "reason": {
       "en": "no monitoring pack exists and the word override appears in no committed document (A D5 section 8)",
-      "es": "no existe paquete de monitoreo y la palabra override no aparece en ningun documento confirmado (A D5 seccion 8)"
+      "es": "no existe paquete de monitoreo y la palabra override no aparece en ningún documento confirmado (A D5 sección 8)"
      }
     }
    ]
@@ -999,7 +999,7 @@
      "kind": "text",
      "text": {
       "en": "12 register rows are stated limits of the synthetic case (risk_accepted); use restrictions are the SDD non-goals.",
-      "es": "12 filas del registro son limites declarados del caso sintetico (risk_accepted); las restricciones de uso son los no-objetivos del SDD."
+      "es": "12 filas del registro son límites declarados del caso sintético (risk_accepted); las restricciones de uso son los no-objetivos del SDD."
      }
     }
    ],
@@ -1007,11 +1007,11 @@
     {
      "element": {
       "en": "Compensating-control catalogue and use restrictions as data",
-      "es": "Catalogo de controles compensatorios y restricciones de uso como datos"
+      "es": "Catálogo de controles compensatorios y restricciones de uso como datos"
      },
      "reason": {
       "en": "neither exists as data (A D5 section 9)",
-      "es": "ninguno existe como datos (A D5 seccion 9)"
+      "es": "ninguno existe como datos (A D5 sección 9)"
      }
     }
    ]
@@ -1304,11 +1304,11 @@
     {
      "element": {
       "en": "Remediation plan text",
-      "es": "Texto del plan de remediacion"
+      "es": "Texto del plan de remediación"
      },
      "reason": {
       "en": "no remediation plan exists: the findings are open results or stated limits (W15-5)",
-      "es": "no existe plan de remediacion: los hallazgos son resultados abiertos o limites declarados (W15-5)"
+      "es": "no existe plan de remediación: los hallazgos son resultados abiertos o límites declarados (W15-5)"
      }
     }
    ]
@@ -1318,7 +1318,7 @@
    "key": "opinion_and_recommendation",
    "title": {
     "en": "Overall opinion and recommendation",
-    "es": "Opinion global y recomendacion"
+    "es": "Opinión global y recomendación"
    },
    "status": "filled",
    "inputs": [
@@ -1337,7 +1337,7 @@
      "kind": "text",
      "text": {
       "en": "Opinion level 3: major deficiencies. Remediate before use: a significant or critical finding is open. This is the rule's output on the evidence; Contraste approves no model.",
-      "es": "Nivel de opinion 3: deficiencias mayores. Remediar antes del uso: hay un hallazgo significativo o critico abierto. Es el resultado de la regla sobre la evidencia; Contraste no aprueba ningun modelo."
+      "es": "Nivel de opinión 3: deficiencias mayores. Remediar antes del uso: hay un hallazgo significativo o crítico abierto. Es el resultado de la regla sobre la evidencia; Contraste no aprueba ningún modelo."
      }
     }
    ],
@@ -1352,7 +1352,7 @@
      "id": "W15-7",
      "text": {
       "en": "Level 1 with no open finding; 2 with S4 or S3 only; 3 with any S2; 4 with any S1 (open and overdue findings, not risk_accepted); where an anchor is a share of RWEA, 5 to 10 percent gives level 3 and 10 percent or more level 4, and an anchor can only raise a level (the maximum of the two). A convention (item 30).",
-      "es": "Nivel 1 sin hallazgos abiertos; 2 con solo S4 o S3; 3 con algun S2; 4 con algun S1 (hallazgos abiertos y vencidos, no risk_accepted); si el ancla es una proporcion de RWEA, de 5 a 10 por ciento da nivel 3 y 10 por ciento o mas da nivel 4, y un ancla solo puede subir un nivel (el maximo de ambos). Una convencion (punto 30)."
+      "es": "Nivel 1 sin hallazgos abiertos; 2 con solo S4 o S3; 3 con algún S2; 4 con algún S1 (hallazgos abiertos y vencidos, no risk_accepted); si el ancla es una proporción de RWEA, de 5 a 10 por ciento da nivel 3 y 10 por ciento o más da nivel 4, y un ancla solo puede subir un nivel (el máximo de ambos). Una convención (punto 30)."
      }
     },
     "rwea_cut_points_applied": false,
@@ -1447,12 +1447,12 @@
      "outcome": "remediate before use",
      "text": {
       "en": "Remediate before use: a significant or critical finding is open. This is the rule's output on the evidence; Contraste approves no model.",
-      "es": "Remediar antes del uso: hay un hallazgo significativo o critico abierto. Es el resultado de la regla sobre la evidencia; Contraste no aprueba ningun modelo."
+      "es": "Remediar antes del uso: hay un hallazgo significativo o crítico abierto. Es el resultado de la regla sobre la evidencia; Contraste no aprueba ningún modelo."
      }
     },
     "label": {
      "en": "the rule's output on the evidence; Contraste approves no model",
-     "es": "resultado de la regla sobre la evidencia; Contraste no aprueba ningun modelo"
+     "es": "resultado de la regla sobre la evidencia; Contraste no aprueba ningún modelo"
     }
    }
   },
@@ -1476,7 +1476,7 @@
      "kind": "table",
      "caption": {
       "en": "Documents read",
-      "es": "Documentos leidos"
+      "es": "Documentos leídos"
      },
      "columns": [
       {
@@ -1528,11 +1528,11 @@
     {
      "element": {
       "en": "Policy-file version and content hash for the inline battery strings",
-      "es": "Version y hash del archivo de politica de las cadenas en linea"
+      "es": "Versión y hash del archivo de política de las cadenas en línea"
      },
      "reason": {
-      "en": "the contraste-*-battery strings have no policy file (backlog BL-085, done at the U16 re-bake)",
-      "es": "las cadenas contraste-*-battery no tienen archivo de politica (BL-085, en la re-ejecucion de U16)"
+      "en": "the inline contraste-*-battery strings have no policy file; a packaged battery label has one",
+      "es": "las cadenas en línea contraste-*-battery no tienen archivo de política; una etiqueta de batería empaquetada sí lo tiene"
      }
     }
    ]

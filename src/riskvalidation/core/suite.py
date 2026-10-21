@@ -76,3 +76,8 @@ def run_suite(
             )
         results.append(result)
     return SuiteRun(policy_version=pol.label, results=tuple(results))
+
+__all__ = [
+    "SuiteRun",
+    "run_suite",
+]

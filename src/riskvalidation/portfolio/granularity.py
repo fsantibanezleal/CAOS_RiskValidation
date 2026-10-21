@@ -133,3 +133,12 @@ def granularity_adjustment(share: np.ndarray, k: np.ndarray, pd: np.ndarray, lgd
     r = lg * p
     ga = float(np.sum(s * s * c * (d * (kk + r) - kk))) / (2.0 * k_star)
     return GranularityResult(ga=ga, k_star=k_star, delta=d, alpha_q=alpha, c=c)
+
+__all__ = [
+    "GranularityResult",
+    "delta",
+    "gamma_quantile",
+    "granularity_adjustment",
+    "k_creditrisk_plus",
+    "lgd_variance",
+]

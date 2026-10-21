@@ -128,3 +128,14 @@ def dq_label_consistency(X: np.ndarray, y: np.ndarray) -> DataQualityCount:
     for key, label in zip(keys, yy.tolist(), strict=True):
         labels.setdefault(key, set()).add(label)
     return _count("label_consistency", len(yy), sum(1 for key in keys if len(labels[key]) > 1))
+
+__all__ = [
+    "CompletenessCount",
+    "DataQualityCount",
+    "dq_completeness",
+    "dq_consistency",
+    "dq_label_consistency",
+    "dq_timeliness",
+    "dq_uniqueness",
+    "dq_validity",
+]

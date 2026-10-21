@@ -2,8 +2,8 @@
 the inputs it names or absent with its reason, validating against the schema ``governance-report``.
 
 The report states the rule's output on the evidence and never an approval, a certification or a compliance
-(dossier 06 I.6). The texts are bilingual (English and Spanish, the Spanish without accents, as the product's
-documents write it); every number in them is computed here.
+(dossier 06 I.6). The texts are bilingual (English and Spanish, the Spanish in standard RAE orthography, with its
+accents and the eñe); every number in them is computed here.
 
 Inputs, all mappings read and never mutated:
 
@@ -27,7 +27,7 @@ from typing import Any
 from riskvalidation.core.result import Light
 from riskvalidation.governance.findings import OPEN_STATES
 from riskvalidation.governance.opinion import LABEL, opinion_level, recommendation, rwea_level
-from riskvalidation.governance.policy import resolve_policy
+from riskvalidation.governance.policy import NO_POLICY_FILE, resolve_policy
 
 METHODOLOGY_PAGE = "frontend/src/pages/Methodology.tsx (Methodology page)"
 SECTION_KEYS = (
@@ -46,16 +46,16 @@ SECTION_KEYS = (
 )
 _TITLES = (
     ("Executive summary", "Resumen ejecutivo"),
-    ("Model description and intended use", "Descripcion del modelo y uso previsto"),
+    ("Model description and intended use", "Descripción del modelo y uso previsto"),
     ("Conceptual soundness", "Solidez conceptual"),
     ("Data", "Datos"),
-    ("Implementation and process verification", "Implementacion y verificacion del proceso"),
-    ("Outcomes analysis", "Analisis de resultados"),
-    ("Sensitivity, robustness and stress", "Sensibilidad, robustez y estres"),
+    ("Implementation and process verification", "Implementación y verificación del proceso"),
+    ("Outcomes analysis", "Análisis de resultados"),
+    ("Sensitivity, robustness and stress", "Sensibilidad, robustez y estrés"),
     ("Ongoing monitoring", "Monitoreo continuo"),
     ("Limitations and compensating controls", "Limitaciones y controles compensatorios"),
     ("Findings register", "Registro de hallazgos"),
-    ("Overall opinion and recommendation", "Opinion global y recomendacion"),
+    ("Overall opinion and recommendation", "Opinión global y recomendación"),
     ("Appendices", "Anexos"),
 )
 _LEVEL_LABEL = {
@@ -64,17 +64,17 @@ _LEVEL_LABEL = {
     3: ("major deficiencies", "deficiencias mayores"),
     4: ("severe deficiencies", "deficiencias severas"),
 }
-_LABEL_ES = "resultado de la regla sobre la evidencia; Contraste no aprueba ningun modelo"
+_LABEL_ES = "resultado de la regla sobre la evidencia; Contraste no aprueba ningún modelo"
 _REC_ES = {
     "approve": "Aprobar: sin hallazgos abiertos. Es el resultado de la regla sobre la evidencia; Contraste no "
-    "aprueba ningun modelo.",
+    "aprueba ningún modelo.",
     "approve with conditions": (
         "Aprobar con condiciones: solo hay hallazgos menores abiertos. Es el resultado de la regla sobre la evidencia; "
-        "Contraste no aprueba ningun modelo."
+        "Contraste no aprueba ningún modelo."
     ),
     "remediate before use": (
-        "Remediar antes del uso: hay un hallazgo significativo o critico abierto. Es el resultado de la regla sobre la "
-        "evidencia; Contraste no aprueba ningun modelo."
+        "Remediar antes del uso: hay un hallazgo significativo o crítico abierto. Es el resultado de la regla sobre la "
+        "evidencia; Contraste no aprueba ningún modelo."
     ),
 }
 _RULE = (
@@ -83,11 +83,11 @@ _RULE = (
     "where an anchor is a share of RWEA, 5 to 10 percent gives level 3 and 10 percent or more level 4, and an "
     "anchor can only raise a level "
     "(the maximum of the two). A convention (item 30).",
-    "Nivel 1 sin hallazgos abiertos; 2 con solo S4 o S3; 3 con algun S2; 4 con algun S1 (hallazgos abiertos y "
+    "Nivel 1 sin hallazgos abiertos; 2 con solo S4 o S3; 3 con algún S2; 4 con algún S1 (hallazgos abiertos y "
     "vencidos, no risk_accepted); "
-    "si el ancla es una proporcion de RWEA, de 5 a 10 por ciento da nivel 3 y 10 por ciento o mas da nivel 4, y un "
+    "si el ancla es una proporción de RWEA, de 5 a 10 por ciento da nivel 3 y 10 por ciento o más da nivel 4, y un "
     "ancla solo puede subir un "
-    "nivel (el maximo de ambos). Una convencion (punto 30).",
+    "nivel (el máximo de ambos). Una convención (punto 30).",
 )
 _PATH = re.compile(r"(\S+?)#/")
 _POINTER = re.compile(r"\S+#/\S+")
@@ -132,7 +132,7 @@ def _section(
         "inputs": [{"ref": ref, "kind": kind} for ref, kind in inputs] if filled else [],
         "absent_reason": None
         if filled
-        else _t(*(absent or ("no input exists for this section", "no existe insumo para esta seccion"))),
+        else _t(*(absent or ("no input exists for this section", "no existe insumo para esta sección"))),
         "blocks": blocks if filled else [],
         "missing": [{"element": _t(*e), "reason": _t(*r)} for e, r in missing] if filled else [],
     }
@@ -165,8 +165,13 @@ def _bilingual(value: Any, fallback: tuple[str, str]) -> dict[str, str]:
 
 def _policy_row(row: Mapping[str, Any]) -> dict:
     version = row.get("policy_version")
+    extras = row.get("extras")
     identity, reason = resolve_policy(
-        version if isinstance(version, str) else "", row["test_id"], row.get("alpha_amber"), row.get("alpha_red")
+        version if isinstance(version, str) else "",
+        row["test_id"],
+        row.get("alpha_amber"),
+        row.get("alpha_red"),
+        override=extras.get("policy_override") if isinstance(extras, Mapping) else None,
     )
     if identity is not None:
         return {**identity, "reason": None}
@@ -177,7 +182,7 @@ def _policy_row(row: Mapping[str, Any]) -> dict:
         "alpha_amber": row.get("alpha_amber"),
         "alpha_red": row.get("alpha_red"),
         "direction": None,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": NO_POLICY_FILE,
         "parameters": {},
         "version": None,
         "source": "unresolved",
@@ -256,7 +261,7 @@ def build_report(
     secs: list[dict] = []
     # 1 executive summary
     question = _bilingual(
-        (attrs.get("A04") or {}).get("value"), (f"Validation of {title['en']}", f"Validacion de {title['es']}")
+        (attrs.get("A04") or {}).get("value"), (f"Validation of {title['en']}", f"Validación de {title['es']}")
     )
     secs.append(
         _section(
@@ -272,7 +277,7 @@ def build_report(
                     f"Scope: the fit {fit} of case {entry['case_id']}; the full battery of the default variant "
                     f"({len(tests)} test rows) and the "
                     f"findings of its {n_var} variants.",
-                    f"Alcance: el ajuste {fit} del caso {entry['case_id']}; la bateria completa de la variante por "
+                    f"Alcance: el ajuste {fit} del caso {entry['case_id']}; la batería completa de la variante por "
                     f"defecto ({len(tests)} filas de "
                     f"prueba) y los hallazgos de sus {n_var} variantes.",
                 ),
@@ -283,7 +288,7 @@ def build_report(
                 ),
                 _text(
                     f"Overall opinion: level {level} of 4 on the ECB scale ({label_en}); see section 11.",
-                    f"Opinion global: nivel {level} de 4 en la escala del BCE ({label_es}); ver seccion 11.",
+                    f"Opinión global: nivel {level} de 4 en la escala del BCE ({label_es}); ver sección 11.",
                 ),
             ],
             [
@@ -291,7 +296,7 @@ def build_report(
                     ("Conditions of use", "Condiciones de uso"),
                     (
                         "no structured list of conditions of use exists (A D5 section 1)",
-                        "no existe una lista estructurada de condiciones de uso (A D5 seccion 1)",
+                        "no existe una lista estructurada de condiciones de uso (A D5 sección 1)",
                     ),
                 )
             ],
@@ -317,7 +322,7 @@ def build_report(
                 ),
                 _table(
                     ("Components", "Componentes"),
-                    [("Model", "Modelo"), ("Role", "Rol"), ("Rung", "Peldano")],
+                    [("Model", "Modelo"), ("Role", "Rol"), ("Rung", "Peldaño")],
                     [[c["model_id"], c["role"], c.get("rung")] for c in components],
                 ),
                 _table(
@@ -328,10 +333,10 @@ def build_report(
             ],
             [
                 (
-                    ("Intended use and operating boundaries", "Uso previsto y limites de operacion"),
+                    ("Intended use and operating boundaries", "Uso previsto y límites de operación"),
                     (
                         "no intended-use field exists; the boundaries are not stated for this case (A D5 section 2)",
-                        "no existe campo de uso previsto; los limites no se declaran para este caso (A D5 seccion 2)",
+                        "no existe campo de uso previsto; los límites no se declaran para este caso (A D5 sección 2)",
                     ),
                 )
             ],
@@ -346,18 +351,18 @@ def build_report(
             [
                 _text(
                     f"The design alternatives are the rungs of the ladder in the models document: {ids}.",
-                    f"Las alternativas de diseno son los peldanos de la escalera del documento de modelos: {ids}.",
+                    f"Las alternativas de diseño son los peldaños de la escalera del documento de modelos: {ids}.",
                 )
             ],
             [
                 (
                     (
                         "Written soundness assessment and explainability rating",
-                        "Evaluacion escrita de solidez y calificacion de explicabilidad",
+                        "Evaluación escrita de solidez y calificación de explicabilidad",
                     ),
                     (
                         "no written assessment and no rating exist per case (A D5 section 3)",
-                        "no existe evaluacion escrita ni calificacion por caso (A D5 seccion 3)",
+                        "no existe evaluación escrita ni calificación por caso (A D5 sección 3)",
                     ),
                 )
             ],
@@ -384,7 +389,7 @@ def build_report(
                     ("Representativeness and bias examination", "Representatividad y examen de sesgo"),
                     (
                         "only C01-style drift tests and C21 examine them (A D5 section 4)",
-                        "solo las pruebas de deriva estilo C01 y C21 las examinan (A D5 seccion 4)",
+                        "solo las pruebas de deriva estilo C01 y C21 las examinan (A D5 sección 4)",
                     ),
                 )
             ],
@@ -394,7 +399,7 @@ def build_report(
     seed, code_v, rv_v = default.get("seed"), default.get("code_version"), default.get("riskvalidation_version")
     facts = [
         (f"Seed {seed}", f"Semilla {seed}") if seed is not None else None,
-        (f"code version {code_v}", f"version de codigo {code_v}") if code_v else None,
+        (f"code version {code_v}", f"versión de código {code_v}") if code_v else None,
         (f"riskvalidation {rv_v}", f"riskvalidation {rv_v}") if rv_v else None,
     ]
     facts = [f for f in facts if f]
@@ -415,16 +420,16 @@ def build_report(
             block5,
             [
                 (
-                    ("Independent replication of the pipeline", "Replicacion independiente del pipeline"),
+                    ("Independent replication of the pipeline", "Replicación independiente del pipeline"),
                     (
                         "no independent replication statement exists (A D5 section 5)",
-                        "no existe declaracion de replicacion independiente (A D5 seccion 5)",
+                        "no existe declaración de replicación independiente (A D5 sección 5)",
                     ),
                 )
             ],
             absent=(
                 "the variant documents record no seed, code version or engine version",
-                "los documentos de variante no registran semilla, version de codigo ni version del motor",
+                "los documentos de variante no registran semilla, versión de código ni versión del motor",
             )
             if not facts
             else None,
@@ -437,18 +442,16 @@ def build_report(
     if unresolved or no_direction:
         missing6.append(
             (
-                ("Threshold kind for rows without a policy file", "Tipo de umbral para filas sin archivo de politica"),
+                ("Threshold kind for rows without a policy file", "Tipo de umbral para filas sin archivo de política"),
                 (
                     f"the kind is spec(test_id).decision where the test is registered ({unresolved} of "
                     f"{len(outcomes)} rows are of tests "
                     f"that are not: spec() raises KeyError), and the direction is null for {no_direction} rows "
-                    f"until a policy file exists "
-                    f"(BL-085)",
-                    f"el tipo es spec(test_id).decision donde la prueba esta registrada ({unresolved} de "
+                    f"for an inline battery string, which has no policy file",
+                    f"el tipo es spec(test_id).decision donde la prueba está registrada ({unresolved} de "
                     f"{len(outcomes)} filas son de "
-                    f"pruebas que no lo estan: spec() lanza KeyError), y la direccion es nula en {no_direction} "
-                    f"filas hasta que exista "
-                    f"un archivo de politica (BL-085)",
+                    f"pruebas que no lo están: spec() lanza KeyError), y la dirección es nula en {no_direction} "
+                    f"filas de una cadena de batería en línea, que no tiene archivo de política",
                 ),
             )
         )
@@ -503,12 +506,12 @@ def build_report(
                 ],
                 [
                     (
-                        ("Monitoring pack and overrides analysis", "Paquete de monitoreo y analisis de overrides"),
+                        ("Monitoring pack and overrides analysis", "Paquete de monitoreo y análisis de overrides"),
                         (
                             "no monitoring pack exists and the word override appears in no committed document (A D5 "
                             "section 8)",
-                            "no existe paquete de monitoreo y la palabra override no aparece en ningun documento "
-                            "confirmado (A D5 seccion 8)",
+                            "no existe paquete de monitoreo y la palabra override no aparece en ningún documento "
+                            "confirmado (A D5 sección 8)",
                         ),
                     )
                 ],
@@ -522,7 +525,7 @@ def build_report(
                 [],
                 absent=(
                     "no monitoring pack, no overrides analysis and no PMA exists for this entry (A D5 section 8)",
-                    "no existe paquete de monitoreo, analisis de overrides ni PMA para esta entrada (A D5 seccion 8)",
+                    "no existe paquete de monitoreo, análisis de overrides ni PMA para esta entrada (A D5 sección 8)",
                 ),
             )
         )
@@ -536,7 +539,7 @@ def build_report(
                 _text(
                     f"{len(accepted)} register rows are stated limits of the synthetic case (risk_accepted); use "
                     f"restrictions are the SDD non-goals.",
-                    f"{len(accepted)} filas del registro son limites declarados del caso sintetico (risk_accepted); "
+                    f"{len(accepted)} filas del registro son límites declarados del caso sintético (risk_accepted); "
                     f"las restricciones de uso son los "
                     f"no-objetivos del SDD.",
                 )
@@ -545,9 +548,9 @@ def build_report(
                 (
                     (
                         "Compensating-control catalogue and use restrictions as data",
-                        "Catalogo de controles compensatorios y restricciones de uso como datos",
+                        "Catálogo de controles compensatorios y restricciones de uso como datos",
                     ),
-                    ("neither exists as data (A D5 section 9)", "ninguno existe como datos (A D5 seccion 9)"),
+                    ("neither exists as data (A D5 section 9)", "ninguno existe como datos (A D5 sección 9)"),
                 )
             ],
         )
@@ -575,10 +578,10 @@ def build_report(
             else [],
             [
                 (
-                    ("Remediation plan text", "Texto del plan de remediacion"),
+                    ("Remediation plan text", "Texto del plan de remediación"),
                     (
                         "no remediation plan exists: the findings are open results or stated limits (W15-5)",
-                        "no existe plan de remediacion: los hallazgos son resultados abiertos o limites declarados "
+                        "no existe plan de remediación: los hallazgos son resultados abiertos o límites declarados "
                         "(W15-5)",
                     ),
                 )
@@ -613,7 +616,7 @@ def build_report(
             [
                 _text(
                     f"Opinion level {level}: {label_en}. {rec_en}",
-                    f"Nivel de opinion {level}: {label_es}. {_REC_ES[outcome]}",
+                    f"Nivel de opinión {level}: {label_es}. {_REC_ES[outcome]}",
                 )
             ],
             opinion=opinion,
@@ -628,7 +631,7 @@ def build_report(
             [(f"provenance of the {len(docs)} documents read for the entry", "document")],
             [
                 _table(
-                    ("Documents read", "Documentos leidos"),
+                    ("Documents read", "Documentos leídos"),
                     [("Path", "Ruta"), ("sha256", "sha256")],
                     [[d["path"], d["sha256"]] for d in docs],
                 )
@@ -639,18 +642,18 @@ def build_report(
                 (
                     (
                         "Policy-file version and content hash for the inline battery strings",
-                        "Version y hash del archivo de politica de las cadenas en linea",
+                        "Versión y hash del archivo de política de las cadenas en línea",
                     ),
                     (
-                        "the contraste-*-battery strings have no policy file (backlog BL-085, done at the U16 re-bake)",
-                        "las cadenas contraste-*-battery no tienen archivo de politica (BL-085, en la re-ejecucion "
-                        "de U16)",
+                        "the inline contraste-*-battery strings have no policy file; a packaged battery label has one",
+                        "las cadenas en línea contraste-*-battery no tienen archivo de política; una etiqueta de "
+                        "batería empaquetada sí lo tiene",
                     ),
                 )
             ],
             absent=(
                 "no document read is recorded for the entry",
-                "no se registra ningun documento leido para la entrada",
+                "no se registra ningún documento leído para la entrada",
             )
             if not docs
             else None,
@@ -666,8 +669,13 @@ def build_report(
         "as_of_basis": copy.deepcopy(inventory["as_of_basis"]),
         "provenance": copy.deepcopy(inventory["provenance"]),
         "entry_key": key,
-        "title": _t(f"Validation report: {title['en']}", f"Informe de validacion: {title['es']}"),
+        "title": _t(f"Validation report: {title['en']}", f"Informe de validación: {title['es']}"),
         "tier": tb["tier"],
         "test_counts": counts,
         "sections": secs,
     }
+
+__all__ = [
+    "build_report",
+    "executive_counts",
+]

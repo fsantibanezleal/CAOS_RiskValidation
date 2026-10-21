@@ -1,0 +1,109 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-ifrs9-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste ifrs9-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "ifrs9.ecl_backtest": {
+      "kind": "upper_bad",
+      "amber": 1.25,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.ecl_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: IFRS 9 B5.5.52; EBA (2023), IFRS 9 implementation by EU institutions, 2023 Monitoring report, EBA/Rep/2023/36, doi:10.2853/269836, paras 100 to 104",
+      "rule": "ifrs9_ecl_backtest",
+      "parameters": {
+        "r_amber_high": 2.0,
+        "r_amber_low": 0.5,
+        "r_green_high": 1.25,
+        "r_green_low": 0.8
+      }
+    },
+    "ifrs9.lifetime_pd_backtest": {
+      "kind": "upper_bad",
+      "amber": 0.25,
+      "red": 0.5,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.lifetime_pd_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c06; dossier reference: EBA (2023), IFRS 9 implementation by EU institutions, 2023 Monitoring report, EBA/Rep/2023/36, doi:10.2853/269836, paras 114 to 118; Vasicek (2002), The distribution of loan portfolio value, Risk 15(12); Kaplan-Meier product-limit and Aalen-Johansen cumulative incidence estimators (dossier 02 B.2, C.2)",
+      "rule": "ifrs9_lifetime_pd",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01,
+        "gap_amber": 0.25,
+        "gap_red": 0.5
+      }
+    },
+    "ifrs9.nonlinearity": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.nonlinearity_test; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: dossier 02 B.4 and C.1 (BCBS 2005 explanatory note; Vasicek 2002; Gordy 2003, doi:10.1016/S1042-9573(03)00040-8)",
+      "rule": "ifrs9_nonlinearity",
+      "parameters": {
+        "gauss_hermite_tolerance": 1e-09
+      }
+    },
+    "ifrs9.overlay_diagnostics": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.overlay_diagnostics; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: ECB Banking Supervision (2024), IFRS 9 overlays and model improvements for novel risks, doi:10.2866/034127; ECB letter SSM-2020-0744 (2020-12-04); BCBS (2015), Guidance on credit risk and accounting for expected credit losses (d350), paras 50 and 51",
+      "rule": "ifrs9_overlay",
+      "parameters": {
+        "share_amber": 0.1,
+        "share_red": 0.25
+      }
+    },
+    "ifrs9.reconciliation_identities": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.reconciliation_identities; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: IFRS 7 35H and 35I; dossier 02 I.1 items 9 and 10 and I.2",
+      "rule": "red_if_nonempty:extras.failing_identities",
+      "parameters": {
+        "tolerance": 1e-06
+      }
+    },
+    "ifrs9.scenario_sensitivity": {
+      "kind": "upper_bad",
+      "amber": 1.0,
+      "red": 3.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.scenario_sensitivity; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: BCBS (2015), Guidance on credit risk and accounting for expected credit losses (d350), para 36(a); GPPC (2016), The implementation of IFRS 9 impairment requirements by banks, 2016-06-17, 2.8.1.2; IFRS 9 5.5.17(a), B5.5.42",
+      "rule": "ifrs9_scenario_sensitivity",
+      "parameters": {
+        "nl_amber": 1.0,
+        "nl_red": 3.0
+      }
+    },
+    "ifrs9.sicr_effectiveness": {
+      "kind": "lower_bad",
+      "amber": 2.0,
+      "red": 1.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.sicr_effectiveness; producer CAOS_Contraste data-pipeline pipeline/cases/c06, pipeline/cases/c07; dossier reference: EBA (2023), IFRS 9 implementation by EU institutions, 2023 Monitoring report, EBA/Rep/2023/36, doi:10.2853/269836, paras 94 to 99 and Figure 42; BCBS (2015), Guidance on credit risk and accounting for expected credit losses (d350), A38; dossier 02 I.2",
+      "rule": "ifrs9_sicr_effectiveness",
+      "parameters": {
+        "amber_ratio": 1.0,
+        "direct_share_amber": 0.5,
+        "green_ratio": 2.0
+      }
+    },
+    "ifrs9.sicr_threshold_stability": {
+      "kind": "upper_bad",
+      "amber": 1.0,
+      "red": 1.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.sicr_threshold_stability; producer CAOS_Contraste data-pipeline pipeline/cases/c06; dossier reference: EBA (2023), IFRS 9 implementation by EU institutions, 2023 Monitoring report, EBA/Rep/2023/36, doi:10.2853/269836, paras 29 to 33; EBA (2021), IFRS 9 implementation by EU institutions, Monitoring report, EBA/Rep/2021/35, doi:10.2853/631076",
+      "rule": "ifrs9_sicr_stability",
+      "parameters": {
+        "amber_count": 1.0,
+        "red_share_of_periods": 0.5
+      }
+    },
+    "ifrs9.stage_migration_backtest": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.ifrs9.stage_migration_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c06; dossier reference: EBA (2023), IFRS 9 implementation by EU institutions, 2023 Monitoring report, EBA/Rep/2023/36, doi:10.2853/269836, para 97; Anderson and Goodman (1957), doi:10.1214/aoms/1177707039, equation (3.1)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    }
+  }
+}

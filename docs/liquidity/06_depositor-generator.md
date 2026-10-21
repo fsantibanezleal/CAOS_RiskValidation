@@ -17,10 +17,12 @@ u_1=(1-h_{calm},\,0),\qquad u_{d+1}=(u_d P)\odot(1-h_{calm},\,1-h_{stress}),$$
 
 $$\text{truth}(n)=1-\sum u_n .$$
 
-`DepositorConfig` holds the frozen `DepositorSegment` rows (`segment` one of the five `SEGMENTS`, `share_of_deposits` summing to one, the two
-hazards and the two probabilities, each in `[0, 1]`), `n_depositors` per segment and `horizon_days`; a share vector that does not sum to one,
-a probability outside `[0, 1]`, a non-positive count or an unknown segment raises `ValueError` naming the field. Because the chain is
-shared, every segment carries the same `p_enter_stress` and `p_exit_stress`; segments that disagree are refused. The configuration
+`DepositorConfig` holds the frozen `DepositorSegment` rows (`segment` one of the five `SEGMENTS`, `share_of_deposits` summing to one and the two
+hazards, each in `[0, 1]`), `n_depositors` per segment, `horizon_days` and the two probabilities of the state chain, `p_enter_stress` and
+`p_exit_stress`, each in `[0, 1]`; a share vector that does not sum to one, a probability outside `[0, 1]`, a non-positive count or an unknown
+segment raises `ValueError` naming the field. Because the chain is shared by every depositor, the two probabilities belong to the configuration
+and a `DepositorSegment` does not take them (passing them is a `TypeError`; before `engine-liquidity-api` 2.0.0 each segment carried them and
+the segments had to agree). The configuration
 serialises through `config()` into the `generator.config` block of the models document.
 
 `DepositorGenerator.draw(rng)` returns `{"state": (H,), "withdrawn_day": {segment: (n,)}, "outflow_rate": {segment: (H,)}}` (0 in

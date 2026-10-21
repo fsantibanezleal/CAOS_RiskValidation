@@ -1,6 +1,11 @@
 """Credit risk mathematics with riskvalidation (unit U2): IRB capital under two regimes, the large homogeneous portfolio
 behind it, most prudent PDs for a low-default portfolio, and a PD curve calibrated to a new year and tested for fit."""
 
+import json
+import os
+import sys
+from pathlib import Path
+
 from riskvalidation.engines import low_default, pd_curve, vasicek
 from riskvalidation.regulatory import capital_requirement
 from riskvalidation.validation import pd_default_profile
@@ -21,10 +26,16 @@ for rho in (0.0, 0.12):
     print(f"most prudent PDs at 90%, correlation {rho:.0%}:", ", ".join(f"{p:.2%}" for p in res["pd"]))
 
 # a PD curve smoothed on one year and calibrated to the next (Tasche 2013, S&P corporates, best grade first)
-obligors_2009 = [81, 37, 188, 245, 340, 510, 546, 498, 541, 459, 266, 295, 441, 438, 482, 303, 190]
-defaults_2009 = [0, 0, 0, 0, 1, 2, 0, 2, 1, 5, 0, 3, 4, 24, 48, 52, 92]
-obligors_2010 = [72, 25, 143, 209, 353, 474, 528, 457, 583, 430, 254, 276, 379, 393, 436, 290, 220]
-defaults_2010 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 3, 6, 49]
+# The counts are third-party data and are not in the repository: they are read from
+# <RISKVALIDATION_DATA>/tasche2013/table2.json ({"years": {"2009": {"obligors": [...], "defaults": [...]}, ...}}).
+_data = os.environ.get("RISKVALIDATION_DATA")
+_table2 = Path(_data) / "tasche2013" / "table2.json" if _data else None
+if _table2 is None or not _table2.is_file():
+    print("PD curve part skipped: the S&P Table 2 counts are read from RISKVALIDATION_DATA/tasche2013/table2.json")
+    sys.exit(0)
+_years = json.loads(_table2.read_text(encoding="utf-8"))["years"]
+obligors_2009, defaults_2009 = _years["2009"]["obligors"], _years["2009"]["defaults"]
+obligors_2010, defaults_2010 = _years["2010"]["obligors"], _years["2010"]["defaults"]
 
 m0 = pd_curve.model_from_counts(obligors_2009, defaults_2009)
 q0 = pd_curve.qmm(m0["profile"], m0["pd"], m0["accuracy_ratio"], survival_profile=m0["survival_profile"])

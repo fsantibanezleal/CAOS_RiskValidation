@@ -100,3 +100,12 @@ def overlay_share(overlay_total: float, total_allowance: float) -> float:
 def total_allowance(model_ecl: float, overlays: Sequence[Overlay]) -> float:
     """model_ecl + sum(overlay.amount): the allowance with the overlays as separate lines."""
     return float(model_ecl) + sum_amounts(overlays)
+
+__all__ = [
+    "Overlay",
+    "check_unique",
+    "overlay_lines",
+    "overlay_share",
+    "sum_amounts",
+    "total_allowance",
+]

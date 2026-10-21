@@ -340,3 +340,15 @@ def scenario_influence(points: Sequence[ScenarioPoint],
         without = scalar(capital_fn(pts[:i] + pts[i + 1:]), f"capital(without {i})")
         out[i] = (base - without) / base
     return out
+
+__all__ = [
+    "CredibilityFit",
+    "GammaPrior",
+    "ScenarioPoint",
+    "credibility_pareto",
+    "fit_tail_to_scenarios",
+    "gamma_prior_from_mean_interval",
+    "gamma_prior_from_scenarios",
+    "scenario_influence",
+    "scenario_pseudo_observations",
+]

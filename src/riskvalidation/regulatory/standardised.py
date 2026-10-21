@@ -346,3 +346,20 @@ def lookup(exposure_class: str, key: str, **options: object) -> RegulatoryParame
     if key == "cap":
         return _p(CURRENCY_MISMATCH_CAP, "CRE20.92", "CRE20.92")
     raise _refuse("key", key, "CRE20.92", "CRE20.92")
+
+__all__ = [
+    "RegulatoryParameter",
+    "apply_currency_mismatch",
+    "bank_risk_weight_ecra",
+    "bank_risk_weight_scra",
+    "commercial_re_risk_weight",
+    "corporate_risk_weight",
+    "credit_conversion_factor",
+    "defaulted_risk_weight",
+    "eca_risk_weight",
+    "equity_risk_weight",
+    "lookup",
+    "residential_re_risk_weight",
+    "retail_risk_weight",
+    "sovereign_risk_weight",
+]

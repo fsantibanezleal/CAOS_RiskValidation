@@ -162,21 +162,50 @@ def threshold_rows(**parameters: float) -> dict[str, dict[str, float | str]]:
     }
 
 
+def _cuts(t: Threshold) -> tuple[str, float, float]:
+    """What an ``ml.`` row's light reads: the kind and the two cut points (its parameters name them again)."""
+    return t.kind, float(t.amber), float(t.red)
+
+
 def ml_policy(base: Policy | None = None, **parameters: float) -> Policy:
     """``base`` (the packaged default policy when None) with the ``ml.`` rows of the named parameters. The keyword
     arguments are those of ``ml_thresholds``. A row the base does not hold is added; a row the base holds at its
     packaged default (the packaged policy carries the ``ml.`` rows, so a default row is no customisation) is replaced
-    by the parameterised one; a row the base customised is kept as it stands."""
+    by the parameterised one; a row the base customised is kept as it stands.
+
+    When a row differs from the packaged default row, the policy is a customised one: its label is the base label plus
+    ``+custom`` and ``override`` holds the rows that differ, so the results it produces record the cut points they used
+    in ``extras["policy_override"]``."""
     b = default_policy() if base is None else base
     packaged = ml_thresholds()
     rows = dict(b.thresholds)
     for key, row in ml_thresholds(**parameters).items():
-        if key not in rows or rows[key] == packaged[key]:
+        if key not in rows:
             rows[key] = row
+        elif _cuts(rows[key]) == _cuts(packaged[key]) and _cuts(row) != _cuts(packaged[key]):
+            # a packaged default row the named parameters change: the new cut points, the base entry's other fields
+            named = {k: float(v) for k, v in parameters.items() if k in rows[key].parameters}
+            rows[key] = Threshold(
+                row.kind, row.amber, row.red, row.source, parameters={**rows[key].parameters, **named},
+                rule=rows[key].rule, by=rows[key].by, cases=rows[key].cases,
+            )
+    reference = default_policy().thresholds
+    override = dict(b.override)
+    for key, row in rows.items():
+        if key.startswith("ml.") and key in reference and _cuts(row) != _cuts(reference[key]):
+            override[key] = {"kind": row.kind, "amber": float(row.amber), "red": float(row.red)}
     return Policy(
         policy_id=b.policy_id,
         version=b.version,
         description=(f"{b.description} The ml. rows are those of engine-ml-api 2.0.0 where it holds none or holds the "
                      "packaged default.").strip(),
         thresholds=rows,
+        override=override,
     )
+
+__all__ = [
+    "ml_policy",
+    "ml_thresholds",
+    "strict",
+    "threshold_rows",
+]

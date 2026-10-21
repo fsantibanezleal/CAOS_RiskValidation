@@ -77,3 +77,10 @@ def weak_spots(error: np.ndarray, bins: np.ndarray, k: float, min_n: int = 30) -
         if ratio > kk:
             spots.append(WeakSpot(label=int(label), n=n, mean_error=mean, ratio=ratio))
     return sorted(spots, key=lambda w: (-w.ratio, w.label))
+
+__all__ = [
+    "OverfitResult",
+    "WeakSpot",
+    "overfit_gap",
+    "weak_spots",
+]
