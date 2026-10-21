@@ -9,7 +9,9 @@ Tasche (2013), *The art of probability-of-default curve calibration* (Journal of
 treats it as that forecasting problem: what is known at the start of the forecast period decides which part of the
 estimated model can be kept, and each choice is an invariance assumption that can be tested afterwards. The module
 implements every approach of the paper, its smoothing method (quasi moment matching) and the goodness-of-fit tests the
-paper uses, and reproduces the paper's S&P example from the raw counts.
+paper uses, and reproduces the paper's S&P example from the raw counts. The S&P counts of the paper's Table 2 are third-party data and are
+not in this repository: the tests that reproduce the example read them from `tasche2013/table2.json` under the directory named by the
+environment variable `RISKVALIDATION_DATA`, and are skipped when it is not set.
 
 ![One rating model, three equivalent descriptions](../assets/rating-model-descriptions.svg)
 

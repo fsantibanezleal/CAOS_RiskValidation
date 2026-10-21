@@ -22,9 +22,15 @@ mobility, the through-the-cycle portfolio a migration matrix implies); and known
 paths with planted momentum, regimes and withdrawals, with a size and power harness that measures how often each test
 rejects a right model and catches a wrong one, with the Monte Carlo error of every rate. Each reproduces its primary
 source's own tables, worked examples or published simulations. Further calculators and engines arrive unit by unit; the
-[CHANGELOG](CHANGELOG.md) lists exactly what each release contains. Not yet published on PyPI.
+[CHANGELOG](CHANGELOG.md) lists exactly what each release contains.
 
-## Install (from source, until the first PyPI release)
+## Install
+
+```bash
+pip install riskvalidation
+```
+
+The public API, its semantic-versioning policy and its deprecation rule are in [docs/api-policy.md](docs/api-policy.md). From source:
 
 ```bash
 git clone https://github.com/fsantibanezleal/CAOS_RiskValidation.git

@@ -20,12 +20,13 @@ keywords = [
     "probability-of-default", "backtesting", "irrbb", "liquidity-risk", "operational-risk",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Financial and Insurance Industry",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
     "Topic :: Office/Business :: Financial",
     "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
 ]
 dependencies = ["numpy>=1.24", "scipy>=1.10"]
 
@@ -52,7 +53,7 @@ Changelog = "https://github.com/fsantibanezleal/CAOS_RiskValidation/blob/main/CH
 where = ["src"]
 
 [tool.setuptools.package-data]
-riskvalidation = ["policies/*.json"]
+riskvalidation = ["policies/*.json", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

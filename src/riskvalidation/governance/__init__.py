@@ -13,4 +13,17 @@ validation tests are in :mod:`riskvalidation.validation.governance`.
 
 from riskvalidation.governance.conventions import CONVENTIONS
 
-__all__ = ["CONVENTIONS"]
+__all__ = [
+    "CONVENTIONS",
+    "appetite",
+    "findings",
+    "inventory",
+    "lifecycle",
+    "opinion",
+    "policy",
+    "report",
+    "schedule",
+    "scope",
+    "tiering",
+    "conventions",
+]
