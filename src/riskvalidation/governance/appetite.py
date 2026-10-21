@@ -148,7 +148,7 @@ def _bilingual(en: str, es: str) -> dict[str, str]:
 # id -> (name, kind, unit, reason when the metric has no value)
 _META: dict[str, tuple[dict[str, str], str, str, dict[str, str] | None]] = {
     "tier1-validated-on-time": (
-        _bilingual("Share of Tier 1 entries validated on time", "Proporcion de entradas de Nivel 1 validadas a tiempo"),
+        _bilingual("Share of Tier 1 entries validated on time", "Proporción de entradas de Nivel 1 validadas a tiempo"),
         "share",
         "share",
         _bilingual("no Tier 1 entry exists", "no existe entrada de Nivel 1"),
@@ -159,9 +159,9 @@ _META: dict[str, tuple[dict[str, str], str, str, dict[str, str] | None]] = {
         "count",
         None,
     ),
-    "overdue-remediation": (_bilingual("Overdue remediation", "Remediacion vencida"), "count", "count", None),
+    "overdue-remediation": (_bilingual("Overdue remediation", "Remediación vencida"), "count", "count", None),
     "entries-under-exception": (
-        _bilingual("Entries used under exception", "Entradas usadas bajo excepcion"),
+        _bilingual("Entries used under exception", "Entradas usadas bajo excepción"),
         "count",
         "count",
         None,
@@ -184,7 +184,7 @@ _META: dict[str, tuple[dict[str, str], str, str, dict[str, str] | None]] = {
     "owner-and-complete-record": (
         _bilingual(
             "Share of entries with an owner role and a complete record",
-            "Proporcion de entradas con rol de propietario y registro completo",
+            "Proporción de entradas con rol de propietario y registro completo",
         ),
         "share",
         "share",
