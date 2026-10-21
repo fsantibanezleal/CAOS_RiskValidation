@@ -47,6 +47,16 @@ the freeze, in the release that cut 1.0.0, and is recorded in the CHANGELOG and 
 The package ships `py.typed` (PEP 561): the annotations of the public API are part of it, and a change that makes an
 annotation incompatible is a signature change.
 
+## Bilingual reasons (additive in 1.0.0)
+
+The governance functions `scope_test`, `assign_variant`, `anchor_from_test_row`, `rwea_share_of_anchor` and `resolve_policy`
+return a reason as an English string, as the `engine-governance-api` contract states, and that string is part of the
+public API. The Spanish form is added beside them, by one pattern: `riskvalidation.governance.reasons.bilingual(english)`
+takes the English reason a function returned and returns `{"en": ..., "es": ...}`, in RAE orthography. The English reason is
+the key: fixed sentences are in `REASONS_ES`, sentences that carry a value (a source list, a label, a test id) are matched by
+`TEMPLATES`, and a reason in neither raises `ValueError`. Adding the Spanish of a new reason is a minor change; changing an
+existing English reason is a major one, because it is the key.
+
 ## `riskvalidation`
 
 The top-level exports: the result record, the policy, the registry and the suite runner, the test catalogue and the version.
@@ -95,7 +105,7 @@ Names, imported from the package (`from riskvalidation.generators import <name>`
 
 Model governance: the scope test, the inventory, tiering, lifecycle, findings, review schedule, opinion, risk appetite metrics and the validation report. Every tier count, band and deadline is a stated convention.
 
-Modules, imported by path (`from riskvalidation.governance import <module>`): `appetite`, `findings`, `inventory`, `lifecycle`, `opinion`, `policy`, `report`, `schedule`, `scope`, `tiering`, `conventions`.
+Modules, imported by path (`from riskvalidation.governance import <module>`): `appetite`, `findings`, `inventory`, `lifecycle`, `opinion`, `policy`, `reasons`, `report`, `schedule`, `scope`, `tiering`, `conventions`.
 
 Names, imported from the package (`from riskvalidation.governance import <name>`): `CONVENTIONS`.
 
