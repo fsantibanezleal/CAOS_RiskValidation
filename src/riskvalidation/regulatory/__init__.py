@@ -11,4 +11,18 @@ from riskvalidation.regulatory.irb import (
     el_versus_provisions,
 )
 
-__all__ = ["REGIMES", "IRBResult", "Regime", "capital_requirement", "correlation", "el_versus_provisions"]
+__all__ = [
+    "REGIMES",
+    "IRBResult",
+    "Regime",
+    "ba_cva",
+    "capital_requirement",
+    "correlation",
+    "el_versus_provisions",
+    "frtb",
+    "irb",
+    "lcr_nsfr",
+    "output_floor",
+    "sa_ccr",
+    "standardised",
+]

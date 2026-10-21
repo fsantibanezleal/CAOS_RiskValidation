@@ -1,0 +1,16 @@
+# U16-E1 the public API of 1.0.0: `__all__`, `py.typed`, the API and deprecation policy, BL-082 and BL-049
+
+Sources: the U16 unit sizing decisions D16-5 (the public API of 1.0.0, semantic versioning, the deprecation rule, `py.typed`, the classifier) and
+D16-6 (the S&P Table 2 counts leave the repository), and the backlog items BL-082 (the stress-chain probabilities move to `DepositorConfig`) and
+BL-049. Policy text: `docs/api-policy.md`.
+
+EARS statements, each with the gate that fails when it is violated.
+
+| ID | Requirement | Gate |
+|---|---|---|
+| RV-1700 | THE package and each of its 21 subpackages SHALL state `__all__`; EVERY name in it SHALL be importable and, when it is a module, class or function, have a docstring; `from riskvalidation.<subpackage> import *` SHALL import exactly `__all__`. | `tests/test_public_api.py::test_every_subpackage_states_its_all`, `tests/test_public_api.py::test_every_public_name_is_importable_and_documented`, `tests/test_public_api.py::test_star_import_is_exactly_all` |
+| RV-1701 | THE page `docs/api-policy.md` SHALL list, under a heading per subpackage, exactly the names of that subpackage's `__all__`, and SHALL state semantic versioning, the deprecation rule and what is not public. | `tests/test_public_api.py::test_the_policy_lists_no_name_the_code_does_not_export`, `tests/test_api_policy.py::test_the_policy_states_versioning_and_deprecation` |
+| RV-1702 | THE wheel SHALL carry `riskvalidation/py.typed`, AND the classifier SHALL be `Development Status :: 5 - Production/Stable`. | `tests/test_public_api.py::test_the_built_wheel_carries_py_typed`, `tests/test_public_api.py::test_py_typed_ships_with_the_package`, `tests/test_api_policy.py::test_the_classifier_is_production_stable` |
+| RV-1703 | THE decorator `riskvalidation.core.deprecation.deprecated(since, removal, use)` SHALL emit a `DeprecationWarning` that names the version that deprecated the name, the major that removes it and the replacement, attributed to the caller, WHEN a function is called or a class is constructed; AND it SHALL refuse a removal that is not a later major `X.0.0`, and an empty replacement. | `tests/test_api_policy.py::test_deprecated_function_warns_with_the_three_facts`, `tests/test_api_policy.py::test_deprecated_class_warns_on_construction_and_keeps_behaviour`, `tests/test_api_policy.py::test_deprecated_refuses_a_removal_that_is_not_a_later_major`, `tests/test_api_policy.py::test_deprecated_refuses_an_empty_replacement` |
+| RV-1704 | THE `DepositorConfig` SHALL carry the two state-chain probabilities `p_enter_stress` and `p_exit_stress`, each in `[0, 1]`, and a `DepositorSegment` SHALL NOT take them (passing them is a `TypeError`): the chain is shared by every depositor (BL-082, `engine-liquidity-api` 2.0.0). | `tests/liquidity/test_liquidity_deposits.py::test_depositor_config_validation` |
+| RV-1705 | THE tests that start from the S&P Table 2 counts of Tasche (2013) SHALL read them from `<RISKVALIDATION_DATA>/tasche2013/table2.json` and be skipped, with the variable named in the reason, WHEN the file is absent; AND no tracked test or source file SHALL hold a row of the counts (BL-049, decision D16-6). | `tests/test_pd_curve.py::test_counts_tests_skip_without_the_data_root`, `tests/test_pd_curve.py::test_table2_counts_are_not_tracked` |

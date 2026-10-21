@@ -1,6 +1,6 @@
 # riskvalidation, software design document
 
-Version: 0.04.000 design, 2026-10-06. Requirements with named gates live in `docs/design/features/<unit>/`; each
+Version: design of 0.04.000 (2026-10-06), extended unit by unit through 0.09.000 and the public API of 1.0.0 (U16, 2026-10-21). Requirements with named gates live in `docs/design/features/<unit>/`; each
 unit's requirements are written before its code and its `tasks.md` closes with a convergence verdict.
 
 ## 1. Problem and non-goals
@@ -65,9 +65,9 @@ scenarios with known parameters. Each fixture records its source and the toleran
 
 ## 7. Deploy driver
 
-A Python library published to PyPI by OIDC trusted publishing on a GitHub release (ADR-0061). The repository is
-private until the first publish and public from then on. Driver: the consuming product installs a pinned version,
-and the browser lane needs a pure wheel; publishing waits for the one-time PyPI pending-publisher registration.
+A Python library published to PyPI by OIDC trusted publishing on a GitHub release (ADR-0061). The package has been on
+PyPI since 0.8.0. Driver: the consuming product installs a pinned version, and the browser lane needs a pure wheel. From
+1.0.0 the public API is the one in `docs/api-policy.md`, under semantic versioning, and the wheel ships `py.typed`.
 
 ## 8. Risks and kill criteria
 
