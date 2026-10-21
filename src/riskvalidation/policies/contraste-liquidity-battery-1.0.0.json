@@ -1,0 +1,121 @@
+{
+  "policy_id": "contraste-liquidity-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste liquidity-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "liq.cbc_haircut_rules": {
+      "kind": "upper_bad",
+      "amber": 1e-12,
+      "red": 1e-12,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.cbc_haircut_rules; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.1 line 238 and line 480 (LiST note para 74, Table 2.1: the haircut order, the equity table, 30 and 50 percent); ECB Banking Supervision, Sensitivity analysis of liquidity risk, stress test 2019, methodological note (2019-02-06) and results annex (2019-10-07), https://www.bankingsupervision.europa.eu/",
+      "rule": "liquidity_haircut",
+      "parameters": {
+        "tolerance": 1e-12
+      }
+    },
+    "liq.cliff_effect_diagnostic": {
+      "kind": "lower_bad",
+      "amber": -0.01,
+      "red": -0.03,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.cliff_effect_diagnostic; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.1 line 236 defines the cliff effect (NLP(35) - NLP(30)) / TA as a diagnostic of LCR window optimisation and no limit, so the lights are conventions (decision Q14); ECB Banking Supervision, Sensitivity analysis of liquidity risk, stress test 2019, methodological note (2019-02-06) and results annex (2019-10-07), https://www.bankingsupervision.europa.eu/",
+      "rule": "lower_ge:statistic",
+      "parameters": {
+        "amber": -0.01,
+        "red": -0.03
+      }
+    },
+    "liq.htm_loss_effect": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.htm_loss_effect; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 lines 263, 278 and 480: the CBC and the survival period with and without held-to-maturity unrealised losses (Jiang, Matvos, Piskorski and Seru, doi:10.1016/j.jfineco.2024.103899)",
+      "rule": "liquidity_htm_loss",
+      "parameters": {
+        "tolerance": 0.0
+      }
+    },
+    "liq.htm_revaluation_vs_reported": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.15,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.htm_revaluation_vs_reported; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 line 263 and decision Q11: the HTM book revalued from its maturity profile under the Treasury curve through the engine's irrbb curves against the reported fair value SCHF (FDIC BankFind fields, addendum L3)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "amber": 0.15,
+        "green": 0.05
+      }
+    },
+    "liq.list_compounding_golden": {
+      "kind": "upper_bad",
+      "amber": 5e-07,
+      "red": 5e-07,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.list_compounding_golden; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.1 line 237 (constant daily compounding on relevant days, Table 3.3 and para 107 of the LiST note) and the SDD acceptance row of the unit sizing; ECB Banking Supervision, Sensitivity analysis of liquidity risk, stress test 2019, methodological note (2019-02-06) and results annex (2019-10-07), https://www.bankingsupervision.europa.eu/",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "tolerance": 5e-07
+      }
+    },
+    "liq.nlp_identity": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.nlp_identity; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.1 line 234: NLP(t) = CBC(t) - sum over s <= t of (O(s) - I(s)), checked on hand-computed ladders",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "tolerance": 1e-06
+      }
+    },
+    "liq.reverse_stress_round_trip": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.reverse_stress_round_trip; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.5 rung 5, line 279: the reverse liquidity stress round trip (the survival period at the solved multiplier equals the target)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "tolerance_days": 0.0
+      }
+    },
+    "liq.runoff_adequacy_back_test": {
+      "kind": "lower_bad",
+      "amber": 0.8,
+      "red": 0.5,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.runoff_adequacy_back_test; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 08 lines 566 to 568 and dossier 06 lines 971 to 973: a Basel outflow assumption back-tested against the observed run rate (BCBS d555 Box A, Table A.1, https://www.bis.org/bcbs/publ/d555.htm); a descriptive score on the real event, one observation, no p-value (decision Q5)",
+      "rule": "lower_ge:statistic",
+      "parameters": {
+        "ratio_amber": 0.5,
+        "ratio_green": 0.8
+      }
+    },
+    "liq.runoff_vs_generator_truth": {
+      "kind": "upper_bad",
+      "amber": 2.0,
+      "red": 3.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.runoff_vs_generator_truth; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 08 line 698 and G.4 lines 739 to 742: the run-off estimate against the depositor generator's exact truth, in Monte Carlo standard errors (the generator test of decision Q5)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "se_green": 2.0,
+        "se_red": 3.0
+      }
+    },
+    "liq.survival_monotone_in_severity": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.survival_monotone_in_severity; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 E.1 line 240 (median survival periods 176 and 122 days) and line 480, SDD line 329: the survival period does not lengthen as the severity rises; ECB Banking Supervision, Sensitivity analysis of liquidity risk, stress test 2019, methodological note (2019-02-06) and results annex (2019-10-07), https://www.bankingsupervision.europa.eu/",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "tolerance_days": 0.0
+      }
+    },
+    "liq.uninsured_share_sensitivity": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.uninsured_share_sensitivity; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 line 278: the survival period does not lengthen as the uninsured share of deposits rises",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "tolerance_days": 0.0
+      }
+    }
+  }
+}

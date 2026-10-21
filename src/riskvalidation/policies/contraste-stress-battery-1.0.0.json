@@ -1,0 +1,56 @@
+{
+  "policy_id": "contraste-stress-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste stress-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "stress.reverse_solution_check": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.reverse_solution_check; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 01 J.4 and dossier 05 H.5 and H.7: the reverse stress solution, the minimum Mahalanobis distance scenario",
+      "rule": "stress_reverse_solution",
+      "parameters": {
+        "tolerance": 1e-06
+      }
+    },
+    "stress.satellite_backcast": {
+      "kind": "upper_bad",
+      "amber": 0.35,
+      "red": 0.6,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.satellite_backcast; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 H.7 (Contraste initiative research): back-cast the satellites through 2008-2009 and 2020 with data ending before the episode, check the sign of macro sensitivities, the static balance-sheet rules, bottom-up against top-down, severity against history",
+      "rule": "stress_satellite",
+      "parameters": {
+        "peak_amber": 0.35,
+        "peak_red": 0.6,
+        "timing_quarters": 2.0
+      }
+    },
+    "stress.scenario_severity": {
+      "kind": "lower_bad",
+      "amber": 0.75,
+      "red": 0.75,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.scenario_severity; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 H.7: document severity relative to history (GDP and unemployment paths against the GFC, as the EBA does)",
+      "rule": "stress_severity",
+      "parameters": {
+        "minimum": 0.75
+      }
+    },
+    "stress.sensitivity_monotonicity": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.sensitivity_monotonicity; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 H.7 (Contraste initiative research): back-cast the satellites through 2008-2009 and 2020 with data ending before the episode, check the sign of macro sensitivities, the static balance-sheet rules, bottom-up against top-down, severity against history",
+      "rule": "red_if_positive:statistic"
+    },
+    "stress.static_balance_sheet_rules": {
+      "kind": "upper_bad",
+      "amber": 0.006000000000000001,
+      "red": 0.006000000000000001,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.static_balance_sheet_rules; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: EBA 2025 EU-wide stress test, Methodological Note of 2025-01-20, paras 33, 34 and 90 (static balance sheet: constant total, no cure of stage 3); dossier 05 H.4 and H.7",
+      "rule": "red_if_positive:statistic",
+      "parameters": {
+        "tolerance": 0.006000000000000001
+      }
+    }
+  }
+}
