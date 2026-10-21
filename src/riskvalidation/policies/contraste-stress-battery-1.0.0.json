@@ -1,8 +1,20 @@
 {
+  "format_version": 1,
   "policy_id": "contraste-stress-battery",
   "version": "1.0.0",
   "description": "The cut points of the Contraste stress-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
   "thresholds": {
+    "stress.bottom_up_vs_top_down": {
+      "kind": "upper_bad",
+      "amber": 0.25,
+      "red": 0.5,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.stress.bottom_up_vs_top_down (green when |bottom_up / top_down - 1| is at most amber, amber at most red, red above); producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 H.7 (Contraste initiative research), the bottom-up versus top-down check (05 l.422)",
+      "rule": "abs_upper_le:statistic",
+      "parameters": {
+        "amber": 0.25,
+        "red": 0.5
+      }
+    },
     "stress.reverse_solution_check": {
       "kind": "upper_bad",
       "amber": 1e-06,

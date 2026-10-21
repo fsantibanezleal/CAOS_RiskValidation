@@ -14,10 +14,13 @@ resolving so the committed documents stay readable; a packaged battery label res
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
+from typing import Any
 
 from riskvalidation.core.policy import default_policy, packaged_policy
 from riskvalidation.core.registry import spec
 
+CUSTOM_SUFFIX = "+custom"
 NO_POLICY_FILE = "no policy file for an inline battery string"
 KIND_NOT_REGISTERED = "the test id is not in the engine registry (spec() raises KeyError), so it has no decision"
 _PACKAGED = re.compile(r"(?P<id>[A-Za-z][\w.-]*) (?P<version>\d[\w.]*(?:\+[\w.-]+)?)")
@@ -75,16 +78,55 @@ def _packaged_identity(policy, text: str, test_id: str, alpha_amber: float | Non
     }
 
 
+def _custom_identity(
+    text: str, test_id: str, alpha_amber: float | None, alpha_red: float | None, override: Mapping[str, Any] | None
+) -> tuple[dict | None, str | None]:
+    """A packaged label plus ``+custom``: the packaged identity with the cut points the row used (``source``
+    ``packaged-policy-overridden``)."""
+    base = text[: -len(CUSTOM_SUFFIX)]
+    identity, reason = resolve_policy(base, test_id, alpha_amber, alpha_red)
+    if identity is None:
+        return None, reason
+    if not override:
+        return None, (
+            f"the label {text} is a customised packaged policy but the row carries no extras.policy_override"
+        )
+    row = override.get(test_id)
+    if isinstance(row, Mapping):  # a customised ml policy: the rows that differ from the packaged default
+        parameters = {"amber": float(row["amber"]), "red": float(row["red"])}
+        kind = str(row.get("kind", identity["kind"]))
+        direction = kind if kind in ("upper_bad", "lower_bad") else None
+        direction_reason = None if direction else "a p-value threshold has no direction"
+    else:  # a customised battery row: the cut points by the entry's own names
+        parameters = {str(k): float(v) for k, v in dict(override.get("parameters", {})).items()}
+        direction, direction_reason = identity["direction"], identity["direction_reason"]
+    return {
+        **identity,
+        "label": text,
+        "parameters": parameters,
+        "direction": direction,
+        "direction_reason": direction_reason,
+        "source": "packaged-policy-overridden",
+    }, None
+
+
 def resolve_policy(
-    policy_version: str, test_id: str, alpha_amber: float | None = None, alpha_red: float | None = None
+    policy_version: str,
+    test_id: str,
+    alpha_amber: float | None = None,
+    alpha_red: float | None = None,
+    override: Mapping[str, Any] | None = None,
 ) -> tuple[dict | None, str | None]:
     """The policy identity of a test row, ``(identity, reason)``, exactly one of them ``None``.
 
     An identity is ``{"label", "kind", "kind_reason", "direction", "direction_reason", "alpha_amber", "alpha_red",
-    "parameters", "version", "source"}`` with ``source`` one of ``packaged-policy`` and ``inline-battery``. An
-    identity that is neither a packaged label nor an inline battery string returns ``(None, reason)``.
+    "parameters", "version", "source"}`` with ``source`` one of ``packaged-policy``, ``packaged-policy-overridden``
+    (a packaged label plus ``+custom``, with the cut points of ``override``) and ``inline-battery``. An identity that is
+    neither a packaged label nor an inline battery string returns ``(None, reason)``.
     """
     text = (policy_version or "").strip()
+    if text.endswith(CUSTOM_SUFFIX):
+        return _custom_identity(text, test_id, alpha_amber, alpha_red, override)
     appended = _APPENDED.fullmatch(text)
     if appended and not _INLINE.fullmatch(text):
         identity, reason = resolve_policy(appended.group("label"), test_id, alpha_amber, alpha_red)

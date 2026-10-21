@@ -306,6 +306,23 @@ def market_pla_zone(th: Any, row: Any, field: str = "") -> Light:
     return G if rho > _p(th, "spearman_green") and ks < _p(th, "ks_green") else A
 
 
+def market_basel_zone(th: Any, row: Any, field: str = "") -> Light:
+    """``market.basel_traffic_light`` (MAR32.9 Table 1): the zone of the exception count ``statistic`` in the window
+    ``extras.window`` at ``extras.coverage``. With ``X ~ Bin(window, 1 - coverage)``, amber starts at the smallest count
+    whose cumulative probability ``P(X <= k)`` reaches ``amber_level`` (0.95) and red at the one that reaches
+    ``red_level`` (0.9999): 250 days at 99 percent give green 0 to 4, amber 5 to 9, red 10 or more."""
+    k, window, coverage = _num(row, "statistic"), _num(row, "extras.window"), _num(row, "extras.coverage")
+    if k is None or window is None or coverage is None or not 0.0 < coverage < 1.0 or window < 1:
+        return N
+    from scipy import stats
+
+    n = int(window)
+    cdf = stats.binom.cdf(range(n + 1), n, round(1.0 - coverage, 12))
+    amber = int((cdf >= _p(th, "amber_level")).argmax())
+    red = int((cdf >= _p(th, "red_level")).argmax())
+    return G if k < amber else A if k < red else R
+
+
 def oprisk_capital_stability(th: Any, row: Any, field: str = "") -> Light:
     """``oprisk.capital_stability``: the worse of the dispersion (metric) and the bias (``|statistic|``) gates."""
     dispersion, bias = _num(row, "metric"), _num(row, "statistic")
@@ -418,7 +435,8 @@ NAMED: dict[str, Callable[[Any, Any, str], Light]] = {
         aggregation_sum_vc, aggregation_corr_stress, aggregation_diversification, ccr_path_convergence,
         ccr_pit_simulated, ifrs9_lifetime_pd, ifrs9_nonlinearity, ifrs9_sicr_effectiveness, ifrs9_sicr_stability,
         ifrs9_scenario_sensitivity, ifrs9_ecl_backtest, ifrs9_overlay, irrbb_eve_with_without, irrbb_srp31_92,
-        p_value_negative_red, portfolio_size_power, market_pla_zone, oprisk_capital_stability, stress_satellite,
+        p_value_negative_red, portfolio_size_power, market_basel_zone, market_pla_zone, oprisk_capital_stability,
+        stress_satellite,
         stress_severity, stress_reverse_solution, liquidity_htm_loss, liquidity_haircut, fair_interval_excludes_zero,
         ml_interval_above_zero, always_not_evaluated, worst_of_screens,
     )
@@ -437,6 +455,11 @@ RULE_ONLY: dict[str, tuple[str, dict[str, float]]] = {
 }
 
 RULES = tuple(sorted({*GENERIC, *NAMED}))
+
+
+def known_rule(rule: str) -> bool:
+    """Whether ``rule`` (``name`` or ``name:field``) names a rule of this module (a file naming another is refused)."""
+    return rule.partition(":")[0] in GENERIC or rule.partition(":")[0] in NAMED
 
 
 def classify_rule(rule: str, th: Any, row: Any) -> Light:
@@ -469,9 +492,11 @@ __all__ = [
     "ifrs9_sicr_stability",
     "irrbb_eve_with_without",
     "irrbb_srp31_92",
+    "known_rule",
     "liquidity_haircut",
     "liquidity_htm_loss",
     "lower_ge",
+    "market_basel_zone",
     "market_pla_zone",
     "ml_interval_above_zero",
     "oprisk_capital_stability",

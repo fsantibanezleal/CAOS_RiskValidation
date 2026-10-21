@@ -26,6 +26,7 @@ from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.engines.vasicek import lhp_quantile
 from riskvalidation.portfolio.portfolio import check_level, float_vector
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-portfolio-battery 1.0.0"
 NAN = float("nan")
@@ -113,7 +114,7 @@ def tail_backtest(realised: np.ndarray, pd: float, rho: float, levels: Sequence[
         raise ValueError("realised loss rates must lie in [0, 1] (NaN marks a missing year)")
     # the engine validates pd and rho (open interval)
     quantiles = {q: float(lhp_quantile(q, pd, rho)) for q in lv}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "portfolio.tail_backtest", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(good.size)
     kw = dict(model_id=model_id, segment=segment, alpha_amber=alpha_amber, alpha_red=alpha_red)
     extras: dict[str, Any] = {"n_missing": int(miss.sum()), "primary_level": primary, "levels": []}
@@ -167,7 +168,7 @@ def mc_convergence(estimate: float, se: float, anchor: float, quantity: str = "v
     _check_alphas(alpha_amber, alpha_red)
     if quantity not in ("var", "es", "ec"):
         raise ValueError(f"quantity must be var, es or ec, got {quantity!r}")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "portfolio.mc_convergence", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=segment, alpha_amber=alpha_amber, alpha_red=alpha_red)
     extras = {"estimate": estimate, "se": se, "anchor": anchor, "quantity": quantity}
     vals = [float(estimate), float(se), float(anchor)]
@@ -217,7 +218,7 @@ def euler_additivity(contributions: np.ndarray, total: float, tolerance: float =
         raise ValueError("total must be finite")
     if not (math.isfinite(tol) and tol > 0.0):
         raise ValueError("tolerance must be positive")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "portfolio.euler_additivity", {"extras": {"basis": basis}}, tolerance=tol)
     total_sum = float(c.sum())
     extras = {"sum": total_sum, "total": tot, "thresholds": {"tolerance": tol}, "basis": basis}
     kw = dict(model_id=model_id, segment=segment, n=int(c.size))
@@ -267,7 +268,7 @@ def crp_recursion_vs_mc(pmf: np.ndarray, mc_units: np.ndarray, model_id: str | N
     if raw.dtype.kind not in "iuf" or not np.all(np.isfinite(raw)) or np.any(np.mod(raw, 1) != 0) or np.any(raw < 0):
         raise ValueError("mc_units must hold nonnegative integer loss units")
     units = raw.astype(np.int64)
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "portfolio.crp_recursion_vs_mc", alpha_amber=alpha_amber, alpha_red=alpha_red)
     s = int(units.size)
     negative = int((f < 0.0).sum())
     extras = {"negative_entries": negative, "grid_size": int(f.size)}
@@ -328,7 +329,9 @@ def correlation_size_power(rejected: np.ndarray, known_rho: float, null_rho: flo
         raise ValueError("rejected must be boolean (or 0 and 1)")
     flags = raw.astype(bool)
     r = int(flags.size)
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "portfolio.correlation_size_power", alpha_amber=alpha_amber, alpha_red=alpha_red,
+            power_green=power_green, power_amber=power_amber)
     size_cell = abs(float(known_rho) - float(null_rho)) <= 1e-12
     extras: dict[str, Any] = {"role": "size" if size_cell else "power", "known_rho": float(known_rho),
                               "null_rho": float(null_rho), "alpha": float(alpha), "estimator": estimator,

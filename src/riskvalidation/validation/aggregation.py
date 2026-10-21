@@ -23,6 +23,7 @@ from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import scalar, vec
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-aggregation-battery 1.0.0"
 NAN = float("nan")
@@ -92,7 +93,7 @@ def simple_sum_and_variance_covariance(ec: np.ndarray, corr: np.ndarray, aggrega
     ss = _simple.simple_sum(capital)
     vc = _simple.variance_covariance(capital, corr)
     thresholds = {"amber": am, "tolerance": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.simple_sum_and_variance_covariance", amber=am, tolerance=tol)
     extras = {"simple_sum": ss, "variance_covariance": vc}
     kw = dict(model_id=model_id, segment=segment, n=int(capital.size))
     if not (ss > 0.0 and vc > 0.0):
@@ -145,7 +146,7 @@ def copula_choice_sensitivity(gaussian: float, t_capitals: Sequence[tuple[float,
     if am > rd:
         raise ValueError(f"amber and red must satisfy 0 <= amber <= red, got {amber} and {red}")
     thresholds = {"amber": am, "red": rd}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.copula_choice_sensitivity", amber=am, red=rd)
     kw = dict(model_id=model_id, segment=segment)
     pairs = np.array(t_capitals, dtype=float).reshape(-1, 2) if len(t_capitals) else np.empty((0, 2))
     if not np.all(np.isfinite(pairs)):
@@ -193,7 +194,7 @@ def worst_case_bracket(lower: float, rows: Sequence[float], worst: float, tolera
     tol = _gate(tolerance, "tolerance")
     r = vec(rows, "rows", allow_empty=True)
     thresholds = {"tolerance": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.worst_case_bracket", tolerance=tol)
     kw = dict(model_id=model_id, segment=segment)
     if r.size == 0:
         return _not_evaluated(test_id, h0, alt, reference, version, "rows holds no row", thresholds=thresholds, n=0,
@@ -235,7 +236,7 @@ def correlation_stress(base: float, stressed: float, amber: float = 0.10, tolera
     b, s = scalar(base, "base"), scalar(stressed, "stressed")
     am, tol = _gate(amber, "amber"), _gate(tolerance, "tolerance")
     thresholds = {"amber": am, "tolerance": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.correlation_stress", amber=am, tolerance=tol)
     kw = dict(model_id=model_id, segment=segment)
     if not b > 0.0:
         return _not_evaluated(test_id, h0, alt, reference, version, "the base capital is not positive: "
@@ -277,7 +278,7 @@ def diversification_sign(factors: Sequence[float], tolerance: float = 1e-9, mode
     f = vec(factors, "factors", allow_empty=True)
     tol = _gate(tolerance, "tolerance")
     thresholds = {"tolerance": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.diversification_sign", tolerance=tol)
     kw = dict(model_id=model_id, segment=segment)
     if f.size == 0:
         return _not_evaluated(test_id, h0, alt, reference, version, "factors holds no row", thresholds=thresholds,
@@ -319,7 +320,8 @@ def horizon_confidence_consistency(horizons: Sequence[float], levels: Sequence[f
         raise ValueError(f"horizons and levels must have the same length, got {h.size} and {lv.size}")
     eh, el = scalar(expected_horizon, "expected_horizon"), scalar(expected_level, "expected_level")
     thresholds = {"expected_horizon": eh, "expected_level": el}
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "aggregation.horizon_confidence_consistency", expected_horizon=eh, expected_level=el)
     kw = dict(model_id=model_id, segment=segment)
     if h.size == 0:
         return _not_evaluated(test_id, h0, alt, reference, version, "no marginal to compare", thresholds=thresholds,
@@ -361,7 +363,7 @@ def elliptical_mc_agreement(mc_capital: float, mc_se: float, vc_capital: float, 
     if not zz > 0.0:
         raise ValueError(f"z must be positive, got {z}")
     thresholds = {"z": zz}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.elliptical_mc_agreement", z=zz)
     kw = dict(model_id=model_id, segment=segment)
     if not se > 0.0:
         return _not_evaluated(test_id, h0, alt, reference, version, "the Monte Carlo standard error is not positive",
@@ -406,7 +408,7 @@ def rosenberg_schuermann_reference(simple_sum: float, gaussian: float, low: floa
     if not 0.0 <= lo <= hi:
         raise ValueError(f"low and high must satisfy 0 <= low <= high, got {low} and {high}")
     thresholds = {"low": lo, "high": hi}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "aggregation.rosenberg_schuermann_reference", low=lo, high=hi)
     kw = dict(model_id=model_id, segment=segment)
     role = {"role": "reference-not-a-gate"}
     if not g > 0.0:

@@ -138,6 +138,10 @@ REASONS: dict[str, tuple[str, str]] = {
         "the label {text} is not the packaged policy {label}, so no threshold can be read for it",
         "la etiqueta {text} no es la política empaquetada {label}, por lo que no se puede leer umbral para ella",
     ),
+    "policy.override_missing": (
+        "the label {label} is a customised packaged policy but the row carries no extras.policy_override",
+        "la etiqueta {label} es una política empaquetada personalizada pero la fila no trae extras.policy_override",
+    ),
     "policy.string_unmatched": (
         "the policy string {text} matches neither a packaged label nor an inline battery string "
         "(contraste-<family>-battery-<version>; key=value; ...)",

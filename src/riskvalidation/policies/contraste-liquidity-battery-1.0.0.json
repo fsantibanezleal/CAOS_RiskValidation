@@ -1,4 +1,5 @@
 {
+  "format_version": 1,
   "policy_id": "contraste-liquidity-battery",
   "version": "1.0.0",
   "description": "The cut points of the Contraste liquidity-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
@@ -41,8 +42,8 @@
       "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.liquidity.htm_revaluation_vs_reported; producer CAOS_Contraste data-pipeline pipeline/cases/c16; dossier reference: dossier 05 line 263 and decision Q11: the HTM book revalued from its maturity profile under the Treasury curve through the engine's irrbb curves against the reported fair value SCHF (FDIC BankFind fields, addendum L3)",
       "rule": "upper_le:statistic",
       "parameters": {
-        "amber": 0.15,
-        "green": 0.05
+        "reval_amber": 0.15,
+        "reval_green": 0.05
       }
     },
     "liq.list_compounding_golden": {

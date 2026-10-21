@@ -51,6 +51,15 @@ DEFAULT_ENTRIES_SHA256 = "f1b71857e3c1fb2ad46347d06f664e7957a0ecd373a2adf4ba7c71
 # the keys of an inline string that are cut points of the light; the others are the test's own arguments (quantile,
 # n_sim, seed, lags, compared_at, rho, estimator, ...), measured numbers of the case or descriptions: they stay in
 # the row
+# the entries whose values the Basel Framework sets (read from the BIS text, in force 2023-01-01): the source says so
+REGULATORY = {
+    "market.desk_backtest": "regulatory: BCBS MAR32.19",
+    "market.pla_test": "regulatory: BCBS MAR32.42",
+    "market.basel_traffic_light": "regulatory: BCBS MAR32.9",
+}
+# a parameter renamed so that none reuses the name of the pair (`amber`, `red`): the old string wrote the old name
+RENAMED = {"liq.htm_revaluation_vs_reported": {"green": "reval_green", "amber": "reval_amber"}}
+
 CUT_KEYS = frozenset(
     "alpha_amber alpha_red amber red green tolerance tolerance_days rel_tol k_se gap_amber gap_red diff_amber diff_red "
     "err_green err_amber ratio_green ratio_amber se_green se_red rho_green rho_amber dispersion_green dispersion_amber "
@@ -84,9 +93,13 @@ def test_every_packaged_file_loads_and_has_its_label(label):
 @pytest.mark.parametrize("label", BATTERY_LABELS)
 def test_every_entry_states_its_convention_source_and_a_known_rule(label):
     for tid, th in packaged_policy(label).thresholds.items():
-        assert th.source.startswith("convention:"), tid
-        assert "dossier reference:" in th.source and "pipeline/cases/" in th.source, tid
-        assert "is regulatory" not in th.source, tid
+        # a value that Basel sets is called regulatory (and says which paragraph); every other source is a convention
+        assert th.source.startswith(REGULATORY.get(tid, "convention:")), tid
+        assert "dossier reference:" in th.source, tid
+        assert "pipeline/cases/" in th.source or tid in REGULATORY or "dossier 05" in th.source, tid
+        if tid not in REGULATORY:
+            assert "regulatory:" not in th.source.split("not a regulatory threshold")[0], tid
+            assert "not a regulatory threshold" in th.source, tid
         if th.rule:
             assert th.rule.partition(":")[0] in RULES, (tid, th.rule)
         elif th.kind != "p_value":
@@ -287,6 +300,7 @@ def test_every_inline_string_maps_to_a_packaged_entry_with_its_cut_points():
             known = {"amber": eff.amber, "red": eff.red, **eff.parameters}
         cut = _cut_params(row["policy_version"])
         for key, value in cut.items():
+            key = RENAMED.get(row["test_id"], {}).get(key, key)
             assert key in known and known[key] == value, (rel, row["test_id"], key, value, known)
         if row["test_id"] == "ccr.pit_exposure_backtest":  # the per-case numbers are data in the row's extras
             part = dict(p.split("=", 1) for p in row["policy_version"].split("; ")[1:])
@@ -310,6 +324,32 @@ def test_the_packaged_entry_reproduces_the_committed_light_of_every_inline_row()
     print(f"reproduced rows: {reproduced}")
     assert not failures, f"{len(failures)} rows not reproduced, first: {failures[:8]}"
     assert reproduced == 3123
+
+
+@needs_root
+def test_policy_classify_gives_the_committed_light_for_every_entry_kind_or_refuses_without_row():
+    """N2: ``Policy.classify`` over the committed rows. A plain entry gives the committed light from the value; a rule
+    or keyed entry gives it from the row, and without the row raises an error naming ``classify_row``."""
+    kinds, failures = Counter(), []
+    for rel, row in _inline_rows():
+        policy = packaged_policy(_label(row["policy_version"]))
+        th = policy.threshold(row["test_id"])
+        if th is None:  # a rule-only test: no entry, no classification by Policy.classify
+            continue
+        view = _view(row)
+        if th.rule or th.by:
+            with pytest.raises(ValueError, match="classify_row"):
+                policy.classify(row["test_id"], p_value=row.get("p_value"), metric=row.get("metric"))
+            light, _ = policy.classify(row["test_id"], p_value=row.get("p_value"), metric=row.get("metric"), row=view)
+            kinds["keyed" if th.by else "rule"] += 1
+        else:
+            light, _ = policy.classify(row["test_id"], p_value=row.get("p_value"), metric=row.get("metric"))
+            kinds["plain"] += 1
+        if light.value != row["light"]:
+            failures.append((rel, row["test_id"], row["light"], light.value))
+    print(f"classify over committed rows: {dict(kinds)}")
+    assert not failures, f"{len(failures)} rows, first: {failures[:6]}"
+    assert kinds["plain"] and kinds["rule"] and kinds["keyed"]
 
 
 @needs_root

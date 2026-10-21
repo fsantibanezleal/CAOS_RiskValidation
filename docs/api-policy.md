@@ -158,7 +158,7 @@ Names: `inputs_hash`.
 
 ### `riskvalidation.core.policy`
 
-Names: `Policy`, `Threshold`, `default_policy`, `load_policy`, `packaged_labels`, `packaged_policy`, `policy_from_mapping`.
+Names: `FORMAT_VERSION`, `Policy`, `Threshold`, `default_policy`, `load_policy`, `packaged_labels`, `packaged_policy`, `policy_from_mapping`.
 
 ### `riskvalidation.core.registry`
 
@@ -546,11 +546,11 @@ The packaged policy data and the rules a policy entry names. The policy files ar
 
 Modules, imported by path (`from riskvalidation.policies import <module>`): `rules`.
 
-Names, imported from the package (`from riskvalidation.policies import <name>`): `abs_upper_le`, `aggregation_corr_stress`, `aggregation_diversification`, `aggregation_sum_vc`, `always_green`, `always_not_evaluated`, `amber_if_false`, `amber_if_nonempty`, `ccr_path_convergence`, `ccr_pit_simulated`, `classify_rule`, `fair_interval_excludes_zero`, `ifrs9_ecl_backtest`, `ifrs9_lifetime_pd`, `ifrs9_nonlinearity`, `ifrs9_overlay`, `ifrs9_scenario_sensitivity`, `ifrs9_sicr_effectiveness`, `ifrs9_sicr_stability`, `irrbb_eve_with_without`, `irrbb_srp31_92`, `liquidity_haircut`, `liquidity_htm_loss`, `lower_ge`, `market_pla_zone`, `ml_interval_above_zero`, `oprisk_capital_stability`, `p_value_negative_red`, `portfolio_size_power`, `red_if_nonempty`, `red_if_positive`, `stress_reverse_solution`, `stress_satellite`, `stress_severity`, `upper_le`, `worst_of_screens`.
+Names, imported from the package (`from riskvalidation.policies import <name>`): `abs_upper_le`, `aggregation_corr_stress`, `aggregation_diversification`, `aggregation_sum_vc`, `always_green`, `always_not_evaluated`, `amber_if_false`, `amber_if_nonempty`, `ccr_path_convergence`, `ccr_pit_simulated`, `classify_rule`, `fair_interval_excludes_zero`, `ifrs9_ecl_backtest`, `ifrs9_lifetime_pd`, `ifrs9_nonlinearity`, `ifrs9_overlay`, `ifrs9_scenario_sensitivity`, `ifrs9_sicr_effectiveness`, `ifrs9_sicr_stability`, `irrbb_eve_with_without`, `irrbb_srp31_92`, `known_rule`, `liquidity_haircut`, `liquidity_htm_loss`, `lower_ge`, `market_basel_zone`, `market_pla_zone`, `ml_interval_above_zero`, `oprisk_capital_stability`, `p_value_negative_red`, `portfolio_size_power`, `red_if_nonempty`, `red_if_positive`, `stress_reverse_solution`, `stress_satellite`, `stress_severity`, `upper_le`, `worst_of_screens`.
 
 ### `riskvalidation.policies.rules`
 
-Names: `abs_upper_le`, `aggregation_corr_stress`, `aggregation_diversification`, `aggregation_sum_vc`, `always_green`, `always_not_evaluated`, `amber_if_false`, `amber_if_nonempty`, `ccr_path_convergence`, `ccr_pit_simulated`, `classify_rule`, `fair_interval_excludes_zero`, `ifrs9_ecl_backtest`, `ifrs9_lifetime_pd`, `ifrs9_nonlinearity`, `ifrs9_overlay`, `ifrs9_scenario_sensitivity`, `ifrs9_sicr_effectiveness`, `ifrs9_sicr_stability`, `irrbb_eve_with_without`, `irrbb_srp31_92`, `liquidity_haircut`, `liquidity_htm_loss`, `lower_ge`, `market_pla_zone`, `ml_interval_above_zero`, `oprisk_capital_stability`, `p_value_negative_red`, `portfolio_size_power`, `red_if_nonempty`, `red_if_positive`, `stress_reverse_solution`, `stress_satellite`, `stress_severity`, `upper_le`, `worst_of_screens`.
+Names: `abs_upper_le`, `aggregation_corr_stress`, `aggregation_diversification`, `aggregation_sum_vc`, `always_green`, `always_not_evaluated`, `amber_if_false`, `amber_if_nonempty`, `ccr_path_convergence`, `ccr_pit_simulated`, `classify_rule`, `fair_interval_excludes_zero`, `ifrs9_ecl_backtest`, `ifrs9_lifetime_pd`, `ifrs9_nonlinearity`, `ifrs9_overlay`, `ifrs9_scenario_sensitivity`, `ifrs9_sicr_effectiveness`, `ifrs9_sicr_stability`, `irrbb_eve_with_without`, `irrbb_srp31_92`, `known_rule`, `liquidity_haircut`, `liquidity_htm_loss`, `lower_ge`, `market_basel_zone`, `market_pla_zone`, `ml_interval_above_zero`, `oprisk_capital_stability`, `p_value_negative_red`, `portfolio_size_power`, `red_if_nonempty`, `red_if_positive`, `stress_reverse_solution`, `stress_satellite`, `stress_severity`, `upper_le`, `worst_of_screens`.
 
 ## `riskvalidation.portfolio`
 

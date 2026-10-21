@@ -44,6 +44,7 @@ def _policy_reasons() -> set[str]:
              ("other-policy 9.9", "pd.binomial"), ("x", "pd.binomial")]
     for label in packaged_labels():  # every packaged policy, every test id it holds, plus an id it does not hold
         cases += [(label, test_id) for test_id in (*packaged_policy(label).thresholds, "zz.none")]
+    cases += [("contraste-market-battery 1.0.0+custom", "market.kupiec_pof")]  # a customised row without its override
     for label, test_id in cases:
         identity, reason = policy.resolve_policy(label, test_id)
         found = [reason] + [(identity or {}).get(k) for k in ("kind_reason", "direction_reason")]

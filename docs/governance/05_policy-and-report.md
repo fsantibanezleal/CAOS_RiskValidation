@@ -13,6 +13,7 @@ is `{"label", "kind", "kind_reason", "direction", "direction_reason", "alpha_amb
 |---|---|---|---|
 | a packaged label, `riskvalidation-default 2026.10.1` | `packaged-policy`: resolved through the packaged policy file (`default_policy`) | `2026.10.1` | none |
 | an inline battery string, `contraste-ifrs9-battery-1.0.0; nl_amber=1.0; nl_red=3.0` | `inline-battery`: parsed | `1.0.0` | `{"nl_amber": 1.0, "nl_red": 3.0}` |
+| a packaged label plus `+custom`, `contraste-market-battery 1.0.0+custom`, with the row's `extras.policy_override` | `packaged-policy-overridden`: the packaged identity with the cut points the row used | the packaged version | the override's parameters (reason code `policy.override_missing` without the override) |
 | anything else, such as `x` | none: `(None, reason)` | | |
 
 - The **kind** is `spec(test_id).decision`, `p_value` or `metric` (W15-12); where the test is not registered (`spec` raises `KeyError`) it is `None` with its `kind_reason`; there is no fallback
