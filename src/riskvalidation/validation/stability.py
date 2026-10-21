@@ -40,6 +40,7 @@ def quantile_edges(reference: Sequence[float], bins: int = 10) -> np.ndarray:
 
 
 def bin_counts(sample: Sequence[float], edges: np.ndarray) -> np.ndarray:
+    """The count of ``sample`` in each bin of ``edges`` (outer edges are +/- infinity, so no value falls outside)."""
     x = as_float_array(sample, "sample")
     idx = np.searchsorted(edges, x, side="right") - 1
     idx = np.clip(idx, 0, len(edges) - 2)
@@ -162,6 +163,7 @@ def stability_chi2(
     model_id: str | None = None,
     segment: str | None = None,
 ) -> TestResult:
+    """Pearson chi-square test of homogeneity of two binned samples (``stability.chi2``); empty bins are dropped."""
     table = np.vstack([np.asarray(expected_counts, float), np.asarray(actual_counts, float)])
     keep = table.sum(axis=0) > 0
     table = table[:, keep]
@@ -198,6 +200,7 @@ def stability_ks(
     model_id: str | None = None,
     segment: str | None = None,
 ) -> TestResult:
+    """Two-sample Kolmogorov-Smirnov test of development against current values (``stability.ks``)."""
     x = as_float_array(development, "development")
     y = as_float_array(current, "current")
     res = stats.ks_2samp(x, y)
@@ -230,6 +233,8 @@ def stability_wasserstein(
     model_id: str | None = None,
     segment: str | None = None,
 ) -> TestResult:
+    """The Wasserstein-1 distance between development and current values, in the variable's units
+    (``stability.wasserstein``)."""
     x = as_float_array(development, "development")
     y = as_float_array(current, "current")
     return make_result(

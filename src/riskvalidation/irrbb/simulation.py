@@ -201,3 +201,14 @@ def ear_evar_mc_error(nii_paths: np.ndarray, eve_paths: np.ndarray, level: float
 
     nii_se, eve_se = error(nii), error(ev)
     return EarEvarMcError(lv, nii_se, eve_se, nii_se, eve_se)
+
+__all__ = [
+    "EarEvar",
+    "EarEvarMcError",
+    "NiiPath",
+    "dns_scenarios",
+    "ear_evar",
+    "ear_evar_mc_error",
+    "hw1f_scenarios",
+    "simulate_nii",
+]

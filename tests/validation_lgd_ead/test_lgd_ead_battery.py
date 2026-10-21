@@ -47,7 +47,7 @@ def test_lgd_calibration_by_segment():
     # an independent computation of the paired t
     ref = stats.ttest_rel(a(0.4, 0.5, 0.6), a(0.3, 0.3, 0.3))
     assert r.statistic == pytest.approx(ref.statistic, abs=1e-9) and r.p_value == pytest.approx(ref.pvalue, abs=1e-9)
-    assert r.reference and r.h0 and r.policy_version and "alpha_amber=0.05" in r.policy_version
+    assert r.reference and r.h0 and r.policy_version == "contraste-lgd-ead-battery 1.0.0" and r.alpha_amber == 0.05
     # realised values outside [0, 1] are kept (not clipped) and counted
     pred = a(0.3, 0.3, 0.3, 0.3)
     real = a(-0.2, 0.5, 0.6, 1.3)

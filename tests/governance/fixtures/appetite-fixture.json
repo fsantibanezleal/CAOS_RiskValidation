@@ -176,7 +176,7 @@
    "id": "tier1-validated-on-time",
    "name": {
     "en": "Share of Tier 1 entries validated on time",
-    "es": "Proporcion de entradas de Nivel 1 validadas a tiempo"
+    "es": "Proporción de entradas de Nivel 1 validadas a tiempo"
    },
    "kind": "share",
    "value": 1.0,
@@ -220,7 +220,7 @@
    "id": "overdue-remediation",
    "name": {
     "en": "Overdue remediation",
-    "es": "Remediacion vencida"
+    "es": "Remediación vencida"
    },
    "kind": "count",
    "value": 3,
@@ -242,7 +242,7 @@
    "id": "entries-under-exception",
    "name": {
     "en": "Entries used under exception",
-    "es": "Entradas usadas bajo excepcion"
+    "es": "Entradas usadas bajo excepción"
    },
    "kind": "count",
    "value": 0,
@@ -308,7 +308,7 @@
    "id": "owner-and-complete-record",
    "name": {
     "en": "Share of entries with an owner role and a complete record",
-    "es": "Proporcion de entradas con rol de propietario y registro completo"
+    "es": "Proporción de entradas con rol de propietario y registro completo"
    },
    "kind": "share",
    "value": 0.0,

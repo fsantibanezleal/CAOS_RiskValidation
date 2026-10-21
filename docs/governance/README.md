@@ -83,7 +83,7 @@ The list of dossier 06 I.6 (l.1261-1277), kept as the contract of what any text,
 **UNVERIFIED**, carried from the dossier and the U15 research addendum D6: the SS1/23 2026 text against the 2023 text (not diffed); the OSFI
 2017 guideline's rescission (no OSFI page opened states a replacement; OSFI's transition is "an 18-month transition period" in OSFI's own
 words); the reading of EU AI Act Annex III 5(b); a post-2019 ECB reporting instruction; the EBA draft RTS on material model changes. The
-rules of the scope test are a reading of the B.1 table and are UNVERIFIED beyond it. A packaged policy file per battery is backlog BL-085.
+rules of the scope test are a reading of the B.1 table and are UNVERIFIED beyond it. A packaged battery label resolves through its packaged policy file.
 
 ## Sources
 

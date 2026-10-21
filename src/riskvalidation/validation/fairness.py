@@ -32,7 +32,6 @@ from riskvalidation.fairness.conditional import Effect
 from riskvalidation.fairness.inference import fisher_exact_test, two_proportion_z_test
 from riskvalidation.fairness.metrics import (
     EMPLOYMENT_BENCHMARK,
-    FOUR_FIFTHS_THRESHOLD,
     SelectionRate,
     adverse_impact_ratio,
     demographic_parity_difference,
@@ -58,8 +57,9 @@ def _policy(policy: Policy | None) -> Policy:
     return policy if policy is not None else fairness_default_policy()
 
 
-def _version(pol: Policy, **params: Any) -> str:
-    return "; ".join([pol.label, *(f"{k}={v}" for k, v in params.items())])
+def _version(pol: Policy) -> str:
+    """The packaged policy label and nothing else: the parameters of a row are in its ``extras``."""
+    return pol.label
 
 
 def _not_evaluated(test_id: str, h0: str, alternative: str, reference: str, version: str, reason: str, *,
@@ -148,7 +148,7 @@ def demographic_parity(model_id: str, rates: Mapping[str, SelectionRate], refere
     light, capped = _cap_at_amber(light)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
-        policy_version=_version(pol, tolerance=_threshold_extras(test_id, th)["amber"]), light=light, metric=metric,
+        policy_version=_version(pol), light=light, metric=metric,
         n=sum(s.n for s in rates.values()), n_events=sum(s.favourable for s in rates.values()), model_id=model_id,
         inputs_hash=inputs_hash({g: (s.n, s.favourable) for g, s in rates.items()}, reference),
         notes=f"indicator of statistical parity against {reference!r}; the tolerance is a convention, never a "
@@ -180,7 +180,7 @@ def adverse_impact(model_id: str, rates: Mapping[str, SelectionRate], reference:
            "l.1033-1037 and I.6 l.1268-1270")
     pol = fairness_default_policy()
     _check_rates(rates, reference)
-    version = _version(pol, four_fifths=FOUR_FIFTHS_THRESHOLD, compared_with="highest-rate-group")
+    version = _version(pol)
     if len(rates) < 2:
         return _not_evaluated(test_id, h0, alt, ref, version, "fewer than two groups: there is nothing to compare",
                               model_id=model_id)
@@ -222,7 +222,7 @@ def _two_group_result(test_id: str, model_id: str, x1: int, n1: int, x2: int, n2
                               model_id=model_id, n=n1_ + n2_, extras={"thresholds": {}})
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
-        policy_version=_version(pol, alpha_amber=th.amber, alpha_red=th.red), light=light, statistic=statistic,
+        policy_version=_version(pol), light=light, statistic=statistic,
         p_value=p_value, metric=(x1_ * n2_ - x2_ * n1_) / (n1_ * n2_), alpha_amber=th.amber, alpha_red=th.red,
         n=n1_ + n2_, n_events=x1_ + x2_, model_id=model_id, inputs_hash=inputs_hash(x1_, n1_, x2_, n2_),
         notes="; ".join(s for s in (note, "the rate difference is group 1 minus group 2; smaller differences can "
@@ -292,7 +292,7 @@ def _outcome_result(test_id: str, model_id: str, metric: float, pol: Policy, *, 
                               model_id=model_id, n=n, extras={**extras, "thresholds": {}})
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
-        policy_version=_version(pol, alpha_amber=th.amber, alpha_red=th.red), light=light, metric=metric,
+        policy_version=_version(pol), light=light, metric=metric,
         # a metric light: the alpha fields are p-value cut points and stay null; the metric's cut points are in extras
         alpha_amber=None, alpha_red=None, n=n, n_events=n_events, model_id=model_id,
         notes=f"{notes}; the cut points are conventions, never regulatory thresholds; {NO_LEGAL_CLAIM}",
@@ -452,7 +452,7 @@ def _interval_test(test_id: str, model_id: str, effect: Effect | None, controls:
     if effect is not None and not isinstance(effect, Effect):
         raise ValueError(f"effect must be an Effect, got {type(effect).__name__}")
     extras: dict[str, Any] = {"controls": ctrl, "missing_controls": miss}
-    version = _version(pol, interval_level=0.95)
+    version = _version(pol)
     if effect is None:
         return _not_evaluated(test_id, h0, alt, ref, version,
                               "no effect was supplied: the model was not fitted or did not converge",
@@ -480,7 +480,7 @@ def _interval_test(test_id: str, model_id: str, effect: Effect | None, controls:
                                   "rule": "amber when the interval excludes 0; never red"}})
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
-        policy_version=_version(pol, interval_level=effect.level),
+        policy_version=_version(pol),
         light=Light.AMBER if excludes else Light.GREEN, statistic=z, p_value=float(2.0 * stats.norm.sf(abs(z))),
         metric=metric_of(effect), model_id=model_id,
         inputs_hash=inputs_hash(vals, ctrl, miss),
@@ -558,7 +558,7 @@ def replication(model_id: str, replication: Replication) -> TestResult:
     if not isinstance(replication, Replication):
         raise ValueError(f"replication must be a Replication, got {type(replication).__name__}")
     pol = fairness_default_policy()
-    version = _version(pol, rule="sign_and_size")
+    version = _version(pol)
     extras = {"fit_coefficient": replication.fit_coefficient, "confirm_coefficient": replication.confirm_coefficient,
               "same_sign": replication.same_sign, "size_ratio": replication.size_ratio}
     if replication.size_ratio is None:
@@ -606,7 +606,7 @@ def situation_testing(model_id: str, result: SituationResult, policy: Policy | N
     light, capped = _cap_at_amber(light)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ref,
-        policy_version=_version(pol, alpha_amber=th.amber, k=result.k, tau=result.tau, alpha=result.alpha),
+        policy_version=_version(pol),
         light=light, metric=metric, n=result.n_complainants,
         n_events=result.n_significant, model_id=model_id,
         inputs_hash=inputs_hash(result.n_complainants, result.n_cases, result.n_significant, result.k, result.tau,

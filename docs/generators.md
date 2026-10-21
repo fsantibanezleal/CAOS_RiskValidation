@@ -14,6 +14,7 @@ exists, and estimator performance.
 | [03. Scored samples and portfolios](generators/03_scores-and-portfolios.md) | binormal scores with an exact AUC and AUC variance, a development sample, a challenger, a leaked feature; Demler et al.'s nested discriminants; the logistic portfolio with planted miscalibration |
 | [04. Drift and ratings](generators/04_drift-and-ratings.md) | Yurdakul and Naranjo's two-sample design (Table 4 reproduced); migration matrices with a planted non-monotone cell; grade frequencies with planted concentration, and the bounded ECB concentration statistic |
 | [05. Rating paths](generators/05_rating-paths.md) | continuous-time rating paths from a known generator, with dos Reis et al.'s self-exciting momentum, regimes and informative withdrawals, observed as CEREP observes ratings; the null and the planted defects of the [transitions](transitions.md) tests |
+| [06. Size and power studies](generators/06_size-studies.md) | the named studies of the 21 p-value tests (`size_studies.STUDIES`, `simulate_study`), their generators for the IFRS 9, LGD, PFE, ES, VaR-hit, PIT and Monte Carlo back-tests, and the ML pipelines |
 
 The findings the harness produced in 0.03.000 are recorded on each test's page: the Hosmer-Lemeshow degrees of freedom
 (the default changed), the traffic-lights tie rule, the normal test's size over five years, the chi-square test over

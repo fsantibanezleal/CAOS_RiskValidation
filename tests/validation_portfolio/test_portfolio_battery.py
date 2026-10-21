@@ -97,6 +97,15 @@ def test_euler_additivity_golden():
     assert neg.metric == pytest.approx(2.0)  # relative to the absolute total
 
 
+def test_euler_additivity_writes_its_basis():
+    """D16-17: the basis is the field the packaged policy keys its tolerance by (1e-06 and 0.01)."""
+    es = euler_additivity(np.array([0.5, 0.3, 0.2]), 1.0, basis="exact-allocation")
+    kernel = euler_additivity(np.array([0.5, 0.3, 0.195]), 1.0, tolerance=0.01, basis="kernel-var")
+    assert es.extras["basis"] == "exact-allocation" and kernel.extras["basis"] == "kernel-var"
+    assert euler_additivity(np.array([0.5, 0.3, 0.2]), 1.0).extras["basis"] is None
+    assert es.policy_version == kernel.policy_version == "contraste-portfolio-battery 1.0.0"
+
+
 def test_crp_recursion_vs_mc_golden():
     pmf = np.array([0.5, 0.3, 0.2])
     same = crp_recursion_vs_mc(pmf, np.repeat([0, 1, 2], [5, 3, 2]))

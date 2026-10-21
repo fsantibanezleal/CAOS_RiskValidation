@@ -127,3 +127,13 @@ def tier_counts(tiers: Sequence[int]) -> tuple[int, int, int, int]:
     for t in tiers:
         counts[_score(t, "a tier") - 1] += 1
     return counts[0], counts[1], counts[2], counts[3]
+
+__all__ = [
+    "apply_override",
+    "complexity",
+    "exposure_band",
+    "materiality",
+    "matrix_tier",
+    "tier_counts",
+    "tier_sensitivity",
+]

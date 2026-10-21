@@ -1,0 +1,79 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-irrbb-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste irrbb-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "irrbb.behavioural_change_at_breach": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.behavioural_change_at_breach; producer CAOS_Contraste data-pipeline pipeline/cases/c14; dossier reference: dossier 05 D.7: flag any change in NMD behavioural parameters that coincides with a limit breach (the SVB lesson)",
+      "rule": "red_if_positive:statistic"
+    },
+    "irrbb.cmf_annex1_goldens": {
+      "kind": "upper_bad",
+      "amber": 1e-12,
+      "red": 1e-12,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.cmf_annex1_goldens; producer CAOS_Contraste data-pipeline pipeline/cases/c15; dossier reference: CMF Recopilacion Actualizada de Normas, capitulo 21-13, Anexo 1 (Hoja 9 to Hoja 12): CLP and UR shock sizes, the 50 percent offset, the 2.5 percent indexation charge (dossier 03 F.2), https://www.cmfchile.cl",
+      "rule": "red_if_nonempty:extras.failed",
+      "parameters": {
+        "tolerance": 1e-12
+      }
+    },
+    "irrbb.eve_sum_of_parts": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.eve_sum_of_parts; producer CAOS_Contraste data-pipeline pipeline/cases/c14, pipeline/cases/c15; dossier reference: BCBS SRP31.82 to SRP31.83 and SRP31.129: the EVE supervisory outlier test (15 percent of Tier 1) and the standardised EVE; dossier 05 D.7: always report EVE with and without behavioural assumptions",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "rel_tol": 1e-09
+      }
+    },
+    "irrbb.eve_with_without_behavioural": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.15,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.eve_with_without_behavioural; producer CAOS_Contraste data-pipeline pipeline/cases/c14; dossier reference: BCBS SRP31.82 to SRP31.83 and SRP31.129: the EVE supervisory outlier test (15 percent of Tier 1) and the standardised EVE; dossier 05 D.7: always report EVE with and without behavioural assumptions",
+      "rule": "irrbb_eve_with_without",
+      "parameters": {
+        "diff_amber": 0.05,
+        "diff_red": 0.15
+      }
+    },
+    "irrbb.nii_out_of_sample": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.nii_out_of_sample; producer CAOS_Contraste data-pipeline pipeline/cases/c14; dossier reference: dossier 05, IRRBB acceptance: the 2022 hiking cycle as the out-of-sample test of an NII projection",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "err_amber": 0.25,
+        "err_green": 0.1
+      }
+    },
+    "irrbb.nmd_parameter_stability": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.nmd_parameter_stability; producer CAOS_Contraste data-pipeline pipeline/cases/c14, pipeline/cases/c15; dossier reference: BCBS d368 (2016), Standards: Interest rate risk in the banking book, https://www.bis.org/bcbs/publ/d368.htm; dossier 05 D.3 (weight stability across estimation windows)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "gap_amber": 0.1,
+        "gap_red": 0.25
+      }
+    },
+    "irrbb.srp31_92_goldens": {
+      "kind": "upper_bad",
+      "amber": 0.0005,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.irrbb.srp31_92_goldens; producer CAOS_Contraste data-pipeline pipeline/cases/c14, pipeline/cases/c15; dossier reference: BCBS SRP31.90 to SRP31.92, Interest rate risk in the banking book, the six standardised shock scenarios and the worked example at t = 3.5 years (dossier 01 H.2), https://www.bis.org/basel_framework/chapter/SRP/31.htm",
+      "rule": "irrbb_srp31_92",
+      "parameters": {
+        "tolerance_bp": 0.05,
+        "tolerance_scalar": 0.0005
+      }
+    }
+  }
+}

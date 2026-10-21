@@ -313,3 +313,17 @@ def attribute_completeness(entries: Sequence[Any]) -> dict[str, dict[str, int]]:
         for aid in ATTRIBUTE_IDS:
             out[aid][attributes[aid]["status"].replace("-", "_")] += 1
     return out
+
+__all__ = [
+    "Component",
+    "Edge",
+    "Entry",
+    "Inventory",
+    "assign_variant",
+    "attribute_completeness",
+    "build_inventory",
+    "find_cycle",
+    "graph_metrics",
+    "nodes_on_cycles",
+    "topological_order",
+]

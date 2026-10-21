@@ -1,0 +1,65 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-oprisk-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste oprisk-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "oprisk.benchmark_reproduction": {
+      "kind": "upper_bad",
+      "amber": 1.0,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.oprisk.benchmark_reproduction; producer CAOS_Contraste data-pipeline pipeline/cases/c17; dossier reference: Shevchenko (2010), Implementing loss distribution approach for operational risk, J. Operational Risk 5(2):3-40, arXiv 1008.1108 (Example 9.4 and Table 2), as quoted in dossier 05 F.3; dossier 05 (operational risk ladder and case O1, Implications for Contraste)",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "moment_rel_tol": 1e-05,
+        "quantile_rel_tol": 0.01
+      }
+    },
+    "oprisk.capital_stability": {
+      "kind": "upper_bad",
+      "amber": 0.25,
+      "red": 0.5,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.oprisk.capital_stability; producer CAOS_Contraste data-pipeline pipeline/cases/c17; dossier reference: dossier 05 (operational risk ladder and case O1, Implications for Contraste); Shevchenko (2010), arXiv 1008.1108 (Monte Carlo quantile error O(K^-1/2))",
+      "rule": "oprisk_capital_stability",
+      "parameters": {
+        "bias_amber": 0.25,
+        "bias_green": 0.1,
+        "dispersion_amber": 0.5,
+        "dispersion_green": 0.25
+      }
+    },
+    "oprisk.scenario_influence": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.oprisk.scenario_influence; producer CAOS_Contraste data-pipeline pipeline/cases/c17; dossier reference: dossier 05 F.5 (scenario analysis and its combination with loss data); Shevchenko and Wuthrich (2006), J. Operational Risk 1(3):3-26, doi:10.21314/JOP.2006.016",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "influence_amber": 0.1,
+        "influence_red": 0.25
+      }
+    },
+    "oprisk.sma_ilm_response": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.15,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.oprisk.sma_ilm_response; producer CAOS_Contraste data-pipeline pipeline/cases/c17; dossier reference: Basel Framework OPE25 (BCBS, in force 2023-01-01), dossier 01 section F (OPE25.8, OPE25.9, OPE25.15); dossier 05 (operational risk ladder and case O1, Implications for Contraste)",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "jump_amber": 0.15,
+        "jump_green": 0.05
+      }
+    },
+    "oprisk.threshold_stability": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.oprisk.threshold_stability; producer CAOS_Contraste data-pipeline pipeline/cases/c17; dossier reference: dossier 05 (operational risk ladder and case O1, Implications for Contraste); Chavez-Demoulin, Embrechts and Neslehova (2006), doi:10.1016/j.jbankfin.2005.11.008",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "tol_amber": 0.25,
+        "tol_green": 0.1
+      }
+    }
+  }
+}

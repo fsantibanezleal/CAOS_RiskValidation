@@ -70,3 +70,11 @@ def implied_factor(default_rate: float | np.ndarray, pd: float, rho: float) -> f
     if np.any((dr <= 0.0) | (dr >= 1.0)):
         raise ValueError("an implied factor needs a default rate in (0, 1)")
     return (ndtri(pd) - math.sqrt(1.0 - rho) * ndtri(dr)) / math.sqrt(rho)
+
+__all__ = [
+    "conditional_pd",
+    "implied_factor",
+    "lhp_cdf",
+    "lhp_pdf",
+    "lhp_quantile",
+]

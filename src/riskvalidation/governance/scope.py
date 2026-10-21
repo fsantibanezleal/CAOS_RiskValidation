@@ -83,3 +83,10 @@ def scope_record(answers: ScopeAnswers) -> tuple[ScopeDecision, ...]:
     ``scope.profiles``).
     """
     return tuple(scope_test(answers, p) for p in PROFILES)
+
+__all__ = [
+    "ScopeAnswers",
+    "ScopeDecision",
+    "scope_record",
+    "scope_test",
+]

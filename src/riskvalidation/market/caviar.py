@@ -237,3 +237,14 @@ def dq_statistic_unchecked(h: np.ndarray, v: np.ndarray, alpha: float, lags: int
     keep = w > w.max() * 1e-12
     proj = vecs[:, keep].T @ (x.T @ y)
     return float(np.sum(proj**2 / w[keep])) / (alpha * (1.0 - alpha)), int(keep.sum())
+
+__all__ = [
+    "CaviarEsFit",
+    "CaviarFit",
+    "caviar_es_fit",
+    "caviar_es_forecast",
+    "caviar_var_forecast",
+    "dq_statistic_unchecked",
+    "dynamic_quantile_statistic",
+    "fit_caviar",
+]

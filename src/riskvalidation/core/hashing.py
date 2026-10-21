@@ -46,3 +46,7 @@ def inputs_hash(*objs: Any) -> str:
     for obj in objs:
         _feed(h, obj)
     return h.hexdigest()
+
+__all__ = [
+    "inputs_hash",
+]

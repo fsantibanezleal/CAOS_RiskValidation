@@ -1,6 +1,6 @@
 # 04. Intervals for a PD by grade, and mobility
 
-`riskvalidation.transitions.intervals`: `pd_wald`, `pd_agresti_coull`, `effective_n`, `pd_jeffreys`, `pd_bootstrap`;
+`riskvalidation.transitions.intervals`: `pd_wald`, `pd_agresti_coull`, `effective_n`, `pd_jeffreys`, `pd_bootstrap`, `INTERVALS` (the analytical intervals `exact_coverage` and `overlap_probability` enumerate: Wald, Agresti-Coull, Jeffreys);
 `riskvalidation.transitions.mobility`: `svd_mobility`, `trace_mobility`
 
 A PD by grade is a ratio of rare events, and the question a validator asks of it, whether two adjacent grades differ or

@@ -347,3 +347,7 @@ class RatingPaths(GeneratorBase):
                 checks.append(Check(f"q[{i},{j}]", float(q[i, j]), float(k[i, j] / s[i]),
                                     float(math.sqrt(q[i, j] * s[i]) / s[i])))
         return checks
+
+__all__ = [
+    "RatingPaths",
+]

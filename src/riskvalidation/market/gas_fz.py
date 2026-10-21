@@ -217,3 +217,10 @@ def gas_fz_forecast(fit: GasFzFit, y: np.ndarray) -> tuple[float, float]:
     if not math.isfinite(val):
         raise ValueError("the fitted recursion leaves the domain e <= v < 0 on this series")
     return float(v), float(e)
+
+__all__ = [
+    "GasFzFit",
+    "fit_gas_fz",
+    "fit_hybrid_garch_fz",
+    "gas_fz_forecast",
+]

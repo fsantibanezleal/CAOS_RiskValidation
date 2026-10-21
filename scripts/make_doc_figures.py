@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from pathlib import Path
 
@@ -359,20 +360,25 @@ def most_prudent_svg() -> str:
 
 SP_GRADES = ("AAA", "AA+", "AA", "AA-", "A+", "A", "A-", "BBB+", "BBB", "BBB-", "BB+", "BB", "BB-", "B+", "B", "B-",
              "CCC-C")
-SP_COUNTS = {  # Tasche (2013), Table 2: obligors rated and defaults, best grade first
-    2009: ((81, 37, 188, 245, 340, 510, 546, 498, 541, 459, 266, 295, 441, 438, 482, 303, 190),
-           (0, 0, 0, 0, 1, 2, 0, 2, 1, 5, 0, 3, 4, 24, 48, 52, 92)),
-    2010: ((72, 25, 143, 209, 353, 474, 528, 457, 583, 430, 254, 276, 379, 393, 436, 290, 220),
-           (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 0, 3, 6, 49)),
-}
+def sp_counts() -> dict[int, tuple[list[int], list[int]]] | None:
+    """Tasche (2013) Table 2 (obligors rated and defaults, best grade first) from
+    <RISKVALIDATION_DATA>/tasche2013/table2.json, or None: third-party data, never committed."""
+    data = os.environ.get("RISKVALIDATION_DATA")
+    path = Path(data) / "tasche2013" / "table2.json" if data else None
+    if path is None or not path.is_file():
+        return None
+    years = json.loads(path.read_text(encoding="utf-8"))["years"]
+    return {int(y): (v["obligors"], v["defaults"]) for y, v in years.items()}
 
 
 def pd_curve_sp_svg() -> str:
     from riskvalidation.engines import pd_curve as pc
 
-    m0 = pc.model_from_counts(*SP_COUNTS[2009])
+    counts = sp_counts()
+    assert counts is not None, "the S&P counts are read from RISKVALIDATION_DATA/tasche2013/table2.json"
+    m0 = pc.model_from_counts(*counts[2009])
     q0 = pc.qmm(m0["profile"], m0["pd"], m0["accuracy_ratio"], survival_profile=m0["survival_profile"])
-    m1 = pc.model_from_counts(*SP_COUNTS[2010])
+    m1 = pc.model_from_counts(*counts[2010])
     pi1, p1 = m1["profile"], m1["pd"]
     forecasts = (
         ("l1", "invariant default profile (4.2)", pc.invariant_default_profile(m0["default_profile"], pi1, p1)),
@@ -1054,6 +1060,9 @@ def main() -> None:
         (ASSETS / "psi-benchmark.svg").write_text(psi_benchmark_svg(), encoding="utf-8", newline="\n")
         (ASSETS / "roc-cap.svg").write_text(roc_cap_svg(), encoding="utf-8", newline="\n")
         for name, make in u2.items():
+            if name == "pd-curve-sp.svg" and sp_counts() is None:
+                print("pd-curve-sp.svg kept as committed: the S&P counts are read from RISKVALIDATION_DATA")
+                continue
             (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
     u3 = {"binomial-true-size.svg": binomial_true_size_svg, "traffic-lights-ties.svg": traffic_lights_ties_svg,
           "hhi-statistic.svg": hhi_statistic_svg, "size-of-every-test.svg": size_of_every_test_svg,
@@ -1064,6 +1073,7 @@ def main() -> None:
     unknown = only - set(u3) - set(u4)
     if unknown:
         raise SystemExit(f"unknown figures: {sorted(unknown)}")
+    kept_u2 = [n for n in u2 if n != "pd-curve-sp.svg" or sp_counts()]
     drawn = []
     for name, make in {**u3, **u4}.items():
         if only and name not in only:
@@ -1071,7 +1081,7 @@ def main() -> None:
         print("drawing", name, flush=True)
         (ASSETS / name).write_text(make(), encoding="utf-8", newline="\n")
         drawn.append(name)
-    print("wrote docs/assets/" + ", ".join(([] if only else ["psi-benchmark.svg", "roc-cap.svg", *u2]) + drawn))
+    print("wrote docs/assets/" + ", ".join(([] if only else ["psi-benchmark.svg", "roc-cap.svg", *kept_u2]) + drawn))
 
 
 if __name__ == "__main__":

@@ -209,3 +209,12 @@ def collective_transfer(gross_carrying_amount: np.ndarray, segment: np.ndarray,
         share = float(closed_unit(share_by_segment[name], f"share of segment {name!r}"))
         out[name] = share * float(np.sum(g[seg == name]))
     return out
+
+__all__ = [
+    "StageResult",
+    "StagingPolicy",
+    "allocate_stages",
+    "apply_cure_probation",
+    "collective_transfer",
+    "sicr_quantitative",
+]
