@@ -9,3 +9,6 @@ engine's sentence (the U15-E review, F2).
 
 The fixtures are labelled `fixture:u15-s-contracts` and are never published as results. The tests recompute every computed field of
 them through `riskvalidation.governance`.
+
+U16-E1: the Spanish texts the engine itself writes (report titles, labels, reasons and recommendations, the appetite metric names) carry their accents
+and the eñe, so the copies of `report-*-fixture.json` and `appetite-fixture.json` hold the accented text; no other byte of them differs from the copy.

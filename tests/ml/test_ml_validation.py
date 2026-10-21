@@ -108,7 +108,8 @@ def test_robustness_boundaries_agree_with_the_strict_finding():
         assert row["alpha_amber"] is None and row["alpha_red"] is None
         assert row["extras"]["thresholds"]["amber_cut"] == NA(0.02, math.inf)
         assert row["extras"]["thresholds"]["red_cut"] == NA(0.04, math.inf)
-        assert "perturbation_tolerance=0.02" in row["policy_version"]
+        assert row["policy_version"] == "riskvalidation-default 2026.10.1"
+        assert row["extras"]["battery"] == "ml-battery-1.1.0"
 
 
 def test_robustness_policy_argument_tolerance_and_off_grid():

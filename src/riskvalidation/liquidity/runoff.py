@@ -5,7 +5,7 @@ Sources: dossier 05 E.1 line 237 (the open-maturity deposits of the ECB LiST 201
 compounding
 rate on relevant days, cumulative outflow `1 - (1 - q)^n`) and E.2 (BCBS d555 Table A.1); the U11 research addendum L1
 (the ECB methodological note of February 2019, Tables 3.2 and 3.3, paragraphs 94 to 126) and L2.1. Contract
-`engine-liquidity-api` 1.2.0, module runoff.
+`engine-liquidity-api` 2.0.0, module runoff.
 
 The arithmetic is that of `provisions.term_structure.from_hazard`, considered and not reused: that function refuses a
 rate of exactly 0 or 1, both legitimate for a segment, and indexes months. Money is a float in USD thousands (the

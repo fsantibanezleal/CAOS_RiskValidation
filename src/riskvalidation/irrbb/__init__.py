@@ -7,3 +7,12 @@ compliance claim: thresholds, floors a supervisor may choose and light parameter
 by the function. A shock size outside the transcribed tables is refused unless the caller supplies it with its label.
 The validation tests are in ``riskvalidation.validation.irrbb``. Contract: ``engine-irrbb-api`` 1.1.0.
 """
+
+__all__ = [
+    "behavioural",
+    "curves",
+    "eve_nii",
+    "shocks",
+    "simulation",
+    "slotting",
+]

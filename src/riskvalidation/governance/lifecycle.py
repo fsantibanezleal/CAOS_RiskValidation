@@ -40,3 +40,8 @@ def transition(state: str, to: str, exception: tuple[str, str, date] | None = No
             raise ValueError("an exception record needs a type, an approver and an expiry date")
         return to
     raise ValueError(f"cannot move from {state!r} to {to!r}")
+
+__all__ = [
+    "allowed_next",
+    "transition",
+]

@@ -9,7 +9,12 @@ Tasche (2013), *The art of probability-of-default curve calibration* (Journal of
 treats it as that forecasting problem: what is known at the start of the forecast period decides which part of the
 estimated model can be kept, and each choice is an invariance assumption that can be tested afterwards. The module
 implements every approach of the paper, its smoothing method (quasi moment matching) and the goodness-of-fit tests the
-paper uses, and reproduces the paper's S&P example from the raw counts.
+paper uses, and reproduces the paper's S&P example from the raw counts. The S&P counts of the paper's Table 2 are third-party data and are
+not in this repository: the tests that reproduce the example read them from `tasche2013/table2.json` under the directory named by the
+environment variable `RISKVALIDATION_DATA`, and are skipped when it is not set. The file is a transcription of Tables 2, 3 and 6 of the paper (arXiv 1212.3716) in the form
+`{"years": {"2009": {"obligors": [...], "defaults": [...]}, ...}, "printed": {"table2_default_rate_pct": ..., "table3_profile_pct": ...,
+"table6_empirical_profile_pct_2009": ...}}`, grades best first; the test pins its SHA-256, so a different transcription fails instead of passing. The printed
+columns are in the file too because they rebuild the counts, so none of them is in the repository.
 
 ![One rating model, three equivalent descriptions](../assets/rating-model-descriptions.svg)
 
@@ -95,11 +100,10 @@ they are $(\alpha, \beta) = (5.022, 2.005)$ against the solution $(5.2048, 2.161
 
 ### Reproduction: Tables 5, 6 and 9
 
-From the S&P 2009 counts (Table 2) with the exact targets $p = 234/5860 = 3.9932\%$ and $\mathrm{AR} = 82.710\%$:
+From the S&P 2009 counts (Table 2) with the exact targets $p = 3.9932\%$ and $\mathrm{AR} = 82.710\%$:
 
 | Grade | AAA | AA+ | AA | AA- | A+ | A | A- | BBB+ | BBB | BBB- | BB+ | BB | BB- | B+ | B | B- | CCC-C |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| default rate 2009 (%) | 0 | 0 | 0 | 0 | 0.294 | 0.392 | 0 | 0.402 | 0.185 | 1.089 | 0 | 1.017 | 0.907 | 5.479 | 9.959 | 17.162 | 48.421 |
 | Table 5, smoothed (%) | 0.003 | 0.006 | 0.012 | 0.025 | 0.047 | 0.091 | 0.173 | 0.299 | 0.495 | 0.797 | 1.138 | 1.518 | 2.280 | 3.943 | 7.999 | 19.557 | 48.355 |
 | `qmm` (%) | 0.0028 | 0.0058 | 0.0118 | 0.0249 | 0.0472 | 0.0913 | 0.1732 | 0.2987 | 0.4947 | 0.7975 | 1.1379 | 1.5186 | 2.2800 | 3.9429 | 7.9992 | 19.5569 | 48.3537 |
 
@@ -273,6 +277,8 @@ not hold for these data (section 4.4.4); `test_case3_table8`.
   Exhibit 41), of which the paper prints only 1986 (Table 10).
 - None of this certifies a calibration for regulatory use. The engine computes the paper's approaches; whether an
   approach is appropriate for a portfolio is the validator's judgement, which the tests above inform.
+
+The constant `TASCHE_2013` is the reference string every result of the module quotes.
 
 ## 7. Using it
 

@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-portfolio-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste portfolio-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "portfolio.correlation_size_power": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.portfolio.correlation_size_power; producer CAOS_Contraste data-pipeline pipeline/cases/c10; dossier reference: Wilson (1927), Probable inference, the law of succession, and statistical inference, JASA 22(158):209-212; dossier 05 G.5 (validation tests of an economic capital model: check the allocation sums to the total, the sensitivity checks); dossier 04 C.4 (the Vasicek correlation) on a simulator with a known truth",
+      "rule": "portfolio_size_power",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01,
+        "power_amber": 0.5,
+        "power_green": 0.8
+      }
+    },
+    "portfolio.crp_recursion_vs_mc": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.portfolio.crp_recursion_vs_mc; producer CAOS_Contraste data-pipeline pipeline/cases/c10; dossier reference: Haaf, Reiss and Schoenmakers (2004), Numerically stable computation of CreditRisk+, doi:10.21314/jor.2004.097; Kolmogorov distance and its asymptotic law (Kolmogorov 1933; Smirnov 1948); dossier 05 G.5 (validation tests of an economic capital model: check the allocation sums to the total, the sensitivity checks); dossier 04 ladder rung C4",
+      "rule": "p_value_negative_red",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "portfolio.euler_additivity": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.portfolio.euler_additivity; producer CAOS_Contraste data-pipeline pipeline/cases/c10, pipeline/cases/c18; dossier reference: Tasche (2008), Capital allocation to business units and sub-portfolios: the Euler principle, arXiv 0708.2542 (full allocation); dossier 05 G.5 (validation tests of an economic capital model: check the allocation sums to the total, the sensitivity checks)",
+      "rule": "upper_le:metric",
+      "by": "extras.basis",
+      "cases": {
+        "exact-allocation": {
+          "amber": 1e-06,
+          "red": 1e-06,
+          "tolerance": 1e-06
+        },
+        "kernel-var": {
+          "amber": 0.01,
+          "red": 0.01,
+          "tolerance": 0.01
+        }
+      }
+    },
+    "portfolio.mc_convergence": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.portfolio.mc_convergence; producer CAOS_Contraste data-pipeline pipeline/cases/c10; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: check the allocation sums to the total, the sensitivity checks); dossier 04 ladder rung C2 (the Monte Carlo quantile converges to C1 within its interval)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "portfolio.tail_backtest": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.portfolio.tail_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c10; dossier reference: exceedance counts against the Binomial(n, 1 - q) of the fitted Vasicek quantile (dossier 04 C.4; Vasicek 2002, Risk 12/2002); dossier 05 G.5 (validation tests of an economic capital model: check the allocation sums to the total, the sensitivity checks)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    }
+  }
+}

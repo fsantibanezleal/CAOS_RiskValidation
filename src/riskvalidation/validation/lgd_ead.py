@@ -26,8 +26,9 @@ from riskvalidation.core.hashing import inputs_hash
 from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import same_length, scalar, vec
+from riskvalidation.validation._policy import battery_label
 
-POLICY_LABEL = "contraste-lgd-ead-battery-1.0.0"
+POLICY_LABEL = "contraste-lgd-ead-battery 1.0.0"
 NAN = float("nan")
 ZERO_SPREAD = 1e-12     # a spread or a mean below this (relative to max(1, the largest value)) is zero
 EPS = 1e-12             # tolerance on a gate comparison, so that a value exactly on a gate is not moved by rounding
@@ -53,10 +54,6 @@ EBA_DOWNTURN = (
     "EBA/GL/2019/03 and EBA/RTS/2018/04 are cross-references only; the add-on is Contraste's cohort-based one "
     "(dossier 04 F.4)"
 )
-
-
-def _version(**params: Any) -> str:
-    return "; ".join([POLICY_LABEL, *(f"{k}={v}" for k, v in params.items())])
 
 
 def _not_evaluated(test_id: str, h0: str, alternative: str, reference: str, version: str, reason: str, *,
@@ -136,7 +133,8 @@ def lgd_calibration_by_segment(realised: np.ndarray, predicted: np.ndarray, segm
     _check_alphas(alpha_amber, alpha_red)
     real, pred = vec(realised, "realised", allow_empty=True), vec(predicted, "predicted", allow_empty=True)
     same_length(realised=real, predicted=pred)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "lgd_ead.lgd_calibration_by_segment", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(real.size)
     kw = dict(model_id=model_id, segment=segment, n=n, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if n < 2:
@@ -190,7 +188,8 @@ def lgd_calibration_over_time(realised: np.ndarray, predicted: np.ndarray, perio
     if per.ndim != 1 or (per.size and per.dtype.kind not in "iu"):
         raise ValueError("period must be a one-dimensional integer array")
     same_length(realised=real, predicted=pred, period=per)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "lgd_ead.lgd_calibration_over_time", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(real.size)
     kw = dict(model_id=model_id, n=n, alpha_amber=alpha_amber, alpha_red=alpha_red)
     rows: list[dict[str, Any]] = []
@@ -253,7 +252,7 @@ def lgd_discrimination(realised: np.ndarray, predicted: np.ndarray, segment: str
         raise ValueError(f"rho_amber must not exceed rho_green, got {rho_amber} and {rho_green}")
     real, pred = vec(realised, "realised", allow_empty=True), vec(predicted, "predicted", allow_empty=True)
     same_length(realised=real, predicted=pred)
-    version = _version(rho_green=rho_green, rho_amber=rho_amber)
+    version = battery_label(POLICY_LABEL, "lgd_ead.lgd_discrimination", rho_green=rho_green, rho_amber=rho_amber)
     n = int(real.size)
     kw = dict(model_id=model_id, segment=segment, n=n)
     extras = {"thresholds": {"rho_green": float(rho_green), "rho_amber": float(rho_amber)}}
@@ -311,7 +310,7 @@ def downturn_coverage(estimate: float, realised_downturn: np.ndarray, segment: s
     _check_alphas(alpha_amber, alpha_red)
     est = scalar(estimate, "estimate")
     real = vec(realised_downturn, "realised_downturn", allow_empty=True)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(POLICY_LABEL, "lgd_ead.downturn_coverage", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(real.size)
     kw = dict(model_id=model_id, segment=segment, n=n, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if n < 2:
@@ -375,7 +374,7 @@ def ead_backtest_by_band(predicted_ead: np.ndarray, realised_ead: np.ndarray, ut
         raise ValueError("realised_ead must be non-negative")   # a predicted EAD may be negative (utilisation change)
     if util.size and (util.min() < edges[0] or util.max() > edges[-1]):
         raise ValueError(f"utilisation must lie within the band edges [{edges[0]}, {edges[-1]}]")
-    version = _version(gap_amber=gap_amber, gap_red=gap_red)
+    version = battery_label(POLICY_LABEL, "lgd_ead.ead_backtest_by_band", gap_amber=gap_amber, gap_red=gap_red)
     n = int(pred.size)
     kw = dict(model_id=model_id, n=n)
     thresholds = {"thresholds": {"gap_amber": float(gap_amber), "gap_red": float(gap_red)}}
@@ -441,7 +440,8 @@ def ccf_estimator_bias(estimates: np.ndarray, truth: float, tolerance: float, mo
     tol = scalar(tolerance, "tolerance")
     if tol < 0.0:
         raise ValueError(f"tolerance must be non-negative, got {tolerance!r}")
-    version = _version(tolerance=tol, alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "lgd_ead.ccf_estimator_bias", tolerance=tol, alpha_amber=alpha_amber, alpha_red=alpha_red)
     r = int(est.size)
     kw = dict(model_id=model_id, n=r, alpha_amber=alpha_amber, alpha_red=alpha_red)
     thresholds = {"tolerance": tol}
@@ -467,3 +467,12 @@ def ccf_estimator_bias(estimates: np.ndarray, truth: float, tolerance: float, mo
     half = float(stats.t.ppf(0.975, r - 1)) * se
     extras.update(ci_low=mean - half, ci_high=mean + half)
     return TestResult(statistic=t, p_value=p, extras=extras, **common)
+
+__all__ = [
+    "ccf_estimator_bias",
+    "downturn_coverage",
+    "ead_backtest_by_band",
+    "lgd_calibration_by_segment",
+    "lgd_calibration_over_time",
+    "lgd_discrimination",
+]

@@ -756,3 +756,21 @@ def tail_index_profile(losses: np.ndarray, thresholds: np.ndarray, min_exceedanc
         f_xi, f_beta, _, (f_se, _), ok = _fit_gpd(y)
         xi[i], beta[i], se[i], conv[i] = f_xi, f_beta, f_se, ok
     return TailProfile(th.copy(), n_exc, xi, se, beta, conv)
+
+__all__ = [
+    "FrequencyFit",
+    "SeverityFit",
+    "SpliceFit",
+    "TailProfile",
+    "fit_frequency",
+    "fit_severity",
+    "fit_splice",
+    "frequency_pmf",
+    "rescale_frequency",
+    "severity_cdf",
+    "severity_isf",
+    "severity_moment",
+    "severity_ppf",
+    "tail_index_profile",
+    "truncated_severity_cdf",
+]

@@ -71,3 +71,9 @@ def grade_disagreement(pd_a: np.ndarray, pd_b: np.ndarray, edges: np.ndarray, no
     k = index(notches, "notches", 10**9, lo=1)
     ga, gb = np.searchsorted(e, a, side="right"), np.searchsorted(e, b, side="right")
     return float(np.mean(np.abs(ga - gb) >= k))
+
+__all__ = [
+    "PairedBrier",
+    "grade_disagreement",
+    "paired_brier_bootstrap",
+]

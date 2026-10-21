@@ -82,6 +82,12 @@ $$\mathrm{ESS}=\frac{n}{1+2\sum_{k=1}^{L}\big(1-\tfrac{k}{L+1}\big)\rho_k},\qqua
 Bartlett weights. Uncorrelated PITs give about $n$ and fully overlapping horizons give less. Golden: $z=[1,0,-1,0]$ has $\rho_1=0$ and with `max_lag = 1` gives ESS 4. This is a convention of the
 contract, UNVERIFIED as a backtesting standard. Equal PITs (no variance) are one observation.
 
+## Size and power of the p-value tests
+
+The p-value tests of this page, measured on a generator where each null holds at the boundary (U16-E2, BL-088; the harness is `riskvalidation.harness`, the null and the alternative of each are named in `riskvalidation.generators.size_studies`, the runs are the `sizepower` suites under `tests/`, a local release gate that CI deselects). Size is the rejection rate at the nominal level over 4,000 repetitions, accepted when it is within the binomial bound alpha plus 3.09 standard errors; power is the rejection rate at 5% against one stated alternative, with no pass threshold. The figures below are the numbers of the run; the suite fails when a page states other ones.
+
+**Size and power of `ccr.pfe_exceedance_backtest`** (PFE at 95%, 1000 dates; seed 5201, 4000 repetitions). Assumptions met: independent dates with a date-specific scale, realised values normal and the forecast the true 95% quantile, so the exceedances are independent Bernoulli(5%) draws (about 50 per run), the regime where the Kupiec chi-square(1) law is accurate. The measured size is 4.88% at 5% (bound 6.06%) and 1.00% at 1% (bound 1.49%). Power at 5% against the alternative that the PFE forecast is 90% of the true 95% quantile (exceedance frequency 6.94%, not 5%) (seed 5301, 4000 repetitions): 71.30%.
+
 ## Limits
 
 - The three tests that compare with a reference (`ee_analytic_vs_simulated`, `reconcile_ee_profile` and `martingale_discounted_bonds`) say whether the engine agrees with a closed form or with ORE within the

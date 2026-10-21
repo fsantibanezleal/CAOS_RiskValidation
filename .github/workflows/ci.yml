@@ -31,6 +31,7 @@ jobs:
       - name: Smoke (wheel builds and imports clean)
         run: |
           python -m build
+          python -c "import glob, zipfile; assert 'riskvalidation/py.typed' in zipfile.ZipFile(glob.glob('dist/*.whl')[0]).namelist()"
           python -c "import riskvalidation; print('riskvalidation', riskvalidation.__version__)"
       - name: CI budget, trunk-only triggers, no training (ADR-0074)
         run: python scripts/check_ci_budget.py

@@ -99,6 +99,11 @@ DOCUMENTED_SIZE = {tid: MARKOV_PAGE for tid in ("rating.time_homogeneity", "rati
 _FAIRNESS_SIZE = "tests/fairness/test_fairness_size_power.py::test_size_and_power_two_proportion_z_and_fisher"
 _MARKET_SIZE = "tests/validation_market/test_market_size.py::"
 _ML_SIZE = "tests/ml/test_ml_size_power.py::test_size_under_the_null_and_power_against_the_planted_defect"
+_CCR_SIZE = "tests/ccr/test_ccr_size_power.py::"
+_IFRS9_SIZE = "tests/validation_ifrs9/test_ifrs9_size_power.py::"
+_LGD_SIZE = "tests/validation_lgd_ead/test_lgd_ead_size_power.py::"
+_MARKET_MF_SIZE = "tests/validation_market/test_market_mcneil_frey_size_power.py::"
+_PORTFOLIO_SIZE = "tests/validation_portfolio/test_portfolio_size_power.py::"
 SIZE_SUITES = {
     "fair.two_proportion_z": _FAIRNESS_SIZE,
     "fair.fisher_exact": _FAIRNESS_SIZE,
@@ -112,21 +117,22 @@ SIZE_SUITES = {
     "market.dynamic_quantile_test": _MARKET_SIZE + "test_size_of_the_dq_test_at_production_configurations",
     "ml.shift_resilience": _ML_SIZE,
     "ml.conformal_coverage": _ML_SIZE,
+    # U16-E2 (BL-088): the nine tests that had no size study; the studies are `sizepower` suites
+    "ccr.pfe_exceedance_backtest": _CCR_SIZE + "test_size_and_power_of_the_pfe_exceedance_backtest",
+    "ifrs9.stage_migration_backtest": _IFRS9_SIZE + "test_size_and_power_of_the_stage_migration_backtest",
+    "lgd_ead.lgd_calibration_by_segment": _LGD_SIZE + "test_size_and_power_of_the_lgd_calibration_by_segment",
+    "lgd_ead.lgd_calibration_over_time": _LGD_SIZE + "test_size_and_power_of_the_lgd_calibration_over_time",
+    "lgd_ead.downturn_coverage": _LGD_SIZE + "test_size_and_power_of_the_downturn_coverage",
+    "market.mcneil_frey_residual_test": _MARKET_MF_SIZE + "test_size_and_power_of_the_mcneil_frey_residual_test",
+    "portfolio.tail_backtest": _PORTFOLIO_SIZE + "test_size_and_power_of_the_tail_backtest",
+    "portfolio.mc_convergence": _PORTFOLIO_SIZE + "test_size_and_power_of_the_mc_convergence",
+    "portfolio.crp_recursion_vs_mc": _PORTFOLIO_SIZE + "test_size_and_power_of_the_crp_recursion_vs_mc",
 }
-# registered p-value tests whose size has no measurement in either place yet. Each is a finding, not a pass: the list
-# is pinned (a test below fails when an entry is measured, so it leaves the list, and when a new p-value test is
-# registered without a measurement), and the reason says where a measurement is or what is missing
-SIZE_GAPS = {
-    "ccr.pfe_exceedance_backtest": "no size study: the Kupiec likelihood ratio of the PFE exceedances is not simulated",
-    "ifrs9.stage_migration_backtest": "no size study of the Anderson-Goodman chi-square on stage transitions",
-    "lgd_ead.lgd_calibration_by_segment": "no size study of the paired t-test of mean LGD",
-    "lgd_ead.lgd_calibration_over_time": "no size study of the Bonferroni-adjusted per-period t-tests",
-    "lgd_ead.downturn_coverage": "no size study of the one-sided downturn t-test",
-    "market.mcneil_frey_residual_test": "no size study of the bootstrap residual test",
-    "portfolio.tail_backtest": "no size study of the binomial exceedance count",
-    "portfolio.mc_convergence": "no size study of the Monte Carlo z-test against the anchor",
-    "portfolio.crp_recursion_vs_mc": "no size study of the Kolmogorov distance test",
-}
+# registered p-value tests whose size has no measurement in either place. The list is empty since U16-E2 (BL-088): every
+# registered p-value test is measured. It stays so that the registry test below keeps its three-way contract: a test
+# registered without a measurement must be measured or listed here with its reason, and a test listed here that is
+# measured fails
+SIZE_GAPS: dict[str, str] = {}
 
 
 def _p_value_tests() -> set[str]:
@@ -155,6 +161,19 @@ def test_every_registered_p_value_test_has_its_size_measured_or_named_as_a_gap()
     assert covered <= p_value_tests, f"entries that are not registered p-value tests: {sorted(covered - p_value_tests)}"
     assert not set(NULL_SCENARIOS) & (set(SIZE_SUITES) | set(SIZE_GAPS))
     assert not set(SIZE_SUITES) & set(SIZE_GAPS), "a measured test is no gap"
+
+
+def test_no_p_value_test_is_left_without_a_size_study():
+    """U16-E2 (BL-088): SIZE_GAPS is empty; the nine studies are named, and a test whose measured size exceeds its
+    bound is listed with a page that states the measured size (the `sizepower` suite asserts the figures)."""
+    from riskvalidation.generators.size_studies import STUDIES
+    from size_kit import DOCUMENTED_EXCESS as STUDY_EXCESS
+
+    assert SIZE_GAPS == {}
+    assert set(STUDIES) <= set(SIZE_SUITES), sorted(set(STUDIES) - set(SIZE_SUITES))
+    for tid, page in STUDY_EXCESS.items():
+        assert tid in STUDIES
+        assert "measured size" in page.read_text(encoding="utf-8"), (tid, page)
 
 
 def test_every_size_suite_exists_and_names_its_test():
@@ -232,3 +251,33 @@ def test_auc_vs_initial_with_an_estimated_development_auc():
     ext = simulate("disc.auc_vs_initial", gen, n_rep=N_REP, seed=7410, feed=extended)
     assert ecb.rate(0.05).rate > size_bound(0.05, N_REP) and ecb.rate(0.01).rate > size_bound(0.01, N_REP)
     assert within_size(ext.rate(0.05), 0.05) and within_size(ext.rate(0.01), 0.01)
+
+
+def test_size_gaps_is_empty_and_documented_excess_of_the_studies_has_its_page():
+    """U16-E2 (BL-088): every registered p-value test is measured; a study whose size exceeds its bound is listed in
+    tests/size_kit.py DOCUMENTED_EXCESS and its page states the measured size."""
+    from size_kit import DOCUMENTED_EXCESS as STUDY_EXCESS
+
+    assert SIZE_GAPS == {}
+    assert set(STUDY_EXCESS) <= set(SIZE_SUITES)
+    for tid, page in STUDY_EXCESS.items():
+        assert "measured size" in page.read_text(encoding="utf-8"), tid
+
+
+# the families of Contraste's C22 whose null scenarios are NULL_SCENARIOS above (the older families); every other
+# registered p-value test is a named study of `riskvalidation.generators.size_studies`
+C22_FAMILIES = {"discrimination", "pd-calibration", "rating-system", "stability", "transitions"}
+
+
+def test_every_p_value_test_outside_the_c22_families_has_a_named_study():
+    """U16-E2 follow-up: Contraste's C22 imports each null scenario from the engine and never rebuilds one, so a
+    registered p-value test outside the five older families without a STUDIES entry fails here with its id."""
+    from riskvalidation.generators.size_studies import STUDIES
+
+    _p_value_tests()
+    wanted = {s.test_id for s in catalogue()
+              if s.decision == "p_value" and s.family != "selftest" and s.family not in C22_FAMILIES}
+    assert len(wanted) == 21, sorted(wanted)
+    assert not wanted - set(STUDIES), f"p-value tests with no named study: {sorted(wanted - set(STUDIES))}"
+    assert set(STUDIES) <= wanted, f"studies of tests outside this set: {sorted(set(STUDIES) - wanted)}"
+    assert not set(STUDIES) & set(NULL_SCENARIOS), "a null scenario of the older families or a study, not both"

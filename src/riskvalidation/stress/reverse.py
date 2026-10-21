@@ -177,3 +177,10 @@ def plausibility(distance: float, df: int) -> float:
     if int(df) != df or df < 1:
         raise ValueError(f"df must be an integer of at least 1, got {df!r}")
     return float(stats.chi2.sf(d * d, int(df)))
+
+__all__ = [
+    "ReverseSolution",
+    "plausibility",
+    "reverse_stress",
+    "reverse_stress_linear",
+]

@@ -1,0 +1,93 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-aggregation-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste aggregation-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "aggregation.copula_choice_sensitivity": {
+      "kind": "upper_bad",
+      "amber": 0.05,
+      "red": 0.15,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.copula_choice_sensitivity; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); Rosenberg and Schuermann (2006), A general approach to integrated risk management with skewed, fat-tailed risks, J. Financial Economics 79(3):569-614, doi:10.1016/j.jfineco.2005.03.001 (dossier 05 G.2)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "amber": 0.05,
+        "red": 0.15
+      }
+    },
+    "aggregation.correlation_stress": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.1,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.correlation_stress; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level)",
+      "rule": "aggregation_corr_stress",
+      "parameters": {
+        "amber": 0.1,
+        "tolerance": 1e-09
+      }
+    },
+    "aggregation.diversification_sign": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.diversification_sign; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); dossier 05 G.3 (VaR is not subadditive; worst-case VaR bounds by the rearrangement algorithm of Embrechts, Puccetti and Ruschendorf 2013, doi:10.1016/j.jbankfin.2013.03.014)",
+      "rule": "aggregation_diversification",
+      "parameters": {
+        "tolerance": 1e-09
+      }
+    },
+    "aggregation.elliptical_mc_agreement": {
+      "kind": "upper_bad",
+      "amber": 3.0,
+      "red": 3.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.elliptical_mc_agreement; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); dossier 05 G.1 (the aggregation ladder: simple sum, variance-covariance, copulas)",
+      "rule": "abs_upper_le:statistic",
+      "parameters": {
+        "z": 3.0
+      }
+    },
+    "aggregation.horizon_confidence_consistency": {
+      "kind": "upper_bad",
+      "amber": 0.0,
+      "red": 0.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.horizon_confidence_consistency; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); dossier 01 l.837-839 (one horizon and one confidence level for the aggregation)",
+      "rule": "red_if_positive:statistic",
+      "parameters": {
+        "expected_horizon": 1.0,
+        "expected_level": 0.999
+      }
+    },
+    "aggregation.rosenberg_schuermann_reference": {
+      "kind": "upper_bad",
+      "amber": 0.3,
+      "red": 0.4,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.rosenberg_schuermann_reference; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: Rosenberg and Schuermann (2006), A general approach to integrated risk management with skewed, fat-tailed risks, J. Financial Economics 79(3):569-614, doi:10.1016/j.jfineco.2005.03.001 (dossier 05 G.2); the figure is a reference beside the result, never a gate",
+      "rule": "always_green",
+      "parameters": {
+        "high": 0.4,
+        "low": 0.3
+      }
+    },
+    "aggregation.simple_sum_and_variance_covariance": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.1,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.simple_sum_and_variance_covariance; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); dossier 05 G.1 (the aggregation ladder: simple sum, variance-covariance, copulas)",
+      "rule": "aggregation_sum_vc",
+      "parameters": {
+        "amber": 0.1,
+        "tolerance": 1e-09
+      }
+    },
+    "aggregation.worst_case_bracket": {
+      "kind": "upper_bad",
+      "amber": 1e-09,
+      "red": 1e-09,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.aggregation.worst_case_bracket; producer CAOS_Contraste data-pipeline pipeline/cases/c18; dossier reference: dossier 05 G.5 (validation tests of an economic capital model: benchmark the aggregation against the simple sum and the variance-covariance formula, the copula-choice sensitivity, worst-case bounds, the correlation stress, the sign of every diversification benefit, one horizon and confidence level); dossier 05 G.3 (VaR is not subadditive; worst-case VaR bounds by the rearrangement algorithm of Embrechts, Puccetti and Ruschendorf 2013, doi:10.1016/j.jbankfin.2013.03.014)",
+      "rule": "red_if_positive:extras.rows_outside",
+      "parameters": {
+        "tolerance": 1e-09
+      }
+    }
+  }
+}

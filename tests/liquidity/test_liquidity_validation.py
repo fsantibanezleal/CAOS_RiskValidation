@@ -15,7 +15,7 @@ from riskvalidation.validation import liquidity as v
 
 ROW_FIELDS = {"test_id", "model_id", "segment", "statistic", "p_value", "metric", "h0", "alternative", "policy_version",
               "alpha_amber", "alpha_red", "light", "n", "n_events", "inputs_hash", "reference", "notes", "extras"}
-POLICY = "contraste-liquidity-battery-1.0.0"
+POLICY = "contraste-liquidity-battery 1.0.0"
 
 
 def arr(*x):
@@ -265,9 +265,10 @@ def test_every_result_serialises_with_its_reference():
         "list_compounding_golden", "survival_monotone_in_severity", "cbc_haircut_rules", "nlp_identity",
         "runoff_adequacy_back_test", "runoff_vs_generator_truth", "cliff_effect_diagnostic", "htm_loss_effect",
         "uninsured_share_sensitivity", "reverse_stress_round_trip", "htm_revaluation_vs_reported")}
-    # the thresholds travel in the policy label too, so that a view can explain a light
-    assert "tolerance=5e-07" in v.list_compounding_golden().policy_version
-    assert "ratio_green=0.8" in v.runoff_adequacy_back_test(0.5, 0.85).policy_version
+    # the label is the packaged policy; the thresholds travel in the row's extras, so that a view can explain a light
+    assert v.list_compounding_golden().policy_version == POLICY
+    assert v.list_compounding_golden().extras["thresholds"]["tolerance"] == 5e-07
+    assert v.runoff_adequacy_back_test(0.5, 0.85).extras["thresholds"]["ratio_green"] == 0.8
     # a non-finite input raises, never a number
     with pytest.raises(ValueError):
         v.list_compounding_golden(q=float("nan"))

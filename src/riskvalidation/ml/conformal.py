@@ -114,3 +114,10 @@ def conformal_coverage(sets: np.ndarray, y: np.ndarray, alpha: float, *, n_cal: 
     return CoverageResult(
         n=m, coverage=c / m, target=target, p_value=p, n_cal=nc, k=k, p_value_binomial=min(1.0, max(0.0, binom))
     )
+
+__all__ = [
+    "CoverageResult",
+    "conformal_coverage",
+    "conformal_sets",
+    "split_conformal_quantile",
+]

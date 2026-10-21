@@ -1,0 +1,78 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-c12",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste c12 battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "ccr.ore_cva_agreement": {
+      "kind": "upper_bad",
+      "amber": 2.0,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 2.0
+      }
+    },
+    "ccr.ore_dim_agreement": {
+      "kind": "upper_bad",
+      "amber": 2.0,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 2.0
+      }
+    },
+    "ccr.ore_eepe_agreement": {
+      "kind": "upper_bad",
+      "amber": 2.0,
+      "red": 2.0,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "k_se": 2.0
+      }
+    },
+    "ccr.quantlib_bond_call": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "rel_tol": 1e-06
+      }
+    },
+    "ccr.quantlib_bond_put": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "rel_tol": 1e-06
+      }
+    },
+    "ccr.quantlib_swaption_payer": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "rel_tol": 1e-06
+      }
+    },
+    "ccr.quantlib_swaption_receiver": {
+      "kind": "upper_bad",
+      "amber": 1e-06,
+      "red": 1e-06,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of the Contraste c12 producer (pipeline/cases/c12/reconcile.py, custom_row); producer CAOS_Contraste data-pipeline pipeline/cases/c12; dossier reference: ORE and QuantLib cross-engine reconciliation (addendum R4)",
+      "rule": "upper_le:statistic",
+      "parameters": {
+        "rel_tol": 1e-06
+      }
+    }
+  }
+}

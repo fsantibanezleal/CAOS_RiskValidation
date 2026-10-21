@@ -8,7 +8,7 @@ scenarios, individually and in combination), E.5 lines 276 to 278 (rungs 2 to 4:
 calibration to Table A.1, sensitivity to the uninsured share and to unrealised securities losses), 279; the U11 research
 addendum L1 (the LiST shocks are idiosyncratic only, annex slide 5; collateral calls have no numeric parameter, N paras
 123
-to 126). Contract `engine-liquidity-api` 1.2.0, module scenarios.
+to 126). Contract `engine-liquidity-api` 2.0.0, module scenarios.
 
 `Scenario`, `ListScenario` and `FastRun` are frozen dataclasses. A scenario input the dossiers do not settle is a
 convention, labelled: the fast-run calibration rule (the dossiers give no method, UNVERIFIED), collateral calls (a

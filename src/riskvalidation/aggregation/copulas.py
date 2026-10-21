@@ -239,3 +239,15 @@ def copula_aggregate(ppfs: Sequence[Ppf], corr: np.ndarray, family: str, nu: flo
     return CopulaAggregate(family=family, nu=None if nu is None else float(nu), n_draws=int(n_draws), seed=int(seed),
                            chunk_size=int(chunk_size), level=lv, el=e, var=m.var, es=float(m.es), ec=m.ec,
                            var_se=m.var_se, es_se=m.es_se)
+
+__all__ = [
+    "CopulaAggregate",
+    "clayton_copula",
+    "clayton_lower_tail_dependence",
+    "copula_aggregate",
+    "marginal_ppf_pmf",
+    "marginal_ppf_sample",
+    "simulate_component_losses",
+    "simulate_copula_uniforms",
+    "t_tail_dependence",
+]
