@@ -38,14 +38,34 @@ def _build(extract, inventory_doc, findings_doc, key: str) -> dict:
     return build_report(*report_inputs(extract, inventory_doc, findings_doc, key), AS_OF)
 
 
-def _normalise(doc: dict) -> dict:
+STALE_KIND = (
+    "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision"
+)
+
+
+def _stale_ids(fixture: dict) -> set[str]:
+    """The test ids whose policy identity the fixture wrote before the 0.08.000 catalogue registered them."""
+    return {
+        r["test_id"]
+        for r in fixture["sections"][5]["blocks"][0]["rows"]
+        if r["policy"].get("kind_reason") == STALE_KIND
+    }
+
+
+def _normalise(doc: dict, stale: frozenset[str] = frozenset()) -> dict:
     """Drop what the engine does not state the way the fixture builder wrote it: the free-text lines that name the
-    batch 3 head or the IFRS 9 provision."""
+    batch 3 head or the IFRS 9 provision, and the `kind` and `kind_reason` of the ids that the fixture, built at the
+    batch 3 head, wrote as unregistered (the 0.08.000 catalogue registers them; see
+    `test_stale_kind_ids_are_registered_and_resolve_their_decision`)."""
     out = copy.deepcopy(doc)
     sec = out["sections"]
     sec[5]["missing"] = "text"
     if sec[7]["status"] == "filled":
         sec[7]["blocks"] = "text"
+    for r in sec[5]["blocks"][0]["rows"]:
+        if r["test_id"] in stale:
+            r["policy"].pop("kind", None)
+            r["policy"].pop("kind_reason", None)
     return out
 
 
@@ -101,7 +121,27 @@ def test_report_c07_golden(extract, inventory_doc, findings_doc):
 @pytest.mark.parametrize("key", KEYS)
 def test_report_reproduces_the_fixture(key, extract, inventory_doc, findings_doc, report_docs):
     rep = _build(extract, inventory_doc, findings_doc, key)
-    assert _normalise(rep) == _normalise(report_docs[key])
+    stale = frozenset(_stale_ids(report_docs[key]))
+    assert _normalise(rep, stale) == _normalise(report_docs[key], stale)
+
+
+@pytest.mark.parametrize("key", KEYS)
+def test_stale_kind_ids_are_registered_and_resolve_their_decision(
+    key, extract, inventory_doc, findings_doc, report_docs
+):
+    """The only difference from the Contraste fixture copy is the `kind` of ids that the fixture wrote as unregistered
+    at the batch 3 head: the engine registers them now and states `spec(test_id).decision` with no reason."""
+    from riskvalidation.core.registry import spec
+
+    stale = _stale_ids(report_docs[key])
+    assert stale
+    rows = _build(extract, inventory_doc, findings_doc, key)["sections"][5]["blocks"][0]["rows"]
+    seen = set()
+    for r in rows:
+        if r["test_id"] in stale:
+            seen.add(r["test_id"])
+            assert r["policy"]["kind"] == spec(r["test_id"]).decision and r["policy"]["kind_reason"] is None
+    assert seen == stale
 
 
 @pytest.mark.parametrize("key", KEYS)
