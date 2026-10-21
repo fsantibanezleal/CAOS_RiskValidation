@@ -32,7 +32,7 @@ from riskvalidation.core.registry import catalogue, spec
 PREFIX = {
     "aggregation": "aggregation", "ccr": "ccr", "fairness": "fair", "ifrs9": "ifrs9", "irrbb": "irrbb",
     "lgd_ead": "lgd_ead", "liquidity": "liq", "market": "market", "oprisk": "oprisk", "portfolio": "portfolio",
-    "stress": "stress", "ml": "ml",
+    "stress": "stress", "ml": "ml", "governance": "gov",
 }
 
 # test id -> (module, function, decision as the function's own code decides it): `p_value` where the light is decided
@@ -153,8 +153,14 @@ INVENTORY = {
     "ml.data_quality": ("ml", "data_quality", "metric"),
     "ml.cbpe_estimate": ("ml", "cbpe_estimate", "metric"),
     "ml.challenger_brier": ("ml", "challenger_brier", "metric"),
+    # governance
+    "gov.inventory_completeness": ("governance", "inventory_completeness", "metric"),
+    "gov.findings_overdue": ("governance", "findings_overdue", "metric"),
+    "gov.validation_due": ("governance", "validation_due", "metric"),
+    "gov.tier_override_documented": ("governance", "tier_override_documented", "metric"),
+    "gov.edges_acyclic": ("governance", "edges_acyclic", "metric"),
 }
-assert len(INVENTORY) == 102
+assert len(INVENTORY) == 107
 
 # ids whose row text is built from arguments: the spec holds the text with `{...}` where the argument goes, and a row
 # matches when the rest is equal and the argument is a number
@@ -229,7 +235,7 @@ def test_the_catalogue_holds_the_inventory_beside_the_older_families():
     _import_all()
     ids = {s.test_id for s in catalogue()}
     assert set(INVENTORY) <= ids
-    assert len(set(INVENTORY)) == 102
+    assert len(set(INVENTORY)) == 107
     for module in PREFIX:
         assert {s.test_id for s in catalogue(module)} == {i for i, v in INVENTORY.items() if v[0] == module}, module
     # no family of the inventory reaches an older module's ids, and the older 27 tests are still there
