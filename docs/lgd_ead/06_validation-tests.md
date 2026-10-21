@@ -59,6 +59,16 @@ that rounding noise in identical gaps is not read as a spread; a zero mean is ju
 
 Realised LGD values outside [0, 1] are kept and counted (`n_below_zero`, `n_above_one`).
 
+## Size and power of the p-value tests
+
+The p-value tests of this page, measured on a generator where each null holds at the boundary (U16-E2, BL-088; the harness is `riskvalidation.harness`, the null and the alternative of each are named in `riskvalidation.generators.size_studies`, the runs are the `sizepower` suites under `tests/`, a local release gate that CI deselects). Size is the rejection rate at the nominal level over 4,000 repetitions, accepted when it is within the binomial bound alpha plus 3.09 standard errors; power is the rejection rate at 5% against one stated alternative, with no pass threshold. The figures below are the numbers of the run; the suite fails when a page states other ones.
+
+**Size and power of `lgd_ead.lgd_calibration_by_segment`** (one segment, 250 workouts; seed 5203, 4000 repetitions). Assumptions met: 250 independent workouts, predicted LGD uniform on 0.15 to 0.65, realised LGD Beta with mean the predicted LGD and concentration 2 (the standard deviation of the gap is 0.275), so the mean gap is exactly zero and the t-test rests on the central limit theorem at 250. The measured size is 5.00% at 5% (bound 6.06%) and 1.12% at 1% (bound 1.49%). Power at 5% against the alternative that the realised LGD is 5 points above the predicted one on average (seed 5303, 4000 repetitions): 81.65%.
+
+**Size and power of `lgd_ead.lgd_calibration_over_time`** (five default years, 60 workouts each; seed 5204, 4000 repetitions). Assumptions met: five default years of 60 independent workouts each, the realised LGD Beta with mean the predicted LGD (the mean gap is exactly zero in every year). The Bonferroni adjustment bounds the size by 5% only when each per-year t-test is exact; here each rests on 60 skewed gaps and the measured size at 5% sits near the bound. The measured size is 5.92% at 5% (bound 6.06%) and 1.43% at 1% (bound 1.49%). Power at 5% against the alternative that in the last of five years the realised LGD is 10 points above the predicted one (seed 5304, 4000 repetitions): 56.27%.
+
+**Size and power of `lgd_ead.downturn_coverage`** (150 downturn workouts, estimate 0.45; seed 5205, 4000 repetitions). Assumptions met: 150 independent downturn workouts, realised LGD Beta with mean 0.45 and concentration 2, the estimate 0.45 (the boundary of the one-sided null). The measured size is 5.00% at 5% (bound 6.06%) and 0.80% at 1% (bound 1.49%). Power at 5% against the alternative that the mean realised downturn LGD is 5 points above the 0.45 estimate (seed 5305, 4000 repetitions): 68.33%.
+
 ## Limits
 
 The lights are Contraste internal gates; they are not regulatory thresholds and the engine makes no compliance claim. LGD rank

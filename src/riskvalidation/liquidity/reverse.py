@@ -1,7 +1,7 @@
 """Reverse liquidity stress: the multiplier on the run-off rates at which the survival period first falls to a target.
 
 Source: dossier 05 E.5 rung 5, line 279 ("the run-off multiplier at which the survival period falls below a target, for
-example 30 days", the named parameter `reverse_target_days`). Contract `engine-liquidity-api` 1.2.0, module reverse.
+example 30 days", the named parameter `reverse_target_days`). Contract `engine-liquidity-api` 2.0.0, module reverse.
 
 The multiplier is applied to every segment of a base scenario and capped so that each rate stays at or below 1 (decision
 Q9): the cap is `1 / max(q below 1)`. The survival period `SP(m)` is non-increasing in `m`, and "survives the horizon"

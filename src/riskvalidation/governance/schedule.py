@@ -53,3 +53,8 @@ def next_dates(
         add_months(last_validation, revalidation) if revalidation is not None else None,
         add_months(last_validation, monitoring) if monitoring is not None else None,
     )
+
+__all__ = [
+    "add_months",
+    "next_dates",
+]

@@ -26,8 +26,9 @@ from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.engines.vasicek import lhp_quantile
 from riskvalidation.portfolio.portfolio import check_level, float_vector
+from riskvalidation.validation._policy import battery_label
 
-POLICY_LABEL = "contraste-portfolio-battery-1.0.0"
+POLICY_LABEL = "contraste-portfolio-battery 1.0.0"
 NAN = float("nan")
 EPS = 1e-12             # tolerance on a gate comparison, so that a value exactly on a gate is not moved by rounding
 MIN_MC = 10             # the fewest Monte Carlo scenarios the Kolmogorov comparison accepts
@@ -44,10 +45,6 @@ HRS_2004 = ("Haaf, Reiss and Schoenmakers (2004), Numerically stable computation
 KOLMOGOROV = "Kolmogorov distance and its asymptotic law (Kolmogorov 1933; Smirnov 1948)"
 WILSON_1927 = ("Wilson (1927), Probable inference, the law of succession, and statistical inference, "
                "JASA 22(158):209-212")
-
-
-def _version(**params: Any) -> str:
-    return "; ".join([POLICY_LABEL, *(f"{k}={v}" for k, v in params.items())])
 
 
 def _not_evaluated(test_id: str, h0: str, alternative: str, reference: str, version: str, reason: str, *,
@@ -117,7 +114,7 @@ def tail_backtest(realised: np.ndarray, pd: float, rho: float, levels: Sequence[
         raise ValueError("realised loss rates must lie in [0, 1] (NaN marks a missing year)")
     # the engine validates pd and rho (open interval)
     quantiles = {q: float(lhp_quantile(q, pd, rho)) for q in lv}
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, primary_level=primary)
+    version = battery_label(POLICY_LABEL, "portfolio.tail_backtest", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(good.size)
     kw = dict(model_id=model_id, segment=segment, alpha_amber=alpha_amber, alpha_red=alpha_red)
     extras: dict[str, Any] = {"n_missing": int(miss.sum()), "primary_level": primary, "levels": []}
@@ -171,7 +168,7 @@ def mc_convergence(estimate: float, se: float, anchor: float, quantity: str = "v
     _check_alphas(alpha_amber, alpha_red)
     if quantity not in ("var", "es", "ec"):
         raise ValueError(f"quantity must be var, es or ec, got {quantity!r}")
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(POLICY_LABEL, "portfolio.mc_convergence", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=segment, alpha_amber=alpha_amber, alpha_red=alpha_red)
     extras = {"estimate": estimate, "se": se, "anchor": anchor, "quantity": quantity}
     vals = [float(estimate), float(se), float(anchor)]
@@ -197,8 +194,13 @@ def mc_convergence(estimate: float, se: float, anchor: float, quantity: str = "v
     decision="metric",
 )
 def euler_additivity(contributions: np.ndarray, total: float, tolerance: float = 1e-6, model_id: str | None = None,
-                     segment: str | None = None) -> TestResult:
+                     segment: str | None = None, basis: str | None = None) -> TestResult:
     """The Euler contributions add up to the total (dossier 05 G.4 and G.5: check the allocation sums to the total).
+
+    `basis` names the allocation being tested (``exact-allocation`` for ES and aggregation allocations, ``kernel-var``
+    for the kernel VaR contributions); it is written to ``extras["basis"]``, where the packaged policy
+    ``contraste-portfolio-battery 1.0.0`` finds its tolerance (1e-06 and 0.01), and is ``None`` when the caller does not
+    state it.
 
     statistic = sum(contributions), metric = |sum - total| / |total|, p_value null; extras carry sum, total and
     thresholds = {"tolerance": tolerance}. total = 0: not_evaluated. The ES contributions of `euler.es_contributions`
@@ -216,9 +218,9 @@ def euler_additivity(contributions: np.ndarray, total: float, tolerance: float =
         raise ValueError("total must be finite")
     if not (math.isfinite(tol) and tol > 0.0):
         raise ValueError("tolerance must be positive")
-    version = _version(tolerance=tol)
+    version = battery_label(POLICY_LABEL, "portfolio.euler_additivity", {"extras": {"basis": basis}}, tolerance=tol)
     total_sum = float(c.sum())
-    extras = {"sum": total_sum, "total": tot, "thresholds": {"tolerance": tol}}
+    extras = {"sum": total_sum, "total": tot, "thresholds": {"tolerance": tol}, "basis": basis}
     kw = dict(model_id=model_id, segment=segment, n=int(c.size))
     if tot == 0.0:
         return _not_evaluated(test_id, h0, alt, reference, version, "the total is zero: no relative gap",
@@ -266,7 +268,7 @@ def crp_recursion_vs_mc(pmf: np.ndarray, mc_units: np.ndarray, model_id: str | N
     if raw.dtype.kind not in "iuf" or not np.all(np.isfinite(raw)) or np.any(np.mod(raw, 1) != 0) or np.any(raw < 0):
         raise ValueError("mc_units must hold nonnegative integer loss units")
     units = raw.astype(np.int64)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(POLICY_LABEL, "portfolio.crp_recursion_vs_mc", alpha_amber=alpha_amber, alpha_red=alpha_red)
     s = int(units.size)
     negative = int((f < 0.0).sum())
     extras = {"negative_entries": negative, "grid_size": int(f.size)}
@@ -327,8 +329,9 @@ def correlation_size_power(rejected: np.ndarray, known_rho: float, null_rho: flo
         raise ValueError("rejected must be boolean (or 0 and 1)")
     flags = raw.astype(bool)
     r = int(flags.size)
-    version = _version(alpha=alpha, alpha_amber=alpha_amber, alpha_red=alpha_red, power_green=power_green,
-                       power_amber=power_amber)
+    version = battery_label(
+            POLICY_LABEL, "portfolio.correlation_size_power", alpha_amber=alpha_amber, alpha_red=alpha_red,
+            power_green=power_green, power_amber=power_amber)
     size_cell = abs(float(known_rho) - float(null_rho)) <= 1e-12
     extras: dict[str, Any] = {"role": "size" if size_cell else "power", "known_rho": float(known_rho),
                               "null_rho": float(null_rho), "alpha": float(alpha), "estimator": estimator,
@@ -351,3 +354,11 @@ def correlation_size_power(rejected: np.ndarray, known_rho: float, null_rho: flo
     z = (rate - alpha) / math.sqrt(alpha * (1.0 - alpha) / r)
     p = min(1.0, float(2.0 * stats.norm.sf(abs(z))))
     return TestResult(light=_p_light(p, alpha_amber, alpha_red), statistic=z, p_value=p, **common)
+
+__all__ = [
+    "correlation_size_power",
+    "crp_recursion_vs_mc",
+    "euler_additivity",
+    "mc_convergence",
+    "tail_backtest",
+]

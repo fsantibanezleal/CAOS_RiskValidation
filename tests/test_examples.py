@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,6 +18,9 @@ def test_quickstart_runs():
     assert "portfolio" in out.stdout and "worst:" in out.stdout
 
 
+@pytest.mark.skipif(not (os.environ.get("RISKVALIDATION_DATA")
+                         and (Path(os.environ["RISKVALIDATION_DATA"]) / "tasche2013" / "table2.json").is_file()),
+                    reason="the S&P Table 2 counts are read from RISKVALIDATION_DATA/tasche2013/table2.json (BL-049)")
 def test_credit_math_runs():
     out = subprocess.run([sys.executable, str(ROOT / "examples" / "credit_math.py")], capture_output=True, text=True)
     assert out.returncode == 0, out.stderr

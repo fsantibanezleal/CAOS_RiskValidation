@@ -1,5 +1,7 @@
 """Known-truth generators: data-generating mechanisms whose parameters are known, so the size and power of a test
-and the error of an estimator can be measured (see :mod:`riskvalidation.harness`).
+and the error of an estimator can be measured (see :mod:`riskvalidation.harness`). The named size and power studies of
+the p-value tests are in :mod:`riskvalidation.generators.size_studies` (public by path: it imports the fairness and ML
+pipelines, so this package does not import it).
 
 Every generator is a frozen configuration with ``config()`` (the configuration written next to the data),
 ``draw(rng)`` (one dataset, keyed by the names of the test arguments it feeds), ``truth()`` (exact) and ``verify()``
@@ -17,8 +19,12 @@ from riskvalidation.generators.counts import (
     feed_series,
     joint_default_probability,
 )
+from riskvalidation.generators.credit import DownturnLgd, LgdCalibration, StageTransitions
 from riskvalidation.generators.drift import YURDAKUL_NARANJO, TwoSample, population_psi
+from riskvalidation.generators.exceedances import EsResiduals, LhpLossRates, PfeSeries
 from riskvalidation.generators.framingham import DEMLER, NestedLda, lda_auc
+from riskvalidation.generators.hits import EsLosses, PitSeries, VarHits
+from riskvalidation.generators.montecarlo import CreditRiskPlusSample, McQuantile
 from riskvalidation.generators.ratings import (
     GradeFrequencies,
     Migrations,
@@ -36,6 +42,17 @@ from riskvalidation.generators.scores import (
 )
 
 __all__ = [
+    "CreditRiskPlusSample",
+    "DownturnLgd",
+    "EsLosses",
+    "EsResiduals",
+    "LgdCalibration",
+    "LhpLossRates",
+    "McQuantile",
+    "PfeSeries",
+    "PitSeries",
+    "StageTransitions",
+    "VarHits",
     "DEMLER",
     "HANLEY_MCNEIL",
     "WP14",

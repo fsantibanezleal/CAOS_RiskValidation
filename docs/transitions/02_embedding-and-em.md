@@ -1,7 +1,8 @@
 # 02. From a matrix to a generator: the embedding problem and the EM generator
 
 `riskvalidation.transitions.embedding`: `log_series`, `embedding_diagnostics`, `diagonal_adjustment`,
-`weighted_adjustment`, `jlt_generator`, `generator`, `l1_distance`, `monotonicity_violations`, `is_generator`;
+`weighted_adjustment`, `jlt_generator`, `generator`, `l1_distance`, `monotonicity_violations`, `is_generator`,
+`eigen_condition` (the number $S = \max |\lambda - 1|^2$ of Theorem 1: the log series converges when $S < 1$);
 `riskvalidation.transitions.em`: `em_generator`
 
 ## 1. Why a generator

@@ -15,12 +15,12 @@ from riskvalidation.liquidity import deposits as d
 from riskvalidation.liquidity import runoff
 
 
-def seg(segment="retail-uninsured", share=1.0, hc=0.001, hs=0.01, enter=1.0, exit_=0.0):
-    return d.DepositorSegment(segment, share, hc, hs, enter, exit_)
+def seg(segment="retail-uninsured", share=1.0, hc=0.001, hs=0.01):
+    return d.DepositorSegment(segment, share, hc, hs)
 
 
-def cfg(*segments, n=200, horizon=3):
-    return d.DepositorConfig(tuple(segments), n, horizon)
+def cfg(*segments, n=200, horizon=3, enter=1.0, exit_=0.0):
+    return d.DepositorConfig(tuple(segments), n, horizon, enter, exit_)
 
 
 def test_depositor_config_validation():
@@ -35,10 +35,18 @@ def test_depositor_config_validation():
         cfg(seg(share=0.9))
     with pytest.raises(ValueError, match="share_of_deposits"):
         cfg(seg("retail-insured", 0.5), seg("retail-uninsured", 0.4))
-    for field, kwargs in (("calm_daily_hazard", {"hc": 1.1}), ("stress_daily_hazard", {"hs": -0.1}),
-                          ("p_enter_stress", {"enter": 2.0}), ("p_exit_stress", {"exit_": -0.5})):
+    for field, kwargs in (("calm_daily_hazard", {"hc": 1.1}), ("stress_daily_hazard", {"hs": -0.1})):
         with pytest.raises(ValueError, match=field):
             cfg(seg(**kwargs))
+    # BL-082: the chain probabilities belong to the configuration, each in [0, 1]
+    for field, kwargs in (("p_enter_stress", {"enter": 2.0}), ("p_exit_stress", {"exit_": -0.5})):
+        with pytest.raises(ValueError, match=field):
+            cfg(seg(), **kwargs)
+    with pytest.raises(ValueError, match="p_enter_stress"):
+        cfg(seg(), enter=float("nan"))
+    for bad in ("0.1", True, None, [0.1]):  # a string or a flag is not a probability (it failed later, in truth())
+        with pytest.raises(ValueError, match="p_exit_stress"):
+            cfg(seg(), exit_=bad)
     with pytest.raises(ValueError, match="n_depositors"):
         cfg(seg(), n=0)
     with pytest.raises(ValueError, match="horizon_days"):
@@ -46,16 +54,22 @@ def test_depositor_config_validation():
     with pytest.raises(ValueError, match="segment"):
         cfg(seg("household"))
     with pytest.raises(ValueError, match="segments"):
-        d.DepositorConfig((), 10, 3)
+        d.DepositorConfig((), 10, 3, 1.0, 0.0)
     with pytest.raises(ValueError, match="segment"):  # a segment id twice
         cfg(seg("retail-insured", 0.5), seg("retail-insured", 0.5))
-    # the state chain is shared by all depositors: segments that disagree on it are refused
-    with pytest.raises(ValueError, match="p_enter_stress"):
-        cfg(seg("retail-insured", 0.5, enter=0.1), seg("retail-uninsured", 0.5, enter=0.2))
-    with pytest.raises(ValueError, match="p_exit_stress"):
-        cfg(seg("retail-insured", 0.5, exit_=0.1), seg("retail-uninsured", 0.5, exit_=0.3))
-    # a rate of exactly 0 or 1 is legitimate for a segment
-    cfg(seg("financial", 1.0, hc=1.0, hs=1.0, enter=0.0, exit_=1.0))
+    # the state chain is shared by all depositors, so it is one pair of numbers of the configuration: a segment no
+    # longer takes it (passing it is a TypeError, the BL-082 break of engine-liquidity-api 2.0.0)
+    with pytest.raises(TypeError):
+        d.DepositorSegment("retail-uninsured", 1.0, 0.001, 0.01, 0.2, 0.3)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        d.DepositorSegment("retail-uninsured", 1.0, 0.001, 0.01, p_enter_stress=0.2)  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        d.DepositorConfig((seg(),), 10, 3)  # type: ignore[call-arg]  # the two probabilities are required
+    assert not {"p_enter_stress", "p_exit_stress"} & {f.name for f in dataclasses.fields(d.DepositorSegment)}
+    assert [f.name for f in dataclasses.fields(d.DepositorConfig)] == [
+        "segments", "n_depositors", "horizon_days", "p_enter_stress", "p_exit_stress"]
+    # a rate of exactly 0 or 1 is legitimate for a segment and for the chain
+    cfg(seg("financial", 1.0, hc=1.0, hs=1.0), enter=0.0, exit_=1.0)
     cfg(seg(hc=0.0, hs=0.0))
 
 
@@ -88,23 +102,23 @@ def brute_truth(hc, hs, enter, exit_, horizon):
 
 
 def test_depositor_truth_goldens_and_invariants():
-    g = d.DepositorGenerator(cfg(seg(hc=0.001, hs=0.01, enter=1.0, exit_=0.0), horizon=3))
+    g = d.DepositorGenerator(cfg(seg(hc=0.001, hs=0.01), enter=1.0, exit_=0.0, horizon=3))
     t = g.truth()["outflow_rate"]["retail-uninsured"]
     assert t.tolist() == pytest.approx([0.001, 0.01099, 0.0208801], abs=5e-7)
     assert t[2] == pytest.approx(1 - 0.999 * 0.99 * 0.99, abs=1e-12)
     # with p_enter = 0 the truth is the constant compounding of runoff
-    g0 = d.DepositorGenerator(cfg(seg(hc=0.001, hs=0.01, enter=0.0, exit_=0.5), horizon=30))
+    g0 = d.DepositorGenerator(cfg(seg(hc=0.001, hs=0.01), enter=0.0, exit_=0.5, horizon=30))
     t0 = g0.truth()["outflow_rate"]["retail-uninsured"]
     assert t0 == pytest.approx(runoff.cumulative_outflow_constant(0.001, np.arange(1, 31)), abs=1e-12)
     # a genuine chain, against the enumeration of all state paths
     for enter, exit_ in ((0.3, 0.2), (0.05, 0.6), (1.0, 1.0), (0.5, 0.0)):
-        gg = d.DepositorGenerator(cfg(seg(hc=0.002, hs=0.03, enter=enter, exit_=exit_), horizon=8))
+        gg = d.DepositorGenerator(cfg(seg(hc=0.002, hs=0.03), enter=enter, exit_=exit_, horizon=8))
         got = gg.truth()["outflow_rate"]["retail-uninsured"]
         assert got == pytest.approx(brute_truth(0.002, 0.03, enter, exit_, 8), abs=1e-12), (enter, exit_)
         assert np.all(np.diff(got) >= 0.0)  # non-decreasing in the horizon
     # several segments: one truth per segment on the one chain
-    two = d.DepositorGenerator(cfg(seg("retail-insured", 0.5, hc=0.0005, hs=0.002, enter=0.3, exit_=0.2),
-                                   seg("financial", 0.5, hc=0.01, hs=1.0, enter=0.3, exit_=0.2), horizon=6))
+    two = d.DepositorGenerator(cfg(seg("retail-insured", 0.5, hc=0.0005, hs=0.002),
+                                   seg("financial", 0.5, hc=0.01, hs=1.0), enter=0.3, exit_=0.2, horizon=6))
     truth = two.truth()["outflow_rate"]
     assert set(truth) == {"retail-insured", "financial"}
     assert truth["financial"][-1] > truth["retail-insured"][-1]
@@ -114,8 +128,8 @@ def test_depositor_truth_goldens_and_invariants():
 
 
 def test_depositor_draw_seeded_and_consistent():
-    c = cfg(seg("retail-insured", 0.4, hc=0.01, hs=0.05, enter=0.2, exit_=0.3),
-            seg("retail-uninsured", 0.6, hc=0.02, hs=0.2, enter=0.2, exit_=0.3), n=500, horizon=20)
+    c = cfg(seg("retail-insured", 0.4, hc=0.01, hs=0.05),
+            seg("retail-uninsured", 0.6, hc=0.02, hs=0.2), n=500, horizon=20, enter=0.2, exit_=0.3)
     g = d.DepositorGenerator(c)
     a = g.draw(np.random.default_rng(11))
     b = g.draw(np.random.default_rng(11))
@@ -135,18 +149,18 @@ def test_depositor_draw_seeded_and_consistent():
         for day in (1, 5, 20):  # the cumulative share is the share withdrawn by that day
             assert rate[day - 1] == pytest.approx(np.mean((wd >= 1) & (wd <= day)), abs=1e-12)
     # a rate of 1 in the calm state empties the segment on day 1; a rate of 0 never withdraws anyone
-    full = d.DepositorGenerator(cfg(seg("financial", 1.0, hc=1.0, hs=1.0, enter=0.0, exit_=1.0), n=30, horizon=4))
+    full = d.DepositorGenerator(cfg(seg("financial", 1.0, hc=1.0, hs=1.0), n=30, horizon=4, enter=0.0, exit_=1.0))
     f = full.draw(np.random.default_rng(1))
     assert f["withdrawn_day"]["financial"].tolist() == [1] * 30 and f["outflow_rate"]["financial"].tolist() == [1.0] * 4
-    none = d.DepositorGenerator(cfg(seg(hc=0.0, hs=0.0, enter=0.5, exit_=0.5), n=30, horizon=4))
+    none = d.DepositorGenerator(cfg(seg(hc=0.0, hs=0.0), n=30, horizon=4, enter=0.5, exit_=0.5))
     z = none.draw(np.random.default_rng(1))
     assert z["withdrawn_day"]["retail-uninsured"].tolist() == [0] * 30
     assert z["outflow_rate"]["retail-uninsured"].sum() == 0
 
 
 def test_depositor_verify_reproduces_truth():
-    g = d.DepositorGenerator(cfg(seg("retail-insured", 0.4, hc=0.002, hs=0.02, enter=0.2, exit_=0.3),
-                                 seg("financial", 0.6, hc=0.01, hs=0.3, enter=0.2, exit_=0.3), n=300, horizon=10))
+    g = d.DepositorGenerator(cfg(seg("retail-insured", 0.4, hc=0.002, hs=0.02),
+                                 seg("financial", 0.6, hc=0.01, hs=0.3), n=300, horizon=10, enter=0.2, exit_=0.3))
     checks = g.verify(n_draws=4000)
     assert checks and all(isinstance(c, Check) for c in checks)
     assert all(c.ok(4.0) for c in checks), [(c.name, c.z) for c in checks]

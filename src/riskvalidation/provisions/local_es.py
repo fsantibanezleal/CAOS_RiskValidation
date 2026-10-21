@@ -155,3 +155,11 @@ def annex9_coverage(segment: str, category: str, ead: float, adjusted_guarantee_
     else:
         c = annex9_normal_coverage(segment, category)
     return c * annex9_uncovered_amount(ead, adjusted_guarantee_values)
+
+__all__ = [
+    "annex9_category_to_stage",
+    "annex9_coverage",
+    "annex9_doubtful_coverage",
+    "annex9_normal_coverage",
+    "annex9_uncovered_amount",
+]

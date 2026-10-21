@@ -42,7 +42,7 @@ def _calls():
     scenario = scenarios.compose_scenario("idiosyncratic", "protracted", fast,
                                           {"d": (scenarios.FAST_RUN_CLASS, 1000.0)}, 125)
     depositors = deposits.DepositorGenerator(deposits.DepositorConfig(
-        (deposits.DepositorSegment("retail-uninsured", 1.0, 0.001, 0.01, 0.2, 0.3),), 50, 10))
+        (deposits.DepositorSegment("retail-uninsured", 1.0, 0.001, 0.01),), 50, 10, 0.2, 0.3))
     nlp40 = np.zeros(40)
     nlp40[29], nlp40[34] = 100.0, 80.0
     pts = [(1, 0.5), (2, 1.0)]

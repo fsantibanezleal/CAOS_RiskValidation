@@ -1,0 +1,72 @@
+{
+  "format_version": 1,
+  "policy_id": "contraste-lgd-ead-battery",
+  "version": "1.0.0",
+  "description": "The cut points of the Contraste lgd-ead-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "thresholds": {
+    "lgd_ead.ccf_estimator_bias": {
+      "kind": "upper_bad",
+      "amber": 0.02,
+      "red": 0.04,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.ccf_estimator_bias; producer CAOS_Contraste data-pipeline pipeline/cases/c09; dossier reference: Tong, Mues, Brown and Thomas (2016), Exposure at default models with and without the credit conversion factor, EJOR 252(3):910-920, doi:10.1016/j.ejor.2016.01.054; Qi (2009), Exposure at default of unsecured credit cards, OCC Economics Working Paper 2009-2, https://www.occ.gov/publications-and-resources/publications/economics/working-papers-archived/pub-econ-working-paper-2009-2.pdf; dossier 04 G.1 to G.3 (the CCF estimators and their reference-date designs)",
+      "rule": "abs_upper_le:metric",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01,
+        "tolerance": 0.02
+      }
+    },
+    "lgd_ead.downturn_coverage": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.downturn_coverage; producer CAOS_Contraste data-pipeline pipeline/cases/c08; dossier reference: EBA/GL/2019/03 and EBA/RTS/2018/04 are cross-references only; the add-on is Contraste's cohort-based one (dossier 04 F.4); Loterman, Brown, Martens, Mues and Baesens (2012), Benchmarking regression algorithms for loss given default modeling, Int. J. Forecasting 28(1):161-170, doi:10.1016/j.ijforecast.2011.01.006",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "lgd_ead.ead_backtest_by_band": {
+      "kind": "upper_bad",
+      "amber": 0.1,
+      "red": 0.25,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.ead_backtest_by_band; producer CAOS_Contraste data-pipeline pipeline/cases/c09; dossier reference: Tong, Mues, Brown and Thomas (2016), Exposure at default models with and without the credit conversion factor, EJOR 252(3):910-920, doi:10.1016/j.ejor.2016.01.054; Qi (2009), Exposure at default of unsecured credit cards, OCC Economics Working Paper 2009-2, https://www.occ.gov/publications-and-resources/publications/economics/working-papers-archived/pub-econ-working-paper-2009-2.pdf; dossier 04 G.3 (back-test in currency by utilisation band)",
+      "rule": "upper_le:metric",
+      "parameters": {
+        "gap_amber": 0.1,
+        "gap_red": 0.25
+      }
+    },
+    "lgd_ead.lgd_calibration_by_segment": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.lgd_calibration_by_segment; producer CAOS_Contraste data-pipeline pipeline/cases/c08; dossier reference: Loterman, Brown, Martens, Mues and Baesens (2012), Benchmarking regression algorithms for loss given default modeling, Int. J. Forecasting 28(1):161-170, doi:10.1016/j.ijforecast.2011.01.006; Qi and Zhao (2011), Comparison of modeling methods for Loss Given Default, J. Banking and Finance 35(11):2842-2855, doi:10.1016/j.jbankfin.2011.03.011; dossier 04 F.3 (calibration by segment, not R2 alone)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "lgd_ead.lgd_calibration_over_time": {
+      "kind": "p_value",
+      "amber": 0.05,
+      "red": 0.01,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.lgd_calibration_over_time; producer CAOS_Contraste data-pipeline pipeline/cases/c08; dossier reference: Loterman, Brown, Martens, Mues and Baesens (2012), Benchmarking regression algorithms for loss given default modeling, Int. J. Forecasting 28(1):161-170, doi:10.1016/j.ijforecast.2011.01.006; Qi and Zhao (2011), Comparison of modeling methods for Loss Given Default, J. Banking and Finance 35(11):2842-2855, doi:10.1016/j.jbankfin.2011.03.011; dossier 04 F.3 (calibration over time)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
+    },
+    "lgd_ead.lgd_discrimination": {
+      "kind": "lower_bad",
+      "amber": 0.3,
+      "red": 0.1,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.lgd_ead.lgd_discrimination; producer CAOS_Contraste data-pipeline pipeline/cases/c08; dossier reference: Loterman, Brown, Martens, Mues and Baesens (2012), Benchmarking regression algorithms for loss given default modeling, Int. J. Forecasting 28(1):161-170, doi:10.1016/j.ijforecast.2011.01.006; Spearman (1904), doi:10.2307/1412159",
+      "rule": "lower_ge:statistic",
+      "parameters": {
+        "rho_amber": 0.1,
+        "rho_green": 0.3
+      }
+    }
+  }
+}

@@ -231,3 +231,17 @@ def portfolio_allowance(stage: np.ndarray, ecl_12m: np.ndarray, ecl_lifetime: np
     overlay_sum = math.fsum(float(o.amount) for o in overlays)
     return AllowanceBreakdown(by_stage=by_stage, model_total=model_total, overlay_total=overlay_sum,
                               total=model_total + overlay_sum)
+
+__all__ = [
+    "AllowanceBreakdown",
+    "commitment_ead",
+    "discount_factors",
+    "ecl_scenario",
+    "non_linearity_index",
+    "poci_allowance",
+    "portfolio_allowance",
+    "probability_weighted_ecl",
+    "simplified_matrix_ecl",
+    "stage3_ecl",
+    "weight_sensitivity",
+]

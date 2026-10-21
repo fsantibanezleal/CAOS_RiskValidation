@@ -38,9 +38,7 @@ def _build(extract, inventory_doc, findings_doc, key: str) -> dict:
     return build_report(*report_inputs(extract, inventory_doc, findings_doc, key), AS_OF)
 
 
-STALE_KIND = (
-    "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision"
-)
+STALE_KIND = "the test id is not in the engine registry (spec() raises KeyError), so it has no decision"
 
 
 def _stale_ids(fixture: dict) -> set[str]:

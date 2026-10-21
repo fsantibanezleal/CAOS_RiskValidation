@@ -89,3 +89,10 @@ def cbpe_auc(p: np.ndarray, n_thresholds: int = 101) -> CbpeAuc:
     x, y = fpr[order], tpr[order]
     auc = float(np.sum((x[1:] - x[:-1]) * (y[1:] + y[:-1]) / 2.0))
     return CbpeAuc(estimated_auc=min(1.0, max(0.0, auc)), label="estimate", assumptions=ASSUMPTIONS)
+
+__all__ = [
+    "CbpeAuc",
+    "CbpeConfusion",
+    "cbpe_auc",
+    "cbpe_confusion",
+]

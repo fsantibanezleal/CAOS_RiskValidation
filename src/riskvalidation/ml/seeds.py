@@ -104,3 +104,11 @@ def attribution_rank_stability(attributions_by_seed: np.ndarray) -> RankStabilit
     taus = np.array([stats.kendalltau(a[i], a[j]).statistic for i, j in itertools.combinations(range(len(a)), 2)])
     lo, hi = float(taus.min()), float(taus.max())
     return RankStability(mean_tau=min(max(float(taus.mean()), lo), hi), min_tau=lo)
+
+__all__ = [
+    "RankStability",
+    "SeedDispersion",
+    "attribution_rank_stability",
+    "grade_assignment_stability",
+    "seed_auc_dispersion",
+]

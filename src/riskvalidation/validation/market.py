@@ -30,8 +30,9 @@ from riskvalidation.core.result import Light, TestResult
 from riskvalidation.market import frtb
 from riskvalidation.market.caviar import dq_statistic_unchecked, dynamic_quantile_statistic
 from riskvalidation.market.conventions import vec
+from riskvalidation.validation._policy import battery_label
 
-POLICY_LABEL = "contraste-market-battery-1.0.0"
+POLICY_LABEL = "contraste-market-battery 1.0.0"
 NAN = float("nan")
 
 KUPIEC_1995 = "Kupiec (1995), J. Derivatives 3(2):73-84, doi:10.3905/jod.1995.407942"
@@ -55,10 +56,6 @@ ENGLE_MANGANELLI_2004 = (
 )
 PLA_REFERENCE = "BCBS MAR32.36 to MAR32.42 and MAR32.20 (dossier 01 D.4)"
 DESK_REFERENCE = "BCBS MAR32.18 to MAR32.19 (dossier 01 D.4)"
-
-
-def _version(**params: Any) -> str:
-    return "; ".join([POLICY_LABEL, *(f"{k}={v}" for k, v in params.items())])
 
 
 def _not_evaluated(test_id: str, h0: str, alternative: str, reference: str, version: str, reason: str, *,
@@ -154,7 +151,7 @@ def kupiec_pof(exceedances: np.ndarray, alpha: float, model_id: str | None = Non
     p = _level(alpha)
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(POLICY_LABEL, "market.kupiec_pof", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if t == 0:
         return _not_evaluated(test_id, h0, alt, KUPIEC_1995, version, "no observation", **kw)
@@ -209,7 +206,8 @@ def christoffersen_independence(exceedances: np.ndarray, alpha: float, model_id:
     _level(alpha)
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "market.christoffersen_independence", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red, inputs=inputs_hash(ex))
     if t < 2:
@@ -247,7 +245,8 @@ def christoffersen_conditional_coverage(exceedances: np.ndarray, alpha: float, m
     p = _level(alpha)
     ex = _flags(exceedances, "exceedances")
     ind = christoffersen_independence(ex, alpha, model_id, alpha_amber, alpha_red)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "market.christoffersen_conditional_coverage", alpha_amber=alpha_amber, alpha_red=alpha_red)
     t, x = int(ex.size), int(ex.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red)
@@ -332,7 +331,7 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
         raise ValueError(f"n_mc must be a positive integer, got {n_mc}")
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, n_mc=int(n_mc), seed=int(seed))
+    version = battery_label(POLICY_LABEL, "market.duration_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red)
     if x < 2:
@@ -360,7 +359,7 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
         light=_p_light(pv, alpha_amber, alpha_red), statistic=stat, p_value=pv, inputs_hash=inputs_hash(ex, p),
         notes=("the Weibull shape reached the bound of its search [0.05, 20]: the statistic is capped"
                if at_bound else ""),
-        extras={"weibull_b": b_hat, "weibull_b_at_bound": at_bound, "n_mc": int(n_mc),
+        extras={"weibull_b": b_hat, "weibull_b_at_bound": at_bound, "n_mc": int(n_mc), "seed": int(seed),
                 "n_completed_spells": x - 1}, **kw)
 
 
@@ -390,7 +389,7 @@ def basel_traffic_light(exceedances: np.ndarray, model_id: str | None = None, co
     alt = "the exception count is in the amber or red zone"
     ex = _flags(exceedances, "exceedances")
     p = round(1.0 - float(coverage), 12)
-    version = _version(coverage=coverage, window=window)
+    version = battery_label(POLICY_LABEL, "market.basel_traffic_light")
     kw = dict(model_id=model_id, segment=_segment(p), n=int(window))
     if ex.size < window:
         return _not_evaluated(test_id, h0, alt, BASEL_1996, version, f"fewer than {window} days", n_events=None,
@@ -402,7 +401,7 @@ def basel_traffic_light(exceedances: np.ndarray, model_id: str | None = None, co
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=BASEL_1996, policy_version=version, light=Light(zone),
         statistic=float(k), metric=pct, n_events=k, inputs_hash=inputs_hash(ex[-window:], coverage),
-        extras={"mar32_multiplier": mult, "zone": zone}, **kw)
+        extras={"mar32_multiplier": mult, "zone": zone, "coverage": float(coverage), "window": int(window)}, **kw)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -457,11 +456,10 @@ def acerbi_szekely(loss: np.ndarray, var: np.ndarray, es: np.ndarray, alpha: flo
     if es_a.shape != lo.shape or va.shape != lo.shape:
         raise ValueError("loss, var and es must have the same length")
     t = int(lo.size)
-    version = _version(statistic=statistic, n_sim=int(n_sim), seed=int(seed), alpha_amber=alpha_amber,
-                       alpha_red=alpha_red)
+    version = battery_label(POLICY_LABEL, "market.acerbi_szekely", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, alpha_amber=alpha_amber, alpha_red=alpha_red)
     ref = {"yellow": -0.70, "red": -1.8}
-    extras0 = {"statistic_name": statistic, "reference": ref, "n_draws": int(n_sim)}
+    extras0 = {"statistic_name": statistic, "reference": ref, "n_draws": int(n_sim), "seed": int(seed)}
     if np.any(np.isnan(es_a)):
         return _not_evaluated(test_id, h0, alt, ACERBI_SZEKELY_2014, version,
                               "an ES forecast is undefined (NaN) on at least one day", extras=extras0,
@@ -542,7 +540,8 @@ def du_escanciano_unconditional(pit: np.ndarray, alpha: float, model_id: str | N
     _check_alphas(alpha_amber, alpha_red)
     a = _level(alpha)
     u = _pit(pit)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red)
+    version = battery_label(
+            POLICY_LABEL, "market.du_escanciano_unconditional", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(np.size(pit))
     kw = dict(model_id=model_id, segment=_segment(alpha), n=n, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if u is None:
@@ -582,7 +581,8 @@ def du_escanciano_conditional(pit: np.ndarray, alpha: float, lags: int = 5, mode
     if int(lags) != lags or lags < 1:
         raise ValueError(f"lags must be a positive integer, got {lags}")
     u = _pit(pit)
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, lags=int(lags))
+    version = battery_label(
+            POLICY_LABEL, "market.du_escanciano_conditional", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(np.size(pit))
     kw = dict(model_id=model_id, segment=_segment(alpha), n=n, alpha_amber=alpha_amber, alpha_red=alpha_red,
               extras={"lags": int(lags)})
@@ -635,7 +635,8 @@ def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray,
         raise ValueError("loss, var, es and sigma must have the same length")
     if np.any(sg <= 0.0):
         raise ValueError("sigma must be positive")
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, n_boot=int(n_boot), seed=int(seed))
+    version = battery_label(
+            POLICY_LABEL, "market.mcneil_frey_residual_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     exc = lo > va
     n_ex = int(exc.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=int(lo.size), n_events=n_ex, alpha_amber=alpha_amber,
@@ -662,7 +663,8 @@ def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray,
         test_id=test_id, h0=h0, alternative=alt, reference=MCNEIL_FREY_2000, policy_version=version,
         light=_p_light(pv, alpha_amber, alpha_red), statistic=stat, p_value=pv,
         model_id=model_id, segment=_segment(alpha), n=int(lo.size), n_events=n_ex, alpha_amber=alpha_amber,
-        alpha_red=alpha_red, inputs_hash=inputs_hash(lo, va, es_a, sg), extras={"n_boot": int(n_boot)})
+        alpha_red=alpha_red, inputs_hash=inputs_hash(lo, va, es_a, sg),
+        extras={"n_boot": int(n_boot), "seed": int(seed)})
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -703,7 +705,7 @@ def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags:
         raise ValueError(f"lags must be a non-negative integer, got {lags}")
     if int(n_mc) != n_mc or n_mc < 1:
         raise ValueError(f"n_mc must be a positive integer, got {n_mc}")
-    version = _version(alpha_amber=alpha_amber, alpha_red=alpha_red, lags=int(lags), n_mc=int(n_mc), seed=int(seed))
+    version = battery_label(POLICY_LABEL, "market.dynamic_quantile_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     t, x = int(hit.size), int(hit.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red, extras={"lags": int(lags)})
@@ -718,7 +720,8 @@ def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags:
         s, _rank = dq_statistic_unchecked(sim, v, a, int(lags))
         ge += s >= stat - 1e-12 * max(1.0, abs(stat))
     pv = (1.0 + ge) / (n_mc + 1.0)
-    extras = {"lags": int(lags), "p_value_basis": "monte-carlo", "p_value_asymptotic": pv_asym, "n_mc": int(n_mc)}
+    extras = {"lags": int(lags), "p_value_basis": "monte-carlo", "p_value_asymptotic": pv_asym, "n_mc": int(n_mc),
+              "seed": int(seed)}
     kw = dict(kw, extras=extras)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=ENGLE_MANGANELLI_2004, policy_version=version,
@@ -744,7 +747,8 @@ def pla_test(hpl: np.ndarray, rtpl: np.ndarray, model_id: str | None = None) -> 
     test_id = "market.pla_test"
     h0 = "the risk-theoretical P&L is a good attribution of the hypothetical P&L"
     alt = "the attribution is poor (Spearman low or KS high)"
-    version = _version(spearman_green=0.80, spearman_red=0.70, ks_green=0.09, ks_red=0.12)
+    version = battery_label(
+            POLICY_LABEL, "market.pla_test", spearman_green=0.80, spearman_red=0.70, ks_green=0.09, ks_red=0.12)
     thresholds = {"spearman_green": 0.80, "spearman_red": 0.70, "ks_green": 0.09, "ks_red": 0.12}
     h = np.asarray(hpl, dtype=float)
     r = np.asarray(rtpl, dtype=float)
@@ -795,7 +799,7 @@ def desk_backtest(loss: np.ndarray, var: np.ndarray, alpha: float, model_id: str
     va = np.asarray(var, dtype=float)
     if lo.ndim != 1 or lo.shape != va.shape:
         raise ValueError("loss and var must be one-dimensional of the same length")
-    version = _version(basis=basis, limit=limit)
+    version = battery_label(POLICY_LABEL, "market.desk_backtest", {"segment": _segment(alpha)}, limit=limit)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=frtb.PLA_N, extras={"basis": basis})
     if lo.size < 250:
         return _not_evaluated(test_id, h0, alt, DESK_REFERENCE, version, "fewer than 250 days",
@@ -805,3 +809,18 @@ def desk_backtest(loss: np.ndarray, var: np.ndarray, alpha: float, model_id: str
         test_id=test_id, h0=h0, alternative=alt, reference=DESK_REFERENCE, policy_version=version,
         light=Light.RED if count > limit else Light.GREEN, statistic=float(count), metric=float(limit), n_events=count,
         inputs_hash=inputs_hash(lo[-250:], va[-250:], alpha), **kw)
+
+__all__ = [
+    "acerbi_szekely",
+    "basel_traffic_light",
+    "christoffersen_conditional_coverage",
+    "christoffersen_independence",
+    "desk_backtest",
+    "du_escanciano_conditional",
+    "du_escanciano_unconditional",
+    "duration_test",
+    "dynamic_quantile_test",
+    "kupiec_pof",
+    "mcneil_frey_residual_test",
+    "pla_test",
+]
