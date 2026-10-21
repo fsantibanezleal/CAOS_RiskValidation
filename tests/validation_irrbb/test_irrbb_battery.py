@@ -97,7 +97,7 @@ def test_cmf_annex1_goldens(monkeypatch):
     # the row states its own rule: the exact tolerance and the printed precision of the two Hoja 10 values
     ok = v.cmf_annex1_goldens()
     assert ok.extras["thresholds"] == {"tolerance": 1e-12, "tolerance_printed": {"alpha_short": 5e-4, "bp": 5e-2}}
-    assert "tolerance_printed" in ok.policy_version
+    assert ok.policy_version == "contraste-irrbb-battery 1.0.0"
 
 
 # ---------------------------------------------------------------------------------------------------- RV-1025

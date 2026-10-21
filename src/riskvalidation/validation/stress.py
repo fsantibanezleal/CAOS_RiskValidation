@@ -22,7 +22,7 @@ from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import mat, scalar, vec
 
-POLICY_LABEL = "contraste-stress-battery-1.0.0"
+POLICY_LABEL = "contraste-stress-battery 1.0.0"
 NAN = float("nan")
 EPS = 1e-12  # tolerance on a gate comparison, so that a value exactly on a gate is not moved by rounding
 START_TOLERANCE = 1e-6  # a start counts as closer when its distance is below distance (1 - 1e-6) (the contract)
@@ -44,10 +44,6 @@ GFC_SEVERITY = (
 REVERSE_CHECK = (
     "dossier 01 J.4 and dossier 05 H.5 and H.7: the reverse stress solution, the minimum Mahalanobis distance scenario"
 )
-
-
-def _version(**params: Any) -> str:
-    return "; ".join([POLICY_LABEL, *(f"{k}={v}" for k, v in params.items())])
 
 
 def _not_evaluated(
@@ -166,7 +162,7 @@ def satellite_backcast(
         raise ValueError("quarters must be ascending")
     fit_q = _quarter_number(fit_end, "fit_end")
     thresholds = {"peak_amber": amber, "peak_red": red, "timing_quarters": int(tq) if tq == int(tq) else tq}
-    version = _version(peak_amber=amber, peak_red=red, timing_quarters=thresholds["timing_quarters"])
+    version = POLICY_LABEL
     if fit_q >= q_idx[0]:
         return TestResult(
             test_id=test_id,
@@ -277,7 +273,7 @@ def sensitivity_monotonicity(
         h0=h0,
         alternative=alt,
         reference=DOSSIER_05_H7,
-        policy_version=_version(rule="red-on-any"),
+        policy_version=POLICY_LABEL,
         light=Light.RED if offending else Light.GREEN,
         statistic=float(len(offending)),
         n=int(est.size),
@@ -336,7 +332,7 @@ def static_balance_sheet_rules(
         h0=h0,
         alternative=alt,
         reference=EBA_NOTE,
-        policy_version=_version(tolerance=tol),
+        policy_version=POLICY_LABEL,
         light=Light.RED if violated else Light.GREEN,
         statistic=float(len(violated)),
         n=int(b.shape[0]),
@@ -376,7 +372,7 @@ def bottom_up_vs_top_down(
     bu, td = scalar(bottom_up, "bottom_up"), scalar(top_down, "top_down")
     a, r = scalar(amber, "amber"), scalar(red, "red")
     _check_gates(a, r, "amber", "red")
-    version = _version(amber=a, red=r)
+    version = POLICY_LABEL
     thresholds = {"amber": a, "red": r}
     if td <= 0.0:
         return _not_evaluated(
@@ -440,7 +436,7 @@ def scenario_severity(
     mn = scalar(minimum, "minimum")
     if mn < 0.0:
         raise ValueError("minimum must be nonnegative")
-    version = _version(minimum=mn)
+    version = POLICY_LABEL
     thresholds = {"minimum": mn}
     if not is_stress:
         return _not_evaluated(
@@ -517,7 +513,7 @@ def reverse_solution_check(
         raise ValueError("distance must be positive")
     if tol < 0.0:
         raise ValueError("tolerance must be nonnegative")
-    version = _version(tolerance=tol)
+    version = POLICY_LABEL
     thresholds = {"tolerance": tol}
     if starts.size < 3:
         return _not_evaluated(
