@@ -83,6 +83,12 @@ identity names; the stage closing against the stage ECL (the overlays carried in
 the same tolerance and its largest gap is `stage_ecl_gap_max`. Golden value: the C06 reporting-date fixture gives a metric of
 0 (to rounding) and green.
 
+## Size and power of the p-value tests
+
+The p-value tests of this page, measured on a generator where each null holds at the boundary (U16-E2, BL-088; the harness is `riskvalidation.harness`, the null and the alternative of each are named in `riskvalidation.generators.size_studies`, the runs are the `sizepower` suites under `tests/`, a local release gate that CI deselects). Size is the rejection rate at the nominal level over 4,000 repetitions, accepted when it is within the binomial bound alpha plus 3.09 standard errors; power is the rejection rate at 5% against one stated alternative, with no pass threshold. The figures below are the numbers of the run; the suite fails when a page states other ones.
+
+**Size and power of `ifrs9.stage_migration_backtest`** (three stages, 4000, 1500 and 500 accounts; seed 5202, 4000 repetitions). Assumptions met: independent accounts, one multinomial draw per stage row from the predicted matrix (rows of 4,000, 1,500 and 500 accounts), so the smallest expected cell count is 10, the chi-square approximation's assumption. The measured size is 5.15% at 5% (bound 6.06%) and 1.12% at 1% (bound 1.49%). Power at 5% against the alternative that the stage 1 to stage 2 migration is 9.5%, not the predicted 8% (stage 1 staying 88.5%) (seed 5302, 4000 repetitions): 72.88%.
+
 ## What must not be claimed
 
 These limits come from dossier 02, section I.5, and bind every use of this page and of the engine:
