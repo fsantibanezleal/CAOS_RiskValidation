@@ -409,13 +409,13 @@ def test_situation_testing_is_never_red_under_a_caller_policy():
 def test_the_interval_and_situation_rows_carry_no_p_value_alphas():
     """engine-fairness-api 1.2.0 (the U14-P3 review, deviation 4): the two interval tests and situation testing have no
     p-value threshold, so their rows carry null alphas; the interval level and the share cut point are in
-    `extras.thresholds` and in `policy_version`, never in the alpha fields a reader takes for p-value cut points."""
+    `extras.thresholds`, never in the alpha fields a reader takes for p-value cut points."""
     controls = ["income"]
     for fn in (fv.conditional_disparity, fv.rate_spread_disparity):
         r = fn("m", effect(0.4), controls, [])
         assert (r.alpha_amber, r.alpha_red) == (None, None), r.test_id
         assert r.extras["thresholds"]["interval_level"] == 0.95
-        assert "interval_level=0.95" in r.policy_version
+        assert r.policy_version == "riskvalidation-default 2026.10.1"  # U16-E3: the label alone, parameters in extras
         assert r.light is Light.AMBER
     s = fv.situation_testing("m", SituationResult(n_complainants=10, n_cases=10, n_significant=3, k=2, tau=0.0,
                                                   alpha=0.05))

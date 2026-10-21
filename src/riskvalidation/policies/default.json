@@ -133,55 +133,88 @@
       "kind": "upper_bad",
       "amber": 0.05000000000000001,
       "red": 2.0,
-      "source": "convention: the amber tolerance 0.05 on the largest absolute selection-rate gap is proposed, no dossier value; strict (a gap equal to the tolerance is green); red 2.0 is a sentinel above the metric's range: never red"
+      "source": "convention: the amber tolerance 0.05 on the largest absolute selection-rate gap is proposed, no dossier value; strict (a gap equal to the tolerance is green); red 2.0 is a sentinel above the metric's range: never red",
+      "parameters": {
+        "tolerance": 0.05
+      }
     },
     "fair.two_proportion_z": {
       "kind": "p_value",
       "amber": 0.05,
       "red": 0.01,
-      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
     },
     "fair.fisher_exact": {
       "kind": "p_value",
       "amber": 0.05,
       "red": 0.01,
-      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039"
+      "source": "convention: the engine's default p-value cut points (5% and 1%); dossier 06 C.7 l.1036-1039",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.01
+      }
     },
     "fair.equalized_odds": {
       "kind": "upper_bad",
       "amber": 0.05,
       "red": 0.1,
-      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.1
+      }
     },
     "fair.equal_opportunity": {
       "kind": "upper_bad",
       "amber": 0.05,
       "red": 0.1,
-      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)"
+      "source": "convention: proposed for the Taiwan battery, no dossier value (06 C.7 l.1029-1033)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.1
+      }
     },
     "fair.calibration_within_groups": {
       "kind": "upper_bad",
       "amber": 0.05,
       "red": 0.1,
-      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.1
+      }
     },
     "fair.auc_by_group": {
       "kind": "upper_bad",
       "amber": 0.05,
       "red": 0.1,
-      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)"
+      "source": "convention: proposed for the Taiwan battery, no dossier value (04 J.3 l.904-905)",
+      "parameters": {
+        "alpha_amber": 0.05,
+        "alpha_red": 0.1
+      }
     },
     "fair.situation_testing": {
       "kind": "upper_bad",
       "amber": 0.2,
       "red": 2.0,
-      "source": "convention: the amber share 0.20 of significant complainants, set on the measured size 0.039 and power 1.000 at n 400 and k 30 (docs/fairness/06), no source value; red 2.0 is a sentinel above the metric's range: never red"
+      "source": "convention: the amber share 0.20 of significant complainants, set on the measured size 0.039 and power 1.000 at n 400 and k 30 (docs/fairness/06), no source value; red 2.0 is a sentinel above the metric's range: never red",
+      "parameters": {
+        "alpha_amber": 0.2
+      }
     },
     "ml.robustness": {
       "kind": "upper_bad",
       "amber": 0.020000000000000004,
       "red": 0.04000000000000001,
-      "source": "AUC degradation at the preset scale: amber above perturbation_tolerance (0.02), red above twice it, a delta equal to the tolerance green; convention (engine-ml-api 2.0.0, Policy thresholds)"
+      "source": "AUC degradation at the preset scale: amber above perturbation_tolerance (0.02), red above twice it, a delta equal to the tolerance green; convention (engine-ml-api 2.0.0, Policy thresholds)",
+      "parameters": {
+        "perturbation_tolerance": 0.02
+      }
     },
     "ml.shift_resilience": {
       "kind": "p_value",
@@ -211,19 +244,28 @@
       "kind": "upper_bad",
       "amber": 1.0000000000000003e-09,
       "red": 1.0000000000000003e-09,
-      "source": "maximum Shapley additivity gap: red above the numeric tolerance (1e-09); convention (engine-ml-api 2.0.0, Policy thresholds)"
+      "source": "maximum Shapley additivity gap: red above the numeric tolerance (1e-09); convention (engine-ml-api 2.0.0, Policy thresholds)",
+      "parameters": {
+        "additivity_tolerance": 1e-09
+      }
     },
     "ml.overfit": {
       "kind": "upper_bad",
       "amber": 0.05000000000000001,
       "red": 0.05000000000000001,
-      "source": "train minus holdout AUC gap: red above overfit_tolerance (0.05); convention (engine-ml-api 2.0.0, Policy thresholds)"
+      "source": "train minus holdout AUC gap: red above overfit_tolerance (0.05); convention (engine-ml-api 2.0.0, Policy thresholds)",
+      "parameters": {
+        "overfit_tolerance": 0.05
+      }
     },
     "ml.weak_spot": {
       "kind": "upper_bad",
       "amber": 2.0000000000000004,
       "red": 1000000000000.0001,
-      "source": "error ratio of the worst slice to the average error: amber above weak_spot_multiple (2.0); red 1e12 is a sentinel no ratio reaches, so never red; convention (engine-ml-api 2.0.0, Policy thresholds)"
+      "source": "error ratio of the worst slice to the average error: amber above weak_spot_multiple (2.0); red 1e12 is a sentinel no ratio reaches, so never red; convention (engine-ml-api 2.0.0, Policy thresholds)",
+      "parameters": {
+        "weak_spot_multiple": 2.0
+      }
     },
     "ml.conformal_coverage": {
       "kind": "p_value",

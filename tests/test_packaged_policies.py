@@ -29,7 +29,7 @@ from riskvalidation.core.policy import (
     policy_from_mapping,
 )
 from riskvalidation.core.result import Light
-from riskvalidation.policies.rules import RULES, classify_rule
+from riskvalidation.policies.rules import RULE_ONLY, RULES, classify_rule
 
 BATTERY_LABELS = [
     "contraste-aggregation-battery 1.0.0",
@@ -44,8 +44,9 @@ BATTERY_LABELS = [
     "contraste-portfolio-battery 1.0.0",
     "contraste-stress-battery 1.0.0",
 ]
-# sha256 of policies/default.json at 0.09.000: the default policy is unchanged by this unit
-DEFAULT_SHA256 = "0f930dff38c6fe6208c882d9aeb3e63e53ef8a82ed4db210dcf03315b95959ed"
+# sha256 of the canonical (kind, amber, red, source) of the 48 entries of policies/default.json at 0.09.000: U16-E3 only
+# adds `parameters`, it changes no existing threshold, adds no entry, and the label stays 2026.10.1
+DEFAULT_ENTRIES_SHA256 = "f1b71857e3c1fb2ad46347d06f664e7957a0ecd373a2adf4ba7c714babd0cf0a"
 
 # the keys of an inline string that are cut points of the light; the others are the test's own arguments (quantile,
 # n_sim, seed, lags, compared_at, rho, estimator, ...), measured numbers of the case or descriptions: they stay in
@@ -57,7 +58,8 @@ CUT_KEYS = frozenset(
     "quantile_rel_tol peak_amber peak_red timing_quarters minimum z low high expected_horizon expected_level nl_amber "
     "nl_red r_green r_amber share_amber share_red green_ratio amber_ratio direct_share_amber amber_count "
     "red_share_of_periods gauss_hermite_tolerance spearman_green spearman_red ks_green ks_red power_green power_amber "
-    "limit tolerance_scalar tolerance_bp".split()
+    "limit tolerance_scalar tolerance_bp four_fifths overfit_tolerance perturbation_tolerance additivity_tolerance "
+    "weak_spot_multiple".split()
 )
 
 
@@ -107,12 +109,18 @@ def test_packaged_policy_returns_the_default_for_its_own_label():
     assert packaged_policy(default_policy().label) is default_policy()
 
 
-def test_default_json_is_unchanged():
-    text = resources.files("riskvalidation.policies").joinpath("default.json").read_bytes()
-    assert hashlib.sha256(text).hexdigest() == DEFAULT_SHA256
+def test_default_json_changes_no_existing_threshold_and_keeps_its_label():
     policy = default_policy()
     assert policy.label == "riskvalidation-default 2026.10.1"
-    assert all(not t.parameters and not t.rule and not t.by and not t.cases for t in policy.thresholds.values())
+    old = policy.thresholds
+    assert len(old) == 48
+    canon = json.dumps({k: [t.kind, t.amber, t.red, t.source] for k, t in sorted(old.items())}, sort_keys=True)
+    assert hashlib.sha256(canon.encode("utf-8")).hexdigest() == DEFAULT_ENTRIES_SHA256
+    # additive only: a pre-existing entry gains at most `parameters`; no rule, no keyed entry in the default
+    assert all(not t.rule and not t.by and not t.cases for t in old.values())
+    # the tests whose policy states no threshold by contract stay without a row (the rule is the classification)
+    assert all(policy.threshold(tid) is None for tid in RULE_ONLY)
+    assert Threshold("p_value", 0.05, 0.01).classify(0.03) is Light.AMBER
 
 
 def test_parameters_round_trip_through_the_json_format():
@@ -211,11 +219,19 @@ def _documents():
 
 
 def _inline_rows():
-    return [(rel, row) for rel, row in _documents() if row["policy_version"].startswith("contraste")]
+    """The 2,450 inline battery rows and the 673 rows of the packaged default with parameters appended: 3,123."""
+    return [
+        (rel, row)
+        for rel, row in _documents()
+        if row["policy_version"].startswith("contraste")
+        or (row["policy_version"].startswith("riskvalidation-default") and ";" in row["policy_version"])
+    ]
 
 
 def _label(pv: str) -> str:
     head = pv.split("; ")[0]
+    if pv.startswith("riskvalidation-default"):
+        return head
     stem, _, version = head.rpartition("-")
     return f"{stem} {version}"
 
@@ -223,6 +239,8 @@ def _label(pv: str) -> str:
 def _cut_params(pv: str) -> dict[str, float]:
     out: dict[str, float] = {}
     for part in pv.split("; ")[1:]:
+        if "=" not in part:  # the battery token `ml-battery-1.1.0`
+            continue
         key, value = part.split("=", 1)
         if key in ("r_green", "r_amber"):
             low, high = value.split("-")
@@ -254,16 +272,20 @@ def _view(row: dict) -> dict:
 @needs_root
 def test_every_inline_string_maps_to_a_packaged_entry_with_its_cut_points():
     rows = _inline_rows()
-    assert len(rows) == 2450
+    assert len(rows) == 3123
     checked = Counter()
     for rel, row in rows:
         policy = packaged_policy(_label(row["policy_version"]))
         th = policy.threshold(row["test_id"])
-        assert th is not None, (rel, row["test_id"])
-        eff = th.for_row(_view(row))
-        assert eff is not None, (rel, row["test_id"], th.by)
+        if th is None:  # a test whose policy states no threshold: the constants of its rule
+            assert row["test_id"] in RULE_ONLY, (rel, row["test_id"])
+            known = dict(RULE_ONLY[row["test_id"]][1])
+        else:
+            eff = th.for_row(_view(row))
+            assert eff is not None, (rel, row["test_id"], th.by)
+            # parameters keep the engine's argument names
+            known = {"amber": eff.amber, "red": eff.red, **eff.parameters}
         cut = _cut_params(row["policy_version"])
-        known = {"amber": eff.amber, "red": eff.red, **eff.parameters}  # parameters keep the engine's argument names
         for key, value in cut.items():
             assert key in known and known[key] == value, (rel, row["test_id"], key, value, known)
         if row["test_id"] == "ccr.pit_exposure_backtest":  # the per-case numbers are data in the row's extras
@@ -272,7 +294,7 @@ def test_every_inline_string_maps_to_a_packaged_entry_with_its_cut_points():
             assert float(part["simulated_p05"]) == crit["p05"] and float(part["simulated_p01"]) == crit["p01"]
             assert float(part["effective_sample_size"]) == row["extras"]["effective_sample_size"]
         checked[row["test_id"]] += 1
-    assert sum(checked.values()) == 2450
+    assert sum(checked.values()) == 3123
 
 
 @needs_root
@@ -287,16 +309,18 @@ def test_the_packaged_entry_reproduces_the_committed_light_of_every_inline_row()
             reproduced += 1
     print(f"reproduced rows: {reproduced}")
     assert not failures, f"{len(failures)} rows not reproduced, first: {failures[:8]}"
-    assert reproduced == 2450
+    assert reproduced == 3123
 
 
 @needs_root
-def test_the_inline_battery_heads_keep_resolving_with_the_packaged_equivalent():
+def test_the_inline_forms_keep_resolving_the_battery_heads_and_the_default_with_parameters():
     from riskvalidation.governance.policy import resolve_policy
 
     for rel, row in _inline_rows():
         identity, reason = resolve_policy(row["policy_version"], row["test_id"], row["alpha_amber"], row["alpha_red"])
-        assert reason is None and identity["source"] == "inline-battery", (rel, row["policy_version"], reason)
+        want = "packaged-policy" if row["policy_version"].startswith("riskvalidation-default") else "inline-battery"
+        assert reason is None and identity["source"] == want, (rel, row["policy_version"], reason)
+        assert identity["label"] == row["policy_version"]
 
 
 def test_battery_results_carry_the_packaged_label_and_it_resolves():
@@ -322,3 +346,24 @@ def test_battery_results_carry_the_packaged_label_and_it_resolves():
         assert spec(result.test_id).test_id == result.test_id
         light, _ = policy.classify_row(result.test_id, result.to_dict())
         assert light is result.light, (result.test_id, light, result.light)
+
+
+def test_a_rule_only_test_is_classified_by_its_rule_whatever_the_policy_holds():
+    """The fairness flags and the ml estimate rows have no policy row by contract; the rule is the classification."""
+    policy = default_policy()
+    flagged = {"extras": {"flagged_groups": ["b"]}}
+    assert policy.classify_row("fair.adverse_impact", flagged) == (Light.AMBER, None)
+    assert policy.classify_row("fair.adverse_impact", {"extras": {"flagged_groups": []}})[0] is Light.GREEN
+    assert policy.classify_row("fair.replication", {"extras": {"same_sign": False}})[0] is Light.AMBER
+    excludes = {"extras": {"effect": {"lo": 0.1, "hi": 0.4}}}
+    assert policy.classify_row("fair.conditional_disparity", excludes)[0] is Light.AMBER
+    spans_zero = {"extras": {"effect": {"lo": -0.1, "hi": 0.4}}}
+    assert policy.classify_row("fair.rate_spread_disparity", spans_zero)[0] is Light.GREEN
+    assert policy.classify_row("ml.challenger_brier", {"extras": {"lo": 0.001}})[0] is Light.AMBER
+    assert policy.classify_row("ml.cbpe_estimate", {})[0] is Light.NOT_EVALUATED
+    screens = {
+        "a": {"key": "ml.leakage_screen.temporal_order", "value": 0},
+        "b": {"key": "ml.leakage_screen.single_feature_auc", "value": 0.999},
+    }
+    assert policy.classify_row("ml.leakage_screen", {"extras": {"screens": screens}})[0] is Light.RED
+    assert policy.classify_row("ml.leakage_screen", {"extras": {}})[0] is Light.NOT_EVALUATED

@@ -86,6 +86,24 @@ the engine since U16-E3; the committed documents predate it and the reproduction
 score and signed gap), and `liq.htm_loss_effect` sees the survival period only as the flags
 `extras["survives_horizon"]`, so a lengthening between two finite periods is not visible to its rule.
 
+## The packaged default with parameters appended
+
+Before U16-E3 the fairness (`fair.*`) and ML (`ml.*`) tests wrote the default label with their parameters appended
+(`riskvalidation-default 2026.10.1; alpha_amber=0.05; alpha_red=0.01`, and for ml `...; ml-battery-1.1.0; ...`): 673 rows
+of the committed Contraste documents. They now write the bare label `riskvalidation-default 2026.10.1`; the parameters
+are in `extras["thresholds"]` (and, for ml, the battery version in `extras["battery"]`). `governance.policy` still
+resolves the old form: it reads the label, then the parameters (`identity["parameters"]`) and the battery token
+(`identity["battery"]`).
+
+`policies/default.json` keeps its label and every threshold; it gains `parameters` on 12 entries, the cut points a row
+named but the pair does not hold under the engine's argument name (`tolerance`, `alpha_amber` and `alpha_red`,
+`additivity_tolerance`, `overfit_tolerance`, `perturbation_tolerance`, `weak_spot_multiple`): the strict rows store
+their amber one float above the tolerance (`0.05000000000000001`), so the tolerance itself is a parameter. No entry was
+added: the fairness and ML contracts state no policy row for `fair.adverse_impact`, `fair.conditional_disparity`,
+`fair.rate_spread_disparity`, `fair.replication`, `ml.challenger_brier`, `ml.cbpe_estimate` and `ml.leakage_screen`, whose
+rule is the whole classification. `Policy.classify_row` classifies them by `rules.RULE_ONLY` (rule and constants, for
+example `four_fifths = 0.8`) whatever the policy holds; `ml.leakage_screen` reads the four `ml.leakage_screen.*` entries.
+
 ## The batteries
 
 Amber and red are the pair `Threshold` holds; the parameters repeat every cut point of the old inline string under the

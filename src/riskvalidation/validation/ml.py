@@ -8,7 +8,8 @@ hold, by the rows of ``riskvalidation.ml.policy`` (the contract's Policy thresho
 returns the light ``not_evaluated``, never a colour. A rule stated as "exceeds" keeps a value equal to the tolerance in
 the better colour (the row stores one float above the cut), so a light and the strict boolean of the pure function agree
 at the boundary. The tolerances, grids and cut points are conventions, never regulatory thresholds (06 I.6 l.1268-1270);
-each function records its parameters in ``policy_version`` and in ``extras["thresholds"]``. A test that cannot be
+each function records its parameters in ``extras["thresholds"]`` and the battery version in ``extras["battery"]``;
+the ``policy_version`` is the packaged label alone. A test that cannot be
 evaluated returns ``not_evaluated`` with its reason in ``notes`` and a null statistic, metric and p-value once
 serialised, never a number. The tests compute and state no compliance claim.
 """
@@ -66,8 +67,15 @@ def _resolve(policy: Policy | None) -> Policy:
     return policy if policy is not None else _policy.ml_policy()
 
 
-def _version(pol: Policy, **params: Any) -> str:
-    return "; ".join([pol.label, BATTERY, *(f"{k}={v}" for k, v in params.items())])
+def _version(pol: Policy) -> str:
+    """The packaged policy label and nothing else: the parameters of a row are in its ``extras["thresholds"]`` and the
+    battery version in ``extras["battery"]``."""
+    return pol.label
+
+
+def _row(**fields: Any) -> TestResult:
+    """A ``TestResult`` carrying the battery version in ``extras["battery"]`` (it left the policy label)."""
+    return TestResult(**{**fields, "extras": {"battery": BATTERY, **dict(fields.get("extras") or {})}})
 
 
 def _not_evaluated(
@@ -84,7 +92,7 @@ def _not_evaluated(
     inputs: Sequence[Any] = (),
 ) -> TestResult:
     """No number is carried: the statistic is NaN (null once serialised), the metric and the p-value are None."""
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alternative,
@@ -144,7 +152,7 @@ def robustness(
     if not hits:
         raise ValueError(f"preset_eps {eps} is not a point of the grid {curve.grid}")
     deg = round(-curve.auc_delta[hits[0]], 12)  # 12 decimals: a loss that is the tolerance in decimals stays green
-    version = _version(pol, perturbation_tolerance=tol, preset_eps=eps)
+    version = _version(pol)
     ins = (list(curve.grid), list(curve.auc), list(curve.brier), tol, eps)
     th = pol.threshold(test_id)
     if th is None:
@@ -170,7 +178,7 @@ def robustness(
             inputs=ins,
         )
     _cut_matches(th, tol, "tolerance", red=2.0 * tol)
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
@@ -214,7 +222,7 @@ def _simple(
 ) -> TestResult:
     """A test whose light is one threshold of the policy read on one metric."""
     pol = _resolve(policy)
-    version = _version(pol, **params)
+    version = _version(pol)
     th = pol.threshold(test_id)
     if th is None:
         return _not_evaluated(
@@ -240,7 +248,7 @@ def _simple(
             model_id=model_id,
             inputs=inputs,
         )
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
@@ -293,7 +301,7 @@ def shift_resilience(
     )
     pol = _resolve(policy)
     drop = float(result.auc_full - result.auc)
-    version = _version(pol, shift_permutations=reference.n_permutations, share=reference.share)
+    version = _version(pol)
     ins = (
         result.n,
         result.auc,
@@ -377,7 +385,7 @@ def shift_resilience(
             inputs=ins,
         )
     nulls = np.asarray(reference.null_drops, dtype=float)
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
@@ -617,7 +625,7 @@ def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | N
     h0 = "the coverage of the split conformal set equals the target 1 - alpha (exchangeability holds)"
     alt = "the coverage differs from the target: the calibration and evaluation samples are not exchangeable"
     ref = f"{DOSSIER_06_C7} (C.7 l.1019-1028, I.1 l.1194); {ANGELOPOULOS}"
-    version = _version(pol, target=result.target, n_cal=result.n_cal)
+    version = _version(pol)
     ins = (result.n, result.coverage, result.target, result.p_value, result.n_cal, result.k, result.p_value_binomial)
     extras = {"target": result.target, "n_cal": int(result.n_cal), "k": int(result.k)}
     th = pol.threshold(test_id)
@@ -658,7 +666,7 @@ def conformal_coverage(model_id: str, result: CoverageResult, policy: Policy | N
             model_id=model_id,
             inputs=ins,
         )
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
@@ -788,7 +796,7 @@ def leakage_screen(
     tripped = sum(1 for s in screens.values() if s["light"] != "green")
     screens["single"]["feature"] = int(single.feature)
     screens["overlap"]["share"] = float(overlap)
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
@@ -892,7 +900,7 @@ def cbpe_estimate(model_id: str, estimate: CbpeAuc, labels_supplied: bool = Fals
     )
     alt = "the estimate departs from the labelled AUC when an assumption fails"
     ref = f"{DOSSIER_06_C7} (C.7 l.1052-1058, I.1 l.1199); {NANNYML}"
-    version = _version(_resolve(None), policy_threshold="none")
+    version = _version(_resolve(None))
     ins = (estimate.estimated_auc, estimate.label, list(estimate.assumptions), labels_supplied)
     extras = {
         "estimate": {
@@ -930,14 +938,14 @@ def challenger_brier(model_id: str, result: PairedBrier) -> TestResult:
     h0 = "the champion and the challenger have the same Brier score"
     alt = "the challenger's Brier score is higher than the champion's (the interval excludes zero)"
     ref = f"{DOSSIER_06_C7} (C.7 l.1041-1044, I.1 l.1196); SS1/23 principle 3.3(b)(iii); ECB guide paragraph 60"
-    version = _version(_resolve(None), policy_threshold="none", interval_level=0.95)
+    version = _version(_resolve(None))
     ins = (result.diff, result.lo, result.hi, result.n_boot)
     if not _isfinite(result.diff, result.lo, result.hi):
         return _not_evaluated(
             test_id, h0, alt, ref, version, "the paired Brier interval is not finite", model_id=model_id, inputs=ins
         )
     light = Light.AMBER if result.lo > 0.0 else Light.GREEN
-    return TestResult(
+    return _row(
         test_id=test_id,
         h0=h0,
         alternative=alt,
