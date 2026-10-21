@@ -1,0 +1,2 @@
+include docs/api-policy.md
+include tests/api_surface_0_9_0.json

@@ -44,6 +44,9 @@ def test_depositor_config_validation():
             cfg(seg(), **kwargs)
     with pytest.raises(ValueError, match="p_enter_stress"):
         cfg(seg(), enter=float("nan"))
+    for bad in ("0.1", True, None, [0.1]):  # a string or a flag is not a probability (it failed later, in truth())
+        with pytest.raises(ValueError, match="p_exit_stress"):
+            cfg(seg(), exit_=bad)
     with pytest.raises(ValueError, match="n_depositors"):
         cfg(seg(), n=0)
     with pytest.raises(ValueError, match="horizon_days"):

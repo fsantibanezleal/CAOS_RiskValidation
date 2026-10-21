@@ -964,3 +964,19 @@ def challenger_brier(model_id: str, result: PairedBrier) -> TestResult:
             "n_boot": result.n_boot,
         },
     )
+
+__all__ = [
+    "additivity",
+    "cbpe_estimate",
+    "challenger_brier",
+    "conformal_coverage",
+    "data_quality",
+    "effect_agreement",
+    "leakage_screen",
+    "overfit",
+    "reason_code_stability",
+    "robustness",
+    "seed_stability",
+    "shift_resilience",
+    "weak_spot",
+]

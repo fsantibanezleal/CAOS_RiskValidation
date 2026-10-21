@@ -159,3 +159,18 @@ CONVENTIONS: dict[str, dict[str, str]] = {
         "recommendation is the rule's output on the evidence (item 30)",
     },
 }
+
+__all__ = [
+    "ADOPTED_READING",
+    "APPETITE_THRESHOLDS",
+    "COMPLEXITY_AGGREGATION",
+    "CONVENTION",
+    "CONVENTIONS",
+    "DEADLINE_DAYS",
+    "EXPOSURE_BAND_CUTS",
+    "FINDING_GRAPH",
+    "FREQUENCY",
+    "LIFECYCLE_GRAPH",
+    "RECOMMENDATION_RULE",
+    "REGULATORY_USE_GRADES",
+]

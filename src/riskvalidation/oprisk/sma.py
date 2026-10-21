@@ -167,3 +167,16 @@ def sma_capital(bi: float, annual_losses: np.ndarray, bucket1_uses_losses: bool 
         value, discretion = ilm(lc, bic_value), "none"
     orc = bic_value * value
     return SmaResult(b, bic_value, bucket, used, "bic-times-ilm", lc, value, discretion, orc, RWA_FACTOR * orc, None)
+
+__all__ = [
+    "SmaResult",
+    "bic",
+    "bic_bucket",
+    "business_indicator",
+    "financial_component",
+    "ildc",
+    "ilm",
+    "loss_component",
+    "service_component",
+    "sma_capital",
+]

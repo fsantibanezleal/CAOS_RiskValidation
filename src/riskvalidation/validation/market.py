@@ -802,3 +802,18 @@ def desk_backtest(loss: np.ndarray, var: np.ndarray, alpha: float, model_id: str
         test_id=test_id, h0=h0, alternative=alt, reference=DESK_REFERENCE, policy_version=version,
         light=Light.RED if count > limit else Light.GREEN, statistic=float(count), metric=float(limit), n_events=count,
         inputs_hash=inputs_hash(lo[-250:], va[-250:], alpha), **kw)
+
+__all__ = [
+    "acerbi_szekely",
+    "basel_traffic_light",
+    "christoffersen_conditional_coverage",
+    "christoffersen_independence",
+    "desk_backtest",
+    "du_escanciano_conditional",
+    "du_escanciano_unconditional",
+    "duration_test",
+    "dynamic_quantile_test",
+    "kupiec_pof",
+    "mcneil_frey_residual_test",
+    "pla_test",
+]

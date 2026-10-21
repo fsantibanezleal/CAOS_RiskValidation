@@ -463,3 +463,12 @@ def ccf_estimator_bias(estimates: np.ndarray, truth: float, tolerance: float, mo
     half = float(stats.t.ppf(0.975, r - 1)) * se
     extras.update(ci_low=mean - half, ci_high=mean + half)
     return TestResult(statistic=t, p_value=p, extras=extras, **common)
+
+__all__ = [
+    "ccf_estimator_bias",
+    "downturn_coverage",
+    "ead_backtest_by_band",
+    "lgd_calibration_by_segment",
+    "lgd_calibration_over_time",
+    "lgd_discrimination",
+]

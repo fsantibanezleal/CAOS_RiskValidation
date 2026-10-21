@@ -235,3 +235,17 @@ def register_counts(rows: Sequence[Mapping[str, Any]]) -> dict:
         {"case_id": c, **tally([r for r in rows if r["case_id"] == c])} for c in sorted({r["case_id"] for r in rows})
     ]
     return out
+
+__all__ = [
+    "Finding",
+    "ageing_days",
+    "anchor_from_test_row",
+    "deadline_days",
+    "due_date",
+    "is_overdue",
+    "map_product_status",
+    "register_counts",
+    "rwea_share_of_anchor",
+    "severity_to_ecb",
+    "transition_finding",
+]

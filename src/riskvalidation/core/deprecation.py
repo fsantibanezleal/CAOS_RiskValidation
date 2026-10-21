@@ -16,7 +16,7 @@ from __future__ import annotations
 import functools
 import re
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, TypeVar
 
 T = TypeVar("T")
@@ -31,6 +31,13 @@ def _parse(value: str, field: str) -> tuple[int, int, int]:
     return int(m.group(1)), int(m.group(2)), int(m.group(3))
 
 
+def _check_versions(since: str, removal: str) -> None:
+    s_major = _parse(since, "since")[0]
+    r_major, r_minor, r_patch = _parse(removal, "removal")
+    if r_minor != 0 or r_patch != 0 or r_major <= s_major:
+        raise ValueError(f"removal: must be a major version X.0.0 later than since={since}, got {removal!r}")
+
+
 def deprecated(since: str, removal: str, use: str) -> Callable[[T], T]:
     """Mark a function or a class as deprecated.
 
@@ -38,10 +45,7 @@ def deprecated(since: str, removal: str, use: str) -> Callable[[T], T]:
     ``since``) and ``use`` the replacement. Calling the function, or constructing the class, emits a
     ``DeprecationWarning`` attributed to the caller; the behaviour is unchanged. A ``removal`` that is not a later
     major, or an empty ``use``, is refused with the field named, because it would break the policy."""
-    s_major = _parse(since, "since")[0]
-    r_major, r_minor, r_patch = _parse(removal, "removal")
-    if r_minor != 0 or r_patch != 0 or r_major <= s_major:
-        raise ValueError(f"removal: must be a major version X.0.0 later than since={since}, got {removal!r}")
+    _check_versions(since, removal)
     if not isinstance(use, str) or not use.strip():
         raise ValueError("use: must name the replacement, got an empty value")
 
@@ -75,4 +79,60 @@ def deprecated(since: str, removal: str, use: str) -> Callable[[T], T]:
     return decorate
 
 
-__all__ = ["deprecated"]
+def deprecated_parameter(
+    name: str, since: str, removal: str, use: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Decorator for a function whose keyword argument ``name`` is renamed ``use``.
+
+    The wrapped function no longer lists ``name`` in its signature. A call that still passes ``name`` emits a
+    ``DeprecationWarning`` (the version, the removing major and ``use``) and the value is passed as ``use``; passing
+    both is a ``TypeError``. Versions are checked as for :func:`deprecated`."""
+    _check_versions(since, removal)
+    if not use.strip():
+        raise ValueError("use: must name the replacement, got an empty value")
+
+    def decorate(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            if name in kwargs:
+                if use in kwargs:
+                    raise TypeError(f"{func.__qualname__}() got both {name!r} and {use!r}; {name!r} is deprecated")
+                warnings.warn(
+                    f"the argument {name!r} of {func.__qualname__} is deprecated since riskvalidation {since} and "
+                    f"will be removed in {removal}; use {use!r} instead",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+                kwargs[use] = kwargs.pop(name)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorate
+
+
+def module_getattr(module_name: str, aliases: Mapping[str, tuple[Any, str, str, str]]) -> Callable[[str], Any]:
+    """The ``__getattr__`` of a module that keeps deprecated module-level names working.
+
+    ``aliases`` maps a name to ``(value, since, removal, use)``. Reading the name emits a ``DeprecationWarning`` and
+    returns the value; any other name raises ``AttributeError`` as usual. Use it as
+    ``__getattr__ = module_getattr(__name__, {...})`` in the module; versions are checked when the table is built."""
+    for _, since, removal, _use in aliases.values():
+        _check_versions(since, removal)
+
+    def __getattr__(attr: str) -> Any:
+        if attr in aliases:
+            value, since, removal, use = aliases[attr]
+            warnings.warn(
+                f"{module_name}.{attr} is deprecated since riskvalidation {since} and will be removed in {removal}; "
+                f"use {use} instead",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return value
+        raise AttributeError(f"module {module_name!r} has no attribute {attr!r}")
+
+    return __getattr__
+
+
+__all__ = ["deprecated", "deprecated_parameter", "module_getattr"]

@@ -60,7 +60,10 @@ class DepositorConfig:
         if len(set(ids)) != len(ids):
             raise ValueError(f"segment: each segment id may appear once, got {ids}")
         for name in ("p_enter_stress", "p_exit_stress"):
-            check_unit_share(getattr(self, name), name)
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, (int, float, np.integer, np.floating)):
+                raise ValueError(f"{name}: must be a number in [0, 1], got {value!r}")
+            check_unit_share(value, name)
         for name in ("n_depositors", "horizon_days"):
             value = getattr(self, name)
             if not isinstance(value, (int, np.integer)) or isinstance(value, bool) or value < 1:

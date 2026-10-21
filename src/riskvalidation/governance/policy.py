@@ -7,9 +7,8 @@ packaged battery label (``contraste-<family>-battery <version>``, U16-E3: one pa
 ``riskvalidation.core.policy.packaged_policy``), which resolves through its file like the default. The
 threshold ``kind`` is ``spec(test_id).decision`` (``p_value`` or ``metric``), null with its reason where the test
 is not registered; the ``direction`` (``upper_bad`` or ``lower_bad``) is read from the policy file where one
-resolves and is null with the reason "no policy file (BL-085)" for an inline battery string. The inline form keeps
-resolving so the committed documents stay readable; the packaged file per battery closes backlog item BL-085 when
-the cases are next re-baked (U16).
+resolves and is null with the reason ``NO_POLICY_FILE`` for an inline battery string. The inline form keeps
+resolving so the committed documents stay readable; a packaged battery label resolves through its file.
 """
 
 from __future__ import annotations
@@ -19,10 +18,8 @@ import re
 from riskvalidation.core.policy import default_policy, packaged_policy
 from riskvalidation.core.registry import spec
 
-NO_POLICY_FILE = "no policy file (BL-085)"
-KIND_NOT_REGISTERED = (
-    "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision"
-)
+NO_POLICY_FILE = "no policy file for an inline battery string"
+KIND_NOT_REGISTERED = "the test id is not in the engine registry (spec() raises KeyError), so it has no decision"
 _PACKAGED = re.compile(r"(?P<id>[A-Za-z][\w.-]*) (?P<version>\d[\w.]*(?:\+[\w.-]+)?)")
 _INLINE = re.compile(
     r"contraste-(?P<family>(?!battery-)[a-z0-9]+(?:-[a-z0-9]+)*?)(?:-battery)?-(?P<version>\d+\.\d+\.\d+)"
@@ -133,8 +130,7 @@ def resolve_policy(
             policy = base
         if packaged.group("id") != base.policy_id or version.split("+")[0] != base.version:
             return None, (
-                f"the label {text!r} is not the packaged policy {policy.label!r}, so no threshold can be read for it "
-                f"(a packaged policy file per battery is backlog BL-085)"
+                f"the label {text!r} is not the packaged policy {policy.label!r}, so no threshold can be read for it"
             )
         threshold = policy.threshold(test_id)
         kind, kind_reason = _kind(test_id)
@@ -163,3 +159,7 @@ def resolve_policy(
         f"the policy string {text!r} matches neither a packaged label nor an inline battery string "
         f"(contraste-<family>-battery-<version>; key=value; ...)"
     )
+
+__all__ = [
+    "resolve_policy",
+]

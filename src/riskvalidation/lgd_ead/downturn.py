@@ -62,3 +62,10 @@ def coverage_shortfall(estimate: float, realised: float) -> tuple[bool, float]:
     """(covered, shortfall) with covered = estimate >= realised - 1e-12 and shortfall = max(0, realised - estimate)."""
     e, r = scalar(estimate, "estimate"), scalar(realised, "realised")
     return bool(e >= r - 1e-12), max(0.0, r - e)
+
+__all__ = [
+    "DownturnResult",
+    "coverage_shortfall",
+    "downturn_add_on",
+    "identify_downturn",
+]

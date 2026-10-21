@@ -94,3 +94,11 @@ def volatility_updated_hs_var_es(returns: np.ndarray, sigma_hist: np.ndarray, si
     if np.any(s <= 0.0) or not (np.isfinite(sigma_next) and sigma_next > 0.0):
         raise ValueError("sigma_hist and sigma_next must be positive")
     return var_es_from_sample(r * (float(sigma_next) / s), alpha)
+
+__all__ = [
+    "age_weighted_var_es",
+    "age_weights",
+    "filtered_hs_var_es",
+    "historical_var_es",
+    "volatility_updated_hs_var_es",
+]

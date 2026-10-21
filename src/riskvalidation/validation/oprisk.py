@@ -351,3 +351,10 @@ def scenario_influence(influences: np.ndarray, model_id: str | None = None, infl
         extras={"influences": [float(v) for v in infl], "argmax": int(np.argmax(mag)), "thresholds": gates},
     )
 
+__all__ = [
+    "benchmark_reproduction",
+    "capital_stability",
+    "scenario_influence",
+    "sma_ilm_response",
+    "threshold_stability",
+]

@@ -155,3 +155,14 @@ def check_identities(allowance: Sequence[RollForwardRow], gca: Sequence[RollForw
     limit = float(tolerance) * max(1.0, gross_total(gca))
     residuals = identity_residuals(allowance, gca, waterfall_lines, stage_ecl, overlays)
     return [name for name, value in residuals.items() if not value <= limit]
+
+__all__ = [
+    "RollForwardRow",
+    "allowance_rollforward",
+    "carried_by_stage",
+    "carried_from_lines",
+    "check_identities",
+    "gca_rollforward",
+    "gross_total",
+    "identity_residuals",
+]

@@ -384,3 +384,10 @@ def rating_momentum(
         notes="-2 log partial-likelihood ratio, chi-square with 1 degree of freedom; the coefficient is in extras",
         extras={"coefficient": c, "hazard_ratio": math.exp(c), "direction": direction},
     )
+
+__all__ = [
+    "rating_markov_order",
+    "rating_matrix_reference",
+    "rating_momentum",
+    "rating_time_homogeneity",
+]

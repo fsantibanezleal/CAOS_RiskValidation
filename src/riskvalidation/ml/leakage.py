@@ -97,3 +97,12 @@ def resemblance_auc(X_dev: np.ndarray, X_oot: np.ndarray, seed: int) -> AucResul
     label = np.r_[np.zeros(len(dev), dtype=np.int64), np.ones(len(oot), dtype=np.int64)]
     auc, var, _, _ = auc_with_variance(prob, label)
     return AucResult(auc=auc, variance=var, n=len(label))
+
+__all__ = [
+    "AucResult",
+    "SingleFeatureAuc",
+    "entity_overlap",
+    "resemblance_auc",
+    "single_feature_auc",
+    "temporal_order_violations",
+]

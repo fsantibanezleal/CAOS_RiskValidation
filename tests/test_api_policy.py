@@ -72,3 +72,34 @@ def test_the_policy_states_versioning_and_deprecation():
     for needle in ("Semantic versioning", "DeprecationWarning", "at least one minor release", "py.typed",
                    "riskvalidation.core.deprecation", "What is not public"):
         assert needle in text, needle
+
+
+def test_deprecated_parameter_warns_and_maps_the_old_name_to_the_new():
+    from riskvalidation.core.deprecation import deprecated_parameter
+
+    @deprecated_parameter("alpha", since="1.3.0", removal="2.0.0", use="level")
+    def f(x, level=0.05):
+        return x, level
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert f(1, level=0.1) == (1, 0.1)
+    with pytest.warns(DeprecationWarning, match=r"'alpha'.*1\.3\.0.*2\.0\.0.*'level'") as rec:
+        assert f(1, alpha=0.2) == (1, 0.2)
+    assert rec[0].filename == __file__
+    with pytest.raises(TypeError, match="both"):
+        f(1, alpha=0.2, level=0.3)
+    with pytest.raises(ValueError, match="removal"):
+        deprecated_parameter("a", since="1.0.0", removal="1.5.0", use="b")
+
+
+def test_module_getattr_keeps_a_moved_name_working_with_a_warning():
+    from riskvalidation.core.deprecation import module_getattr
+
+    getter = module_getattr("riskvalidation.fake", {"OLD": (42, "1.1.0", "2.0.0", "riskvalidation.fake.NEW")})
+    with pytest.warns(DeprecationWarning, match=r"riskvalidation\.fake\.OLD.*1\.1\.0.*2\.0\.0.*fake\.NEW"):
+        assert getter("OLD") == 42
+    with pytest.raises(AttributeError, match="no attribute 'other'"):
+        getter("other")
+    with pytest.raises(ValueError, match="removal"):
+        module_getattr("m", {"X": (1, "1.0.0", "1.1.0", "Y")})

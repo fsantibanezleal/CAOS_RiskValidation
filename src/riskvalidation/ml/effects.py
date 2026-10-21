@@ -65,3 +65,9 @@ def accumulated_local_effects(
         local[k] = np.mean(predictions(predict, upper, unit=False) - predictions(predict, lower, unit=False))
     accumulated = np.cumsum(local)
     return edges, accumulated - float(np.sum(counts * accumulated) / x.shape[0])
+
+__all__ = [
+    "accumulated_local_effects",
+    "ice_curves",
+    "partial_dependence",
+]

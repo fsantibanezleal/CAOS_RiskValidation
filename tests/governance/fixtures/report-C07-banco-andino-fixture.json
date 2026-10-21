@@ -558,11 +558,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; nl_amber=1.0; nl_red=3.0",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "nl_amber": 1.0,
          "nl_red": 3.0
@@ -586,11 +586,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -614,11 +614,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -642,11 +642,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -670,11 +670,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -698,11 +698,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -726,11 +726,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; gauss_hermite_tolerance=1e-09; gauss_hermite_nodes=64",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "gauss_hermite_tolerance": 1e-09,
          "gauss_hermite_nodes": 64.0
@@ -754,11 +754,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; share_amber=0.1; share_red=0.25",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "share_amber": 0.1,
          "share_red": 0.25
@@ -782,11 +782,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; green_ratio=2.0; amber_ratio=1.0; direct_share_amber=0.5; min_months=1",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "green_ratio": 2.0,
          "amber_ratio": 1.0,
@@ -812,11 +812,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; r_green=0.8-1.25; r_amber=0.5-2.0",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "r_green": "0.8-1.25",
          "r_amber": "0.5-2.0"
@@ -840,11 +840,11 @@
        "policy": {
         "label": "contraste-ifrs9-battery-1.0.0; tolerance=1e-06; basis=tolerance * max(1, G)",
         "kind": null,
-        "kind_reason": "the test id is not in the engine registry at the batch 3 head (spec() raises KeyError), so it has no decision",
+        "kind_reason": "the test id is not in the engine registry (spec() raises KeyError), so it has no decision",
         "alpha_amber": null,
         "alpha_red": null,
         "direction": null,
-        "direction_reason": "no policy file (BL-085)",
+        "direction_reason": "no policy file for an inline battery string",
         "parameters": {
          "tolerance": 1e-06,
          "basis": "tolerance * max(1, G)"
@@ -1531,8 +1531,8 @@
       "es": "Versión y hash del archivo de política de las cadenas en línea"
      },
      "reason": {
-      "en": "the contraste-*-battery strings have no policy file (backlog BL-085, done at the U16 re-bake)",
-      "es": "las cadenas contraste-*-battery no tienen archivo de política (BL-085, en la re-ejecución de U16)"
+      "en": "the inline contraste-*-battery strings have no policy file; a packaged battery label has one",
+      "es": "las cadenas en línea contraste-*-battery no tienen archivo de política; una etiqueta de batería empaquetada sí lo tiene"
      }
     }
    ]

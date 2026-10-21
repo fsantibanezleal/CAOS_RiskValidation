@@ -211,3 +211,10 @@ def aalen_johansen(paths: Mapping[str, Any], n_states: int, s: float, t: float) 
         np.fill_diagonal(da, -da.sum(axis=1))
         p = p @ (np.eye(m) + da)
     return {"matrix": p, "transition_times": len(times), "reference": AALEN_JOHANSEN_1978}
+
+__all__ = [
+    "aalen_johansen",
+    "cohort",
+    "duration_generator",
+    "pooled_cohort",
+]

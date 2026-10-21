@@ -169,3 +169,12 @@ def eu_floor(maturity_years: np.ndarray) -> np.ndarray:
         raise ValueError("maturity_years must be nonnegative")
     return np.minimum(0.0, -0.015 + 0.0003 * m)
 
+__all__ = [
+    "ShockSize",
+    "apply_floor",
+    "eu_floor",
+    "shock_curve",
+    "shock_scalars",
+    "shock_size",
+    "shock_table",
+]

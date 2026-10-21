@@ -524,3 +524,19 @@ def pit_exposure_backtest(realised: np.ndarray, simulated: np.ndarray,
                 "simulated_critical_values": {"p05": p05, "p01": p01}, "effective_sample_size": ess,
                 "thresholds": {"simulated_p05": p05, "simulated_p01": p01}},
         notes="" if light is Light.GREEN else "W^2 is above the simulated 5 percent critical value")
+
+__all__ = [
+    "CriticalValues",
+    "anderson_darling_w2",
+    "cva_recomputed",
+    "ee_analytic_vs_simulated",
+    "eepe_recomputed",
+    "effective_sample_size",
+    "martingale_discounted_bonds",
+    "path_convergence",
+    "pfe_exceedance_backtest",
+    "pit_exposure_backtest",
+    "pit_from_simulated",
+    "reconcile_ee_profile",
+    "simulate_pit_critical_values",
+]

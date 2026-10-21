@@ -49,6 +49,7 @@ def float_vector(x: Any, name: str, *, allow_empty: bool = False) -> np.ndarray:
 
 
 def check_level(q: Any, name: str = "q") -> float:
+    """A confidence level as a float in (0, 1); ``ValueError`` naming ``name`` otherwise."""
     v = float(q)
     if not (math.isfinite(v) and 0.0 < v < 1.0):
         raise ValueError(f"{name} must lie in (0, 1), got {q}")
@@ -56,6 +57,7 @@ def check_level(q: Any, name: str = "q") -> float:
 
 
 def check_levels(levels: Sequence[float]) -> tuple[float, ...]:
+    """Each level of ``levels`` checked by :func:`check_level`, as a tuple; an empty sequence is refused."""
     out = tuple(check_level(q, "level") for q in levels)
     if not out:
         raise ValueError("levels is empty")
@@ -63,6 +65,7 @@ def check_levels(levels: Sequence[float]) -> tuple[float, ...]:
 
 
 def positive_int(x: Any, name: str) -> int:
+    """``x`` as a positive integer; ``ValueError`` naming ``name`` otherwise."""
     v = int(x)
     if v != x or v <= 0:
         raise ValueError(f"{name} must be a positive integer, got {x}")
@@ -258,6 +261,7 @@ def _sorted_losses(losses: Any) -> np.ndarray:
 
 
 def quantile_rank(q: float, size: int) -> int:
+    """The rank ``k = ceil(q size - 1e-9)`` of the order statistic at level ``q``, clipped to ``[1, size]``."""
     return min(max(int(math.ceil(q * size - QUANTILE_GUARD)), 1), size)
 
 
@@ -307,3 +311,20 @@ def measures_from_sample(losses: np.ndarray, levels: Sequence[float], el: float,
             se_v, se_e = mc_standard_errors(x, q, nb)
         out.append(LossMeasures(level=q, el=e, var=var, es=es, ec=var - e, var_se=se_v, es_se=se_e))
     return tuple(out)
+
+__all__ = [
+    "LossMeasures",
+    "Portfolio",
+    "check_level",
+    "check_levels",
+    "es_from_sample",
+    "expected_loss",
+    "float_vector",
+    "idiosyncratic_scale",
+    "lhp_measures",
+    "measures_from_sample",
+    "portfolio_from_groups",
+    "positive_int",
+    "quantile_rank",
+    "var_from_sample",
+]

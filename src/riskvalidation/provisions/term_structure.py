@@ -197,3 +197,18 @@ def gauss_hermite_pit_pd(pd_ttc: float, rho: float, n_nodes: int = 64) -> float:
         raise ValueError(f"n_nodes must be at least 2, got {n_nodes!r}")
     nodes, w = np.polynomial.hermite_e.hermegauss(n)
     return float(np.sum(w / math.sqrt(2.0 * math.pi) * ttc_to_pit(pd_ttc, rho, nodes)))
+
+__all__ = [
+    "CompetingRisks",
+    "TermStructure",
+    "annualise_pd",
+    "competing_risks",
+    "forward_pd",
+    "from_cumulative",
+    "from_hazard",
+    "from_marginal",
+    "gauss_hermite_pit_pd",
+    "implied_z",
+    "ttc_to_pit",
+    "weighted_pit_pd",
+]

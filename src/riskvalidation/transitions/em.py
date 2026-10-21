@@ -118,3 +118,7 @@ def em_generator(
         "converged": converged,
         "reference": SMITH_DOS_REIS_2018,
     }
+
+__all__ = [
+    "em_generator",
+]

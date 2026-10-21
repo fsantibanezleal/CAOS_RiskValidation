@@ -123,3 +123,12 @@ def monotonicity_check(effect: np.ndarray, expected_sign: int, tolerance: float)
     violation = np.maximum.accumulate(e) - e if s == 1 else e - np.minimum.accumulate(e)
     worst = float(violation.max())
     return worst if worst > tol else 0.0
+
+__all__ = [
+    "OverlapResult",
+    "monotonicity_check",
+    "rank_agreement",
+    "reason_code_overlap",
+    "shapley_additivity_gap",
+    "sign_check",
+]

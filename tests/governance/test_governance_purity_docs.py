@@ -247,5 +247,5 @@ def test_pages_carry_their_sources_and_stated_goldens():
     assert "dossier 06" in _text("01_scope-and-inventory.md") and "B.2" in _text("01_scope-and-inventory.md")
     assert "12/6/0/1" in _text("02_tiering-and-lifecycle.md") and "18/0/0/1" in _text("02_tiering-and-lifecycle.md")
     assert "ECB" in _text("04_opinion-and-appetite.md") and "5 percent" in _text("04_opinion-and-appetite.md")
-    assert "BL-085" in _text("05_policy-and-report.md")
+    assert "inline battery string" in _text("05_policy-and-report.md")
     assert "0.7125" in _text("06_validation-tests.md")
