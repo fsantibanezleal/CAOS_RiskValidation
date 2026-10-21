@@ -8,8 +8,11 @@
   and commit the output as ``tests/api_surface_<version>.json``; ``tests/test_api_surface.py`` then fails when a name of
   the baseline disappears or its signature stops accepting what it accepted. Regenerate only at a major release.
 
+For the 1.0 line, run `snapshot --only names.json --baseline 1.0.0` in a venv with the 1.0.0 release installed (or the
+release tree) and commit the output as ``tests/api_surface_1_0_0.json``: it holds every name the 1.0 lists carry.
+
 Usage: python scripts/api_surface.py names > names.json
-       python scripts/api_surface.py snapshot --only names.json > tests/api_surface_0_9_0.json
+       python scripts/api_surface.py snapshot --only names.json [--baseline X.Y.Z] > tests/api_surface_X_Y_Z.json
 """
 
 from __future__ import annotations
@@ -68,7 +71,7 @@ def names() -> dict[str, list[str]]:
     return out
 
 
-def snapshot(only: dict[str, list[str]]) -> dict:
+def snapshot(only: dict[str, list[str]], baseline: str | None = None) -> dict:
     out: dict[str, dict] = {}
     for modname, wanted in only.items():
         try:
@@ -84,7 +87,7 @@ def snapshot(only: dict[str, list[str]]) -> dict:
             entry[name] = {"kind": kind_of(obj), "params": params_of(obj)}
         if entry:
             out[modname] = entry
-    return {"baseline": getattr(riskvalidation, "__version__", "?"), "modules": out}
+    return {"baseline": baseline or getattr(riskvalidation, "__version__", "?"), "modules": out}
 
 
 def main() -> int:
@@ -95,8 +98,9 @@ def main() -> int:
         json.dump(names(), sys.stdout, indent=1, sort_keys=True)
     else:
         path = sys.argv[sys.argv.index("--only") + 1]
+        baseline = sys.argv[sys.argv.index("--baseline") + 1] if "--baseline" in sys.argv else None
         with open(path, encoding="utf-8") as fh:
-            json.dump(snapshot(json.load(fh)), sys.stdout, indent=1, sort_keys=True)
+            json.dump(snapshot(json.load(fh), baseline), sys.stdout, separators=(",", ":"), sort_keys=True)
     sys.stdout.write("\n")
     return 0
 

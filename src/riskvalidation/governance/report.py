@@ -165,8 +165,13 @@ def _bilingual(value: Any, fallback: tuple[str, str]) -> dict[str, str]:
 
 def _policy_row(row: Mapping[str, Any]) -> dict:
     version = row.get("policy_version")
+    extras = row.get("extras")
     identity, reason = resolve_policy(
-        version if isinstance(version, str) else "", row["test_id"], row.get("alpha_amber"), row.get("alpha_red")
+        version if isinstance(version, str) else "",
+        row["test_id"],
+        row.get("alpha_amber"),
+        row.get("alpha_red"),
+        override=extras.get("policy_override") if isinstance(extras, Mapping) else None,
     )
     if identity is not None:
         return {**identity, "reason": None}

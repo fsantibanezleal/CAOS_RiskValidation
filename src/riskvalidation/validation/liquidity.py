@@ -30,6 +30,7 @@ from riskvalidation.liquidity import ladder as _ladder
 from riskvalidation.liquidity import runoff as _runoff
 from riskvalidation.liquidity._checks import check_increasing_grid, check_unit_share
 from riskvalidation.liquidity.ladder import SurvivalResult
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-liquidity-battery 1.0.0"
 NAN = float("nan")
@@ -181,7 +182,7 @@ def list_compounding_golden(q: float = 0.00103258, n: int = 125, expected: float
     stat = abs(value - exp)
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_COMPOUNDING,
-        policy_version=POLICY_LABEL,
+        policy_version=battery_label(POLICY_LABEL, "liq.list_compounding_golden", tolerance=tolerance),
         light=Light.GREEN if stat <= tolerance + EPS else Light.RED, statistic=stat, metric=value, n=days,
         inputs_hash=inputs_hash(np.array([rate, days, exp])), extras={"thresholds": {"tolerance": tolerance}})
 
@@ -209,7 +210,7 @@ def survival_monotone_in_severity(survival_days: Sequence[float | None], tol_day
     alt = "a more severe scenario survives longer than a milder one"
     tol = _nonneg_tol(tol_days, "tol_days")
     days = _days(survival_days, "survival_days")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.survival_monotone_in_severity", tolerance_days=tol)
     thresholds = {"tolerance_days": tol}
     if days.size < 2:
         return _not_evaluated(test_id, h0, alt, REF_MONOTONE, version, "fewer than 2 scenarios", n=int(days.size),
@@ -275,7 +276,8 @@ def cbc_haircut_rules(tol: float = 1e-12) -> TestResult:
     stat = max(deviations)
     ok = stat <= tolerance + EPS and wrong_labels == 0
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=REF_HAIRCUTS, policy_version=POLICY_LABEL,
+        test_id=test_id, h0=h0, alternative=alt, reference=REF_HAIRCUTS, policy_version=battery_label(
+                POLICY_LABEL, "liq.cbc_haircut_rules", tolerance=tolerance),
         light=Light.GREEN if ok else Light.RED, statistic=stat, n=len(_HAIRCUT_CASES),
         inputs_hash=inputs_hash(np.array(deviations)), extras={"thresholds": {"tolerance": tolerance}, "cases": cases,
                                                                "wrong_labels": wrong_labels},
@@ -308,7 +310,8 @@ def nlp_identity(cbc: np.ndarray, outflows: np.ndarray, inflows: np.ndarray, nlp
     residual = p - (c - np.cumsum(o - i))
     stat = float(np.max(np.abs(residual)))
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alt, reference=REF_NLP, policy_version=POLICY_LABEL,
+        test_id=test_id, h0=h0, alternative=alt, reference=REF_NLP, policy_version=battery_label(
+                POLICY_LABEL, "liq.nlp_identity", tolerance=tolerance),
         light=Light.GREEN if stat <= tolerance + EPS else Light.RED, statistic=stat, n=int(c.size),
         inputs_hash=inputs_hash(c, o, i, p), extras={"thresholds": {"tolerance": tolerance}})
 
@@ -346,7 +349,7 @@ def runoff_adequacy_back_test(modelled_share: float, realised_share: float, rati
     if compared_at not in ("event-horizon", "model-horizon"):
         raise ValueError(f"compared_at: must be 'event-horizon' or 'model-horizon', got {compared_at!r}")
     thresholds = {"ratio_green": green, "ratio_amber": amber, "compared_at": compared_at}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.runoff_adequacy_back_test", ratio_green=green, ratio_amber=amber)
     if realised == 0.0:
         return _not_evaluated(test_id, h0, alt, REF_ADEQUACY, version,
                               "realised_share is 0, so the ratio is undefined", n=1, segment=denominator,
@@ -393,7 +396,7 @@ def runoff_vs_generator_truth(estimated: np.ndarray, truth: np.ndarray, mc_se: n
     stat = float(z.max())
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_GENERATOR,
-        policy_version=POLICY_LABEL,
+        policy_version=battery_label(POLICY_LABEL, "liq.runoff_vs_generator_truth", se_green=green, se_red=red),
         light=_three_light_low(stat, green, red), statistic=stat, n=int(est.size),
         inputs_hash=inputs_hash(est, tru, se),
         extras={"thresholds": {"se_green": green, "se_red": red}, "z": z.tolist()})
@@ -426,7 +429,7 @@ def cliff_effect_diagnostic(nlp: np.ndarray, total_assets: float, near: int = 30
     if r > a:
         raise ValueError(f"amber and red: must satisfy red <= amber, got amber = {a} and red = {r}")
     thresholds = {"amber": a, "red": r}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.cliff_effect_diagnostic", amber=a, red=r)
     if x.size < far:
         return _not_evaluated(test_id, h0, alt, REF_CLIFF, version,
                               f"the horizon of {x.size} days is shorter than far = {int(far)}", n=int(x.size),
@@ -467,7 +470,7 @@ def htm_loss_effect(cbc_without: float, cbc_with: float, survival_without: float
     sw = math.inf if survival_without is None else _scalar(survival_without, "survival_without")
     sl = math.inf if survival_with is None else _scalar(survival_with, "survival_with")
     thresholds = {"tolerance": 0.0}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.htm_loss_effect", tolerance=0.0)
     if without == 0.0:
         return _not_evaluated(test_id, h0, alt, REF_HTM, version, "cbc_without is 0, so its share is undefined", n=2,
                               extras={"thresholds": thresholds})
@@ -510,7 +513,7 @@ def uninsured_share_sensitivity(shares: Sequence[float], survival_days: Sequence
     if days.size != grid.size:
         raise ValueError(f"shares and survival_days: must have the same length, got {grid.size} and {days.size}")
     thresholds = {"tolerance_days": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.uninsured_share_sensitivity", tolerance_days=tol)
     if days.size < 2:
         return _not_evaluated(test_id, h0, alt, REF_UNINSURED, version, "fewer than 2 shares", n=int(days.size),
                               extras={"thresholds": thresholds})
@@ -557,7 +560,7 @@ def reverse_stress_round_trip(solved_multiplier: float | None, survival_at_multi
     tol = _nonneg_tol(tol_days, "tol_days")
     target = int(_scalar(target_days, "target_days"))
     thresholds = {"tolerance_days": tol}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.reverse_stress_round_trip", tolerance_days=tol)
     if solved_multiplier is None or survival_at_multiplier is None:
         return _not_evaluated(test_id, h0, alt, REF_REVERSE, version,
                               "the solve was refused, so there is no multiplier to round trip", n=1,
@@ -620,7 +623,7 @@ def htm_revaluation_vs_reported(model_fair_value: float | None, reported_fair_va
     reported = _scalar(reported_fair_value, "reported_fair_value")
     cost = _scalar(amortised_cost, "amortised_cost")
     thresholds = {"green": g, "amber": a}
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "liq.htm_revaluation_vs_reported", reval_green=g, reval_amber=a)
     if model_fair_value is None:
         return _not_evaluated(test_id, h0, alt, REF_REVALUATION, version,
                               "model_fair_value is None: no revaluation was run", n=1,

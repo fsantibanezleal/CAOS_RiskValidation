@@ -25,6 +25,7 @@ from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.oprisk._checks import positive, scalar, vec
 from riskvalidation.oprisk.sma import OPE25_MINIMUM_YEARS, ilm, loss_component
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-oprisk-battery 1.0.0"
 NAN = float("nan")
@@ -122,7 +123,7 @@ def benchmark_reproduction(moments: tuple[float, float, float], quantiles: Mappi
     if m.size != 3:
         raise ValueError(f"moments must be (mean, variance, skewness), got {m.size} values")
     mtol, qtol = positive(moment_rel_tol, "moment_rel_tol"), positive(quantile_rel_tol, "quantile_rel_tol")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "oprisk.benchmark_reproduction", moment_rel_tol=mtol, quantile_rel_tol=qtol)
     thresholds = {"moment_rel_tol": mtol, "quantile_rel_tol": qtol}
     for name, value in quantiles.items():
         scalar(value, f"quantiles[{name!r}]")
@@ -184,7 +185,7 @@ def threshold_stability(thresholds: np.ndarray, xi_hat: np.ndarray, model_id: st
         raise ValueError("xi_hat contains infinite values")
     tg, ta = scalar(tol_green, "tol_green"), scalar(tol_amber, "tol_amber")
     _check_gates(tg, ta, ("tol_green", "tol_amber"))
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "oprisk.threshold_stability", tol_green=tg, tol_amber=ta)
     gates = {"tol_green": tg, "tol_amber": ta}
     finite = xi[np.isfinite(xi)]
     if finite.size < 2:
@@ -233,7 +234,9 @@ def capital_stability(capitals: np.ndarray, truth: float, model_id: str | None =
     bg, ba = scalar(bias_green, "bias_green"), scalar(bias_amber, "bias_amber")
     _check_gates(dg, da, ("dispersion_green", "dispersion_amber"))
     _check_gates(bg, ba, ("bias_green", "bias_amber"))
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "oprisk.capital_stability", dispersion_green=dg, dispersion_amber=da, bias_green=bg,
+            bias_amber=ba)
     gates = {"dispersion_green": dg, "dispersion_amber": da, "bias_green": bg, "bias_amber": ba}
     if cap.size < 4:
         return _not_evaluated(test_id, h0, reference, version, f"fewer than 4 independent histories ({cap.size})",
@@ -284,7 +287,7 @@ def sma_ilm_response(bic_value: float, annual_losses: np.ndarray, added_loss: fl
         raise ValueError(f"added_loss must not be negative, got {added}")
     jg, ja = scalar(jump_green, "jump_green"), scalar(jump_amber, "jump_amber")
     _check_gates(jg, ja, ("jump_green", "jump_amber"))
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "oprisk.sma_ilm_response", jump_green=jg, jump_amber=ja)
     gates = {"jump_green": jg, "jump_amber": ja}
     lc_before = loss_component(losses)  # also refuses a negative loss
     if losses.size < OPE25_MINIMUM_YEARS:
@@ -336,7 +339,7 @@ def scenario_influence(influences: np.ndarray, model_id: str | None = None, infl
     infl = vec(influences, "influences", allow_empty=True)
     ia, ir = scalar(influence_amber, "influence_amber"), scalar(influence_red, "influence_red")
     _check_gates(ia, ir, ("influence_amber", "influence_red"))
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "oprisk.scenario_influence", influence_amber=ia, influence_red=ir)
     gates = {"influence_amber": ia, "influence_red": ir}
     if infl.size < 1:
         return _not_evaluated(test_id, h0, reference, version, "no scenario influence", model_id=model_id, n=0,

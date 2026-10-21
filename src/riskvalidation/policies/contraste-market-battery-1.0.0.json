@@ -1,7 +1,8 @@
 {
+  "format_version": 1,
   "policy_id": "contraste-market-battery",
   "version": "1.0.0",
-  "description": "The cut points of the Contraste market-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
+  "description": "The cut points of the Contraste market-battery battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds, except the entries whose source starts 'regulatory:' (the Basel MAR32.9, MAR32.19 and MAR32.42 values, which Contraste applies as an internal gate). Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",
   "thresholds": {
     "market.acerbi_szekely": {
       "kind": "p_value",
@@ -11,6 +12,17 @@
       "parameters": {
         "alpha_amber": 0.05,
         "alpha_red": 0.0001
+      }
+    },
+    "market.basel_traffic_light": {
+      "kind": "upper_bad",
+      "amber": 0.95,
+      "red": 0.9999,
+      "source": "regulatory: BCBS MAR32.9 Table 1 (in force 2023-01-01), for 250 observations at 99 percent coverage: green 0 to 4 exceptions, amber 5 to 9, red 10 or more; for another window or coverage the engine reads the zones from the cumulative binomial probability, amber from the count that first reaches 95 percent and red from the count that first reaches 99.99 percent (the BCBS 1996 design; the extension to other windows is a convention of Contraste, dossier 05 B.4); the light rule of riskvalidation.validation.market.basel_traffic_light; dossier reference: BCBS MAR32.9 (dossier 01 D.4)",
+      "rule": "market_basel_zone",
+      "parameters": {
+        "amber_level": 0.95,
+        "red_level": 0.9999
       }
     },
     "market.christoffersen_conditional_coverage": {
@@ -37,7 +49,7 @@
       "kind": "upper_bad",
       "amber": 12.0,
       "red": 12.0,
-      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.desk_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.18 to MAR32.19 (dossier 01 D.4)",
+      "source": "regulatory: BCBS MAR32.19 (in force 2023-01-01): a desk with 'more than 12 exceptions at the 99th percentile or 30 exceptions at the 97.5th percentile' in the most recent 12-month period is capitalised under the standardised approach; the limit is the case of the row's alpha (0.01: 12, 0.025: 30), and the engine reads both limits as 'more than' (red above the limit, otherwise green; there is no amber); the light rule of riskvalidation.validation.market.desk_backtest; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.18 to MAR32.19 (dossier 01 D.4)",
       "rule": "upper_le:statistic",
       "by": "segment",
       "cases": {
@@ -51,6 +63,26 @@
           "red": 30.0,
           "limit": 30.0
         }
+      }
+    },
+    "market.du_escanciano_conditional": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.du_escanciano_conditional; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Du and Escanciano (2017), Management Science 63(4):940-958, doi:10.1287/mnsc.2015.2342",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
+    "market.du_escanciano_unconditional": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.du_escanciano_unconditional; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: Du and Escanciano (2017), Management Science 63(4):940-958, doi:10.1287/mnsc.2015.2342",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
       }
     },
     "market.duration_test": {
@@ -83,11 +115,21 @@
         "alpha_red": 0.05
       }
     },
+    "market.mcneil_frey_residual_test": {
+      "kind": "p_value",
+      "amber": 0.1,
+      "red": 0.05,
+      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.mcneil_frey_residual_test; producer CAOS_Contraste data-pipeline pipeline/cases/c11; dossier reference: McNeil and Frey (2000), J. Empirical Finance 7(3-4):271-300, doi:10.1016/S0927-5398(00)00012-8",
+      "parameters": {
+        "alpha_amber": 0.1,
+        "alpha_red": 0.05
+      }
+    },
     "market.pla_test": {
       "kind": "lower_bad",
       "amber": 0.8,
       "red": 0.7,
-      "source": "convention: a Contraste internal gate, not a regulatory threshold; the light rule of riskvalidation.validation.market.pla_test; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.36 to MAR32.42 and MAR32.20 (dossier 01 D.4)",
+      "source": "regulatory: BCBS MAR32.42 (in force 2023-01-01): green zone when the Spearman correlation is above 0.80 and the Kolmogorov-Smirnov metric is below 0.09 (p-value 0.264); red zone when the correlation is less than 0.7 or the KS metric is above 0.12 (p-value 0.055); amber otherwise; the light rule of riskvalidation.validation.market.pla_test; producer CAOS_Contraste data-pipeline pipeline/cases/c13; dossier reference: BCBS MAR32.36 to MAR32.42 and MAR32.20 (dossier 01 D.4)",
       "rule": "market_pla_zone",
       "parameters": {
         "ks_green": 0.09,

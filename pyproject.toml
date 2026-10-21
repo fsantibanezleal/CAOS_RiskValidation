@@ -31,7 +31,7 @@ classifiers = [
 dependencies = ["numpy>=1.24", "scipy>=1.10"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "ruff>=0.6,<0.17", "build>=1.2", "pypdf>=4"]
+dev = ["pytest>=8", "ruff>=0.6,<0.17", "build>=1.2", "pypdf>=4", "jsonschema>=4"]
 # U8 market: arch (GARCH family, the Model Confidence Set) is optional; its own bounds (numpy<3,>=1.22.3, scipy>=1.8, Python >=3.10) sit
 # inside the engine pins above, and it brings pandas and statsmodels, which the engine core never imports.
 market = ["arch>=8.0,<9"]
@@ -75,3 +75,6 @@ select = ["E", "F", "W", "I", "B", "UP"]
 "scripts/check_sdd.py" = ["E501"]
 # Prose tables of the generated API page.
 "scripts/make_api_policy.py" = ["E501"]
+"scripts/make_policies_doc.py" = ["E501"]
+# Long assertion lines of the policy gates.
+"tests/test_policy_*.py" = ["E501"]

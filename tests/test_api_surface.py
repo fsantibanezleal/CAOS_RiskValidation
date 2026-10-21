@@ -63,34 +63,53 @@ def compatible(old: list | None, obj) -> str | None:
     return None
 
 
-SNAPSHOT = json.loads((Path(__file__).with_name("api_surface_0_9_0.json")).read_text(encoding="utf-8"))
+SNAPSHOTS = {
+    p.name: json.loads(p.read_text(encoding="utf-8")) for p in sorted(Path(__file__).parent.glob("api_surface_*.json"))
+}
 #: names that changed on purpose before the freeze: BL-082, the stress-chain probabilities move to the configuration
 ALLOWED = {
-    "riskvalidation.liquidity.deposits.DepositorConfig",
-    "riskvalidation.liquidity.deposits.DepositorSegment",
+    "api_surface_0_9_0.json": {
+        "riskvalidation.liquidity.deposits.DepositorConfig",
+        "riskvalidation.liquidity.deposits.DepositorSegment",
+    },
 }
-ITEMS = [(mod, name) for mod, names in SNAPSHOT["modules"].items() for name in names]
+ITEMS = [
+    (name, mod, n) for name, snap in SNAPSHOTS.items() for mod, names in snap["modules"].items() for n in names
+]
+CASES = [(name, mod) for name, snap in SNAPSHOTS.items() for mod in sorted(snap["modules"])]
 
 
 def _major() -> int:
     return int(riskvalidation.__version__.split(".")[0])
 
 
+def _current_names() -> set[tuple[str, str]]:
+    out = set()
+    import pkgutil
+
+    for m in [riskvalidation, *[importlib.import_module(x.name) for x in pkgutil.walk_packages(
+            riskvalidation.__path__, "riskvalidation.") if not any(p.startswith("_") for p in x.name.split(".")[1:])]]:
+        out |= {(m.__name__, n) for n in getattr(m, "__all__", [])}
+    return out
+
+
 @pytest.mark.skipif(_major() >= 2, reason="a major release may break the previous surface: regenerate the snapshot")
-@pytest.mark.parametrize("modname", sorted(SNAPSHOT["modules"]))
-def test_no_name_of_the_baseline_disappears_or_loses_a_call(modname):
+@pytest.mark.parametrize("snap,modname", CASES, ids=[f"{s}:{m}" for s, m in CASES])
+def test_no_name_of_the_baseline_disappears_or_loses_a_call(snap, modname):
     mod = importlib.import_module(modname)
     problems = []
-    for name, old in SNAPSHOT["modules"][modname].items():
+    for name, old in SNAPSHOTS[snap]["modules"][modname].items():
         try:
             obj = getattr(mod, name) if hasattr(mod, name) else importlib.import_module(f"{modname}.{name}")
         except ImportError:
             problems.append(f"{name}: removed")
             continue
+        if name not in getattr(mod, "__all__", []):
+            problems.append(f"{name}: no longer in {modname}.__all__ (it is out of the public surface)")
         if kind_of(obj) != old["kind"]:
             problems.append(f"{name}: was a {old['kind']}, is a {kind_of(obj)}")
             continue
-        if f"{modname}.{name}" in ALLOWED:
+        if f"{modname}.{name}" in ALLOWED.get(snap, set()):
             continue
         why = compatible(old["params"], obj)
         if why:
@@ -98,9 +117,23 @@ def test_no_name_of_the_baseline_disappears_or_loses_a_call(modname):
     assert not problems, problems
 
 
-def test_the_snapshot_is_the_baseline_and_not_empty():
-    assert SNAPSHOT["baseline"] == "0.9.0" and len(ITEMS) > 1000
-    assert "riskvalidation.liquidity.deposits" in SNAPSHOT["modules"]
+def test_the_snapshots_are_the_baselines_and_not_empty():
+    assert {s["baseline"] for s in SNAPSHOTS.values()} == {"0.9.0", "1.0.0"}
+    assert len(ITEMS) > 2500
+    assert "riskvalidation.liquidity.deposits" in SNAPSHOTS["api_surface_0_9_0.json"]["modules"]
+
+
+def test_the_newest_snapshot_covers_every_public_name_of_the_1_0_line():
+    """No public name escapes the gate: while the version is 1.0.x (or earlier) every name of every ``__all__`` is in
+    the 1.0.0 snapshot, and from 1.1 a new name may be added (the removal direction stays). The gate cannot stay on
+    0.9.0: the newest baseline's major is at least the current major."""
+    snap = SNAPSHOTS["api_surface_1_0_0.json"]
+    in_snapshot = {(m, n) for m, names in snap["modules"].items() for n in names}
+    missing = sorted(_current_names() - in_snapshot)
+    parts = riskvalidation.__version__.split(".")
+    if _major() < 1 or (parts[0] == "1" and parts[1] == "0"):
+        assert not missing, f"public names outside the 1.0.0 snapshot (regenerate it): {missing[:20]}"
+    assert max(int(s["baseline"].split(".")[0]) for s in SNAPSHOTS.values()) >= _major()
 
 
 def test_the_gate_catches_a_removal_a_reorder_and_a_new_required_parameter():

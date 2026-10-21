@@ -1,4 +1,5 @@
 {
+  "format_version": 1,
   "policy_id": "contraste-c12",
   "version": "1.0.0",
   "description": "The cut points of the Contraste c12 battery of riskvalidation, one entry per test id, transcribed from the test functions' own light rules and the committed Contraste case documents. They are Contraste internal gates and conventions, not regulatory thresholds. Per-case measured numbers and the test's own arguments are not policy: they stay in the result row.",

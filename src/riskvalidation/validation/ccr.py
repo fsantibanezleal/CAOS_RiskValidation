@@ -26,6 +26,7 @@ from riskvalidation.ccr import exposure as _exposure
 from riskvalidation.core.registry import register
 from riskvalidation.core.result import Light, TestResult
 from riskvalidation.lgd_ead._checks import mat, same_length, scalar, vec
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-ccr-battery 1.0.0"
 NAN = float("nan")
@@ -103,7 +104,8 @@ def _within_se(test_id: str, h0: str, alternative: str, reference: str, actual: 
     stat, metric = float(np.max(ratio)), float(np.max(np.abs(actual - expected)))
     ok = stat <= k_se + EPS
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alternative, reference=reference, policy_version=POLICY_LABEL,
+        test_id=test_id, h0=h0, alternative=alternative, reference=reference,
+        policy_version=battery_label(POLICY_LABEL, test_id, k_se=k_se),
         light=Light.GREEN if ok else Light.RED, statistic=stat, metric=metric, n=int(actual.size),
         extras={"thresholds": {"k_se": k_se}},
         notes="" if ok else (f"the largest standardised difference {stat:.4g} is above k_se = {k_se}"
@@ -172,7 +174,8 @@ def _recomputed(test_id: str, h0: str, alternative: str, reference: str, recompu
     rel = resid / abs(recomputed) if recomputed != 0.0 else (0.0 if resid == 0.0 else math.inf)
     ok = rel <= tol
     return TestResult(
-        test_id=test_id, h0=h0, alternative=alternative, reference=reference, policy_version=POLICY_LABEL,
+        test_id=test_id, h0=h0, alternative=alternative, reference=reference,
+        policy_version=battery_label(POLICY_LABEL, test_id, rel_tol=tol),
         light=Light.GREEN if ok else Light.RED, statistic=resid, metric=rel, n=n,
         extras={"thresholds": {"rel_tol": tol}, "recomputed": recomputed, "reported": rep},
         notes="" if ok else f"the reported value departs from the recomputed one by a relative {rel:.3g}")
@@ -256,7 +259,8 @@ def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count:
     h0 = "the EE profile and the CVA are converged in the number of paths"
     alt = "the EE profile or the CVA still moves with the number of paths"
     if len(counts) < 2:
-        return _not_evaluated(test_id, h0, alt, REF_CONVERGENCE, POLICY_LABEL,
+        return _not_evaluated(test_id, h0, alt, REF_CONVERGENCE, battery_label(
+                POLICY_LABEL, "ccr.path_convergence", k_se=k),
                               "fewer than two path counts, so no change can be measured")
     small_n, big_n = counts[-2], counts[-1]
     small, big = vec(ee_by_path_count[small_n], "ee_by_path_count"), vec(ee_by_path_count[big_n], "ee_by_path_count")
@@ -282,7 +286,7 @@ def path_convergence(ee_by_path_count: dict[int, np.ndarray], cva_by_path_count:
         light = Light.RED
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_CONVERGENCE,
-        policy_version=POLICY_LABEL,
+        policy_version=battery_label(POLICY_LABEL, "ccr.path_convergence", k_se=k),
         light=light, statistic=stat, metric=metric, n=int(big_n),
         extras={"thresholds": {"k_se": k, "smaller_count": int(small_n), "larger_count": int(big_n)}},
         notes="" if light is Light.GREEN else ("the profile or the CVA moved more than k_se standard errors of the "
@@ -318,7 +322,8 @@ def reconcile_ee_profile(ee: np.ndarray, mc_se: np.ndarray, reference_ee: np.nda
         test_id="ccr.reconcile_ee_profile",
         h0="the engine's EE profile agrees with the reference within the Monte Carlo error",
         alternative="the engine's EE profile departs from the reference", reference=REF_RECONCILE,
-        policy_version=POLICY_LABEL, light=Light.GREEN if ok else Light.RED, statistic=stat,
+        policy_version=battery_label(POLICY_LABEL, "ccr.reconcile_ee_profile", k_se=k),
+        light=Light.GREEN if ok else Light.RED, statistic=stat,
         metric=float(np.max(np.abs(e - ref))), n=int(e.size),
         extras={"thresholds": {"k_se": k}, "agreement": agreement},
         notes="" if ok else f"the largest difference is {stat:.4g} combined standard errors")
@@ -355,7 +360,8 @@ def pfe_exceedance_backtest(realised: np.ndarray, pfe_forecast: np.ndarray, quan
     return TestResult(
         test_id="ccr.pfe_exceedance_backtest", h0=f"the PFE forecast at {q} is exceeded with frequency {1.0 - q:.4g}",
         alternative="the exceedance frequency differs from the forecast one", reference=REF_BACKTEST,
-        policy_version=POLICY_LABEL, light=light, statistic=lr, p_value=p,
+        policy_version=battery_label(POLICY_LABEL, "ccr.pfe_exceedance_backtest", alpha_amber=0.05, alpha_red=0.01),
+        light=light, statistic=lr, p_value=p,
         metric=x / n, alpha_amber=0.05, alpha_red=0.01, n=n, n_events=x,
         extras={"thresholds": {"alpha_amber": 0.05, "alpha_red": 0.01}, "quantile": q, "caveat": CAVEAT_BCBS_185_27},
         notes="" if light is Light.GREEN else f"{x} exceedances in {n} dates against {(1.0 - q) * n:.3g} expected")
@@ -499,7 +505,8 @@ def pit_exposure_backtest(realised: np.ndarray, simulated: np.ndarray,
         raise ValueError("realised needs at least 2 backtest dates")
     pits = pit_from_simulated(r, simulated)
     if critical_simulated is None:
-        return _not_evaluated(test_id, h0, alt, REF_PIT, POLICY_LABEL, "no simulated critical values",
+        return _not_evaluated(test_id, h0, alt, REF_PIT, battery_label(
+                POLICY_LABEL, "ccr.pit_exposure_backtest"), "no simulated critical values",
                               n=int(r.size), extras={"reason": "no simulated critical values"})
     if effective_sample_size is not None:
         ess = scalar(effective_sample_size, "effective_sample_size")
@@ -517,7 +524,7 @@ def pit_exposure_backtest(realised: np.ndarray, simulated: np.ndarray,
     light = Light.GREEN if w2 <= p05 + EPS else Light.AMBER if w2 <= p01 + EPS else Light.RED
     return TestResult(
         test_id=test_id, h0=h0, alternative=alt, reference=REF_PIT,
-        policy_version=POLICY_LABEL, light=light,
+        policy_version=battery_label(POLICY_LABEL, "ccr.pit_exposure_backtest"), light=light,
         statistic=w2, n=int(r.size),
         extras={"pits": [float(x) for x in pits],
                 "iid_critical_values": {str(k): v for k, v in IID_CRITICAL_VALUES.items()},

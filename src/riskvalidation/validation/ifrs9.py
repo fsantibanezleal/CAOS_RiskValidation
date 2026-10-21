@@ -29,6 +29,7 @@ from riskvalidation.provisions.overlays import TARGETS, Overlay, check_unique
 from riskvalidation.provisions.reconciliation import RollForwardRow
 from riskvalidation.provisions.term_structure import gauss_hermite_pit_pd, ttc_to_pit, weighted_pit_pd
 from riskvalidation.validation._common import check_pd as _check_pd
+from riskvalidation.validation._policy import battery_label
 from riskvalidation.validation.calibration import default_count_sf
 from riskvalidation.validation.discrimination import auc_with_variance
 
@@ -134,7 +135,9 @@ def lifetime_pd_backtest(months: np.ndarray, predicted_cumulative: np.ndarray, o
         f"{EBA_2023}, paras 114 to 118; {VASICEK}; Kaplan-Meier product-limit and Aalen-Johansen cumulative incidence "
         "estimators (dossier 02 B.2, C.2)"
     )
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "ifrs9.lifetime_pd_backtest", gap_amber=gap_amber, gap_red=gap_red,
+            alpha_amber=alpha_amber, alpha_red=alpha_red)
     m = months_array(months)
     pred = _floats(predicted_cumulative, "predicted_cumulative")
     obs = _floats(observed_cumulative, "observed_cumulative", allow_nan=True)
@@ -230,7 +233,9 @@ def sicr_effectiveness(stage_at_origination_view: np.ndarray, defaulted_within_k
     or no Stage 2 accounts: not_evaluated. Contraste internal gates.
     """
     reference = f"{EBA_2023}, paras 94 to 99 and Figure 42; {D350}, A38; dossier 02 I.2"
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "ifrs9.sicr_effectiveness", green_ratio=green_ratio, amber_ratio=amber_ratio,
+            direct_share_amber=direct_share_amber)
     stage = _floats(stage_at_origination_view, "stage_at_origination_view")
     dflt = _bools(defaulted_within_k, "defaulted_within_k")
     months = _floats(months_in_stage2_before_default, "months_in_stage2_before_default", allow_nan=True)
@@ -322,7 +327,7 @@ def sicr_threshold_stability(implied_multiplier: np.ndarray, condition_index: np
         f"{EBA_2023}, paras 29 to 33; EBA (2021), IFRS 9 implementation by EU institutions, Monitoring report, "
         "EBA/Rep/2021/35, doi:10.2853/631076"
     )
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.sicr_threshold_stability", amber_count=1, red_share_of_periods=0.5)
     h0 = "the SICR threshold does not loosen in the periods in which conditions worsen"
     alt = "the multiplier rises as the condition index rises"
     mult = _floats(implied_multiplier, "implied_multiplier")
@@ -367,7 +372,8 @@ def stage_migration_backtest(predicted_matrix: np.ndarray, observed_counts: np.n
     infinite, p-value 0). Light: green when p >= `alpha_amber`, amber when `alpha_red` <= p < `alpha_amber`, red below.
     """
     reference = f"{EBA_2023}, para 97; Anderson and Goodman (1957), doi:10.1214/aoms/1177707039, equation (3.1)"
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "ifrs9.stage_migration_backtest", alpha_amber=alpha_amber, alpha_red=alpha_red)
     h0 = "the observed stage transitions are drawn from the predicted transition matrix"
     alt = "the observed transitions differ from the predicted matrix"
     pm = np.array(predicted_matrix, dtype=float)
@@ -425,7 +431,8 @@ def ecl_backtest(realised_pv_losses: np.ndarray, ecl_horizon: np.ndarray, horizo
     `r_amber` but not in `r_green`, red outside. A zero total ECL: not_evaluated. Contraste internal gates.
     """
     reference = f"IFRS 9 B5.5.52; {EBA_2023}, paras 100 to 104"
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.ecl_backtest", r_green_low=r_green[0], r_green_high=r_green[1],
+                            r_amber_low=r_amber[0], r_amber_high=r_amber[1])
     h0 = "the discounted realised losses within the horizon equal the model ECL for the same accounts"
     alt = "realised losses differ from the ECL (R_H differs from 1)"
     real = _floats(realised_pv_losses, "realised_pv_losses")
@@ -480,7 +487,7 @@ def scenario_sensitivity(ecl_by_scenario: np.ndarray, weights: np.ndarray, ecl_a
     NL is reported as 0. Contraste internal gates.
     """
     reference = f"{D350}, para 36(a); {GPPC}, 2.8.1.2; IFRS 9 5.5.17(a), B5.5.42"
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.scenario_sensitivity", nl_amber=nl_amber, nl_red=nl_red)
     h0 = "the probability-weighted ECL equals the ECL at the probability-weighted mean path (a linear ECL)"
     alt = "the weighted ECL exceeds the ECL at the mean path (convex ECL)"
     e = _floats(ecl_by_scenario, "ecl_by_scenario")
@@ -532,7 +539,7 @@ def nonlinearity_test(pd_ttc: float, rho: float, z: np.ndarray, weights: np.ndar
         "dossier 02 B.4 and C.1 (BCBS 2005 explanatory note; Vasicek 2002; Gordy 2003, "
         "doi:10.1016/S1042-9573(03)00040-8)"
     )
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.nonlinearity", gauss_hermite_tolerance=gh_tolerance)
     zz = _floats(z, "z")
     w = np.array(weights, dtype=float)
     weighted = weighted_pit_pd(pd_ttc, rho, zz, w)  # validates the weights
@@ -576,7 +583,7 @@ def overlay_diagnostics(overlays: Sequence[Overlay], allowance_by_stage: Mapping
     otherwise. Contraste internal gates.
     """
     reference = f"{ECB_2024}; ECB letter SSM-2020-0744 (2020-12-04); {D350}, paras 50 and 51"
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.overlay_diagnostics", share_amber=share_amber, share_red=share_red)
     h0 = "overlays are a small, attributed, directionally consistent part of the allowance"
     alt = "overlays are large or move against the direction of the scenarios"
     if int(scenario_direction) not in (-1, 0, 1):
@@ -651,7 +658,7 @@ def reconciliation_identities(allowance: Sequence[RollForwardRow], gca: Sequence
     an infinite metric). Contraste internal gate, not a regulatory threshold.
     """
     reference = "IFRS 7 35H and 35I; dossier 02 I.1 items 9 and 10 and I.2"
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "ifrs9.reconciliation_identities", tolerance=tolerance)
     h0 = "opening plus movements equals closing, by stage, and the waterfall opens into the stage tables"
     alt = "an identity of the reconciliation does not close"
     if not allowance and not gca:

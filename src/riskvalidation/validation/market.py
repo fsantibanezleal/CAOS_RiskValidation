@@ -30,6 +30,7 @@ from riskvalidation.core.result import Light, TestResult
 from riskvalidation.market import frtb
 from riskvalidation.market.caviar import dq_statistic_unchecked, dynamic_quantile_statistic
 from riskvalidation.market.conventions import vec
+from riskvalidation.validation._policy import battery_label
 
 POLICY_LABEL = "contraste-market-battery 1.0.0"
 NAN = float("nan")
@@ -150,7 +151,7 @@ def kupiec_pof(exceedances: np.ndarray, alpha: float, model_id: str | None = Non
     p = _level(alpha)
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.kupiec_pof", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if t == 0:
         return _not_evaluated(test_id, h0, alt, KUPIEC_1995, version, "no observation", **kw)
@@ -205,7 +206,8 @@ def christoffersen_independence(exceedances: np.ndarray, alpha: float, model_id:
     _level(alpha)
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.christoffersen_independence", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red, inputs=inputs_hash(ex))
     if t < 2:
@@ -243,7 +245,8 @@ def christoffersen_conditional_coverage(exceedances: np.ndarray, alpha: float, m
     p = _level(alpha)
     ex = _flags(exceedances, "exceedances")
     ind = christoffersen_independence(ex, alpha, model_id, alpha_amber, alpha_red)
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.christoffersen_conditional_coverage", alpha_amber=alpha_amber, alpha_red=alpha_red)
     t, x = int(ex.size), int(ex.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red)
@@ -328,7 +331,7 @@ def duration_test(exceedances: np.ndarray, alpha: float, model_id: str | None = 
         raise ValueError(f"n_mc must be a positive integer, got {n_mc}")
     ex = _flags(exceedances, "exceedances")
     t, x = int(ex.size), int(ex.sum())
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.duration_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red)
     if x < 2:
@@ -386,7 +389,7 @@ def basel_traffic_light(exceedances: np.ndarray, model_id: str | None = None, co
     alt = "the exception count is in the amber or red zone"
     ex = _flags(exceedances, "exceedances")
     p = round(1.0 - float(coverage), 12)
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.basel_traffic_light")
     kw = dict(model_id=model_id, segment=_segment(p), n=int(window))
     if ex.size < window:
         return _not_evaluated(test_id, h0, alt, BASEL_1996, version, f"fewer than {window} days", n_events=None,
@@ -453,7 +456,7 @@ def acerbi_szekely(loss: np.ndarray, var: np.ndarray, es: np.ndarray, alpha: flo
     if es_a.shape != lo.shape or va.shape != lo.shape:
         raise ValueError("loss, var and es must have the same length")
     t = int(lo.size)
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.acerbi_szekely", alpha_amber=alpha_amber, alpha_red=alpha_red)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, alpha_amber=alpha_amber, alpha_red=alpha_red)
     ref = {"yellow": -0.70, "red": -1.8}
     extras0 = {"statistic_name": statistic, "reference": ref, "n_draws": int(n_sim), "seed": int(seed)}
@@ -537,7 +540,8 @@ def du_escanciano_unconditional(pit: np.ndarray, alpha: float, model_id: str | N
     _check_alphas(alpha_amber, alpha_red)
     a = _level(alpha)
     u = _pit(pit)
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.du_escanciano_unconditional", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(np.size(pit))
     kw = dict(model_id=model_id, segment=_segment(alpha), n=n, alpha_amber=alpha_amber, alpha_red=alpha_red)
     if u is None:
@@ -577,7 +581,8 @@ def du_escanciano_conditional(pit: np.ndarray, alpha: float, lags: int = 5, mode
     if int(lags) != lags or lags < 1:
         raise ValueError(f"lags must be a positive integer, got {lags}")
     u = _pit(pit)
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.du_escanciano_conditional", alpha_amber=alpha_amber, alpha_red=alpha_red)
     n = int(np.size(pit))
     kw = dict(model_id=model_id, segment=_segment(alpha), n=n, alpha_amber=alpha_amber, alpha_red=alpha_red,
               extras={"lags": int(lags)})
@@ -630,7 +635,8 @@ def mcneil_frey_residual_test(loss: np.ndarray, var: np.ndarray, es: np.ndarray,
         raise ValueError("loss, var, es and sigma must have the same length")
     if np.any(sg <= 0.0):
         raise ValueError("sigma must be positive")
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.mcneil_frey_residual_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     exc = lo > va
     n_ex = int(exc.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=int(lo.size), n_events=n_ex, alpha_amber=alpha_amber,
@@ -699,7 +705,7 @@ def dynamic_quantile_test(hits: np.ndarray, var: np.ndarray, alpha: float, lags:
         raise ValueError(f"lags must be a non-negative integer, got {lags}")
     if int(n_mc) != n_mc or n_mc < 1:
         raise ValueError(f"n_mc must be a positive integer, got {n_mc}")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.dynamic_quantile_test", alpha_amber=alpha_amber, alpha_red=alpha_red)
     t, x = int(hit.size), int(hit.sum())
     kw = dict(model_id=model_id, segment=_segment(alpha), n=t, n_events=x, alpha_amber=alpha_amber,
               alpha_red=alpha_red, extras={"lags": int(lags)})
@@ -741,7 +747,8 @@ def pla_test(hpl: np.ndarray, rtpl: np.ndarray, model_id: str | None = None) -> 
     test_id = "market.pla_test"
     h0 = "the risk-theoretical P&L is a good attribution of the hypothetical P&L"
     alt = "the attribution is poor (Spearman low or KS high)"
-    version = POLICY_LABEL
+    version = battery_label(
+            POLICY_LABEL, "market.pla_test", spearman_green=0.80, spearman_red=0.70, ks_green=0.09, ks_red=0.12)
     thresholds = {"spearman_green": 0.80, "spearman_red": 0.70, "ks_green": 0.09, "ks_red": 0.12}
     h = np.asarray(hpl, dtype=float)
     r = np.asarray(rtpl, dtype=float)
@@ -792,7 +799,7 @@ def desk_backtest(loss: np.ndarray, var: np.ndarray, alpha: float, model_id: str
     va = np.asarray(var, dtype=float)
     if lo.ndim != 1 or lo.shape != va.shape:
         raise ValueError("loss and var must be one-dimensional of the same length")
-    version = POLICY_LABEL
+    version = battery_label(POLICY_LABEL, "market.desk_backtest", {"segment": _segment(alpha)}, limit=limit)
     kw = dict(model_id=model_id, segment=_segment(alpha), n=frtb.PLA_N, extras={"basis": basis})
     if lo.size < 250:
         return _not_evaluated(test_id, h0, alt, DESK_REFERENCE, version, "fewer than 250 days",
