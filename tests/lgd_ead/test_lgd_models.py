@@ -127,6 +127,54 @@ def test_fractional_logit_is_scale_invariant_in_the_covariate_unit():
         m.fit_fractional_logit(np.column_stack([np.ones(4), [0.0, 0.01, 0.02, 0.03]]), a(0, 0, 1, 1))
 
 
+# the 1.0.0 solver's coefficients of the well-conditioned fit below (recorded before the BL-094 change)
+GOLDEN_WELL_CONDITIONED = [0.2147058663304752, 0.5523970735768755, -0.39250684846553585]
+
+
+def _large_fractional(seed: int, n: int = 70_000, p: int = 17):
+    """A design like the Contraste C08 cohorts: standardized covariates, a fractional response with some endpoints,
+    tens of thousands of rows (seeds 7 and 24 stalled the 1.0.0 solver at 4 BLAS threads)."""
+    rng = np.random.default_rng(seed)
+    X = np.column_stack([np.ones(n), rng.normal(size=(n, p - 1))])
+    mu = 1 / (1 + np.exp(-(X @ rng.normal(0, 0.3, p))))
+    return X, np.clip(mu + rng.normal(0, 0.25, n), 0.0, 1.0)
+
+
+@pytest.mark.parametrize("seed", [7, 24])
+def test_fractional_logit_converges_when_the_gain_is_below_the_likelihood_rounding(seed):
+    """BL-094: near the optimum the predicted gain of a Newton step (about 1e-12) is below the rounding of a
+    log-likelihood summed over tens of thousands of rows (about 1e-8), so a step-halving test on that sum cannot tell a
+    better point from a worse one. The 1.0.0 solver halved such steps away and stalled with a score near 1e-8 ("did
+    not converge within 200 iterations", the C08 L2 and L4 rungs). The full step is taken when the decrement is below
+    the rounding bound; the fit is the optimum."""
+    X, y = _large_fractional(seed)
+    fit = m.fit_fractional_logit(X, y)
+    mu = m.predict_lgd(fit, X)
+    assert np.max(np.abs(X.T @ (y - mu))) < 1e-9
+    def nll(b):
+        z = X @ b
+        return float(np.sum(np.logaddexp(0, z) - y * z))
+    def grad(b):
+        return X.T @ (1 / (1 + np.exp(-(X @ b))) - y)
+    ref = optimize.minimize(nll, np.zeros(X.shape[1]), jac=grad, method="L-BFGS-B",
+                            options={"maxiter": 10_000, "gtol": 1e-10, "ftol": 1e-16}).x
+    np.testing.assert_allclose(fit.coefficients, ref, atol=1e-5)
+    # the hurdle's two stages use the same solver
+    yz = np.where(np.arange(len(y)) % 7 == 0, 0.0, y)
+    h = m.fit_hurdle(X, yz)
+    assert np.all(np.isfinite(h.coefficients))
+
+
+def test_fractional_logit_keeps_its_path_on_a_well_conditioned_fit():
+    """The decrement rule changes nothing where the log-likelihood can arbitrate: the 1.0.0 coefficients of a small
+    fit stand."""
+    rng = np.random.default_rng(11)
+    n = 2_000
+    X = np.column_stack([np.ones(n), rng.normal(size=n), rng.normal(size=n)])
+    y = np.clip(1 / (1 + np.exp(-(0.2 + 0.6 * X[:, 1] - 0.4 * X[:, 2]))) + rng.normal(scale=0.2, size=n), 0.0, 1.0)
+    np.testing.assert_allclose(m.fit_fractional_logit(X, y).coefficients, GOLDEN_WELL_CONDITIONED, rtol=0, atol=1e-12)
+
+
 # ---------------------------------------------------------------- RV-607
 
 
