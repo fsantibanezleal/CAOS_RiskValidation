@@ -68,20 +68,31 @@ def lstsq(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 def logit_quasi_mle(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """The Bernoulli quasi-maximum-likelihood estimator of Papke and Wooldridge (1996) by Newton iterations with step
-    halving, from a zero start: maximises sum(y x'b - log(1 + exp(x'b))). The score X'(y - mu) is below 1e-11 at
-    the end."""
+    halving, from a zero start: maximises sum(y x'b - log(1 + exp(x'b))). At the end the score X'(y - mu) is below
+    1e-11, or within the rounding bound of its own sums when that bound is larger (a sample of millions of rows).
+
+    The step-halving test compares two log-likelihoods, each a sum over every row; near the optimum the gain a Newton
+    step predicts (half the decrement score'step) falls below the rounding of those sums, and the comparison then
+    decides on noise. Such a step is taken whole: the quadratic model is exact there, and halving it would stall the
+    iteration with a score far above the tolerance (BL-094; the 1.0.0 solver did so on the Contraste C08 cohorts of
+    50,000 to 70,000 rows)."""
     _check_rank(x)
     b = np.zeros(x.shape[1])
+    eps = np.finfo(float).eps
 
-    def ll(beta: np.ndarray) -> float:
+    def ll(beta: np.ndarray) -> tuple[float, float]:
+        """The log-likelihood and the rounding bound of its sum (eps times the sum of the absolute terms, times 8)."""
         z = x @ beta
-        return float(np.sum(y * z - np.logaddexp(0.0, z)))
+        terms = y * z - np.logaddexp(0.0, z)
+        return float(np.sum(terms)), 8.0 * eps * float(np.sum(np.abs(y * z) + np.logaddexp(0.0, z)))
 
-    cur = ll(b)
+    cur, _ = ll(b)
     for _ in range(200):
         mu = special.expit(x @ b)
-        score = x.T @ (y - mu)
-        if np.max(np.abs(score)) < _SCORE_TOL:
+        resid = y - mu
+        score = x.T @ resid
+        score_bound = 8.0 * eps * float(np.max(np.abs(x).T @ np.abs(resid)))
+        if np.max(np.abs(score)) < max(_SCORE_TOL, score_bound):
             return b
         w = mu * (1.0 - mu)
         hess = (x * w[:, None]).T @ x
@@ -89,14 +100,19 @@ def logit_quasi_mle(x: np.ndarray, y: np.ndarray) -> np.ndarray:
             step = np.linalg.solve(hess, score)
         except np.linalg.LinAlgError as exc:
             raise ValueError("the fractional logit did not converge (singular information matrix)") from exc
-        scale = 1.0
-        while scale > 1e-12:
-            cand = b + scale * step
-            new = ll(cand)
-            if new >= cur - 1e-14:
-                break
-            scale *= 0.5
-        b, cur = cand, new
+        predicted_gain = 0.5 * float(score @ step)
+        full, bound = ll(b + step)
+        if predicted_gain <= bound:
+            b, cur = b + step, full
+        else:  # the 1.0.0 step halving, unchanged
+            scale = 1.0
+            while scale > 1e-12:
+                cand = b + scale * step
+                new = full if scale == 1.0 else ll(cand)[0]
+                if new >= cur - 1e-14:
+                    break
+                scale *= 0.5
+            b, cur = cand, new
         if np.max(np.abs(x @ b)) > _MAX_ABS_LINEAR:
             # judged on the linear predictor x'b, not on the coefficients, so that the unit of a covariate (a rate in
             # decimals or in percent) does not decide whether a legitimate fit is refused (review F2)
