@@ -4,6 +4,13 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [1.00.001] - 2026-10-22
+
+A patch of 1.00.000: no public name or signature changes.
+
+- `lgd_ead.lgd_models.logit_quasi_mle` (the fractional logit of `fit_fractional_logit`, the two stages of `fit_hurdle` and the direct EAD model of `ccf.fit_direct_ead`) no longer stalls near the optimum on samples of tens of thousands of rows (BL-094). Its step-halving test compared two log-likelihoods summed over every row, whose rounding (about 1e-8 at 70,000 rows) exceeds the gain a Newton step predicts there (about 1e-12); the test then decided on noise, halved the step away and ended with "did not converge within 200 iterations" and a score near 1e-8. A step whose predicted gain (half the Newton decrement) is below the rounding bound of the log-likelihood is now taken whole, and the score test also accepts a score within the rounding bound of its own sums. Where the log-likelihood can arbitrate, the 1.00.000 path is unchanged (a recorded golden holds to 1e-12). The Contraste C08 cohorts whose L2 and L4 rungs were reported not converged now fit, to the optimum of an independent L-BFGS-B solve within 3e-7.
+- Docs: the solver paragraph of `docs/lgd_ead/02_lgd-models.md` states the rule, and two of its formulas, and the Hull-White formulas of `docs/ccr/01_hw1f.md`, had LaTeX commands turned into control characters by an escaping slip (`\top`, `\beta`, `\varphi`, `\frac`); they are restored.
+
 ## [1.00.000] - 2026-10-21
 
 The first stable release: the public API is stated and held under semantic versioning, every registered p-value test has a measured size and power, and every policy a test row names resolves through a packaged file.

@@ -24,7 +24,10 @@ The estimator maximises the Bernoulli quasi-log-likelihood
 $$\ell(\beta)=\sum_i\big[y_i\log G(x_i^\top\beta)+(1-y_i)\log(1-G(x_i^\top\beta))\big],$$
 
 solved by Newton iterations with step halving from a zero start; the score equation $X^\top(y-\mu)=0$ holds to $10^{-8}$ and,
-with an intercept, $\sum\mu=\sum y$. A response outside [0, 1] raises. A linear predictor $x^	opeta$ that diverges beyond 40 in absolute value (perfect
+with an intercept, $\sum\mu=\sum y$. Near the optimum the gain a Newton step predicts, half the decrement
+$g^\top H^{-1}g$, falls below the rounding of the log-likelihood summed over every row; there the step is taken whole
+instead of halved on a comparison of two noisy sums (from 1.00.001; the 1.00.000 solver stalled on samples of 50,000 to
+70,000 rows and reported them not converged). A response outside [0, 1] raises. A linear predictor $x^\top\beta$ that diverges beyond 40 in absolute value (perfect
 separation, a group sitting only on the endpoints) raises rather than returning a boundary value; divergence is judged on the
 linear predictor, not on the coefficients, so the unit of a covariate (a rate in decimals or in percent) does not decide whether
 a legitimate fit is refused.
