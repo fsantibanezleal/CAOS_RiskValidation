@@ -32,6 +32,7 @@ from collections.abc import Sequence
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.validation.sequential._core import (
     check_alpha_level,
     counts,
@@ -48,6 +49,14 @@ _LOW = tuple(float(v) for v in np.geomspace(0.25, 1.0, 9)[:-1])
 _HIGH = tuple(float(v) for v in np.geomspace(1.0, 4.0, 9)[1:])
 
 
+@register(
+    "sequential.pd_grades",
+    family="sequential",
+    name="PD calibration e-process by grade",
+    h0="the defaults of every grade are Binomial(obligors, predicted PD) given the past",
+    reference=REFERENCE,
+    decision="p_value",
+)
 def pd_grade_eprocess(defaults: object, exposures: object, predicted_pd: object, *, alpha_level: float = 0.05,
                       direction: str = "two-sided", multipliers: Sequence[float] | None = None,
                       combine: str = "product", grades: Sequence[str] | None = None) -> GradeEProcessResult:

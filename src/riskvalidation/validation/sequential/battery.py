@@ -23,6 +23,7 @@ from collections.abc import Mapping
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.validation.sequential._core import check_alpha_level
 from riskvalidation.validation.sequential.monitor import EProcessResult
 
@@ -31,6 +32,14 @@ REFERENCE = (
 )
 
 
+@register(
+    "sequential.battery",
+    family="sequential",
+    name="Battery of e-processes",
+    h0="every component null holds (the intersection of the component nulls)",
+    reference=REFERENCE,
+    decision="p_value",
+)
 def eprocess_battery(components: Mapping[str, EProcessResult], *, combine: str = "average",
                      alpha_level: float | None = None) -> EProcessResult:
     """Combine named e-processes of equal length into one.
