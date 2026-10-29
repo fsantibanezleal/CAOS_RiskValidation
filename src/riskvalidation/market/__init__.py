@@ -16,5 +16,6 @@ __all__ = [
     "gas_fz",
     "historical",
     "parametric",
+    "pla_complement",
     "scoring",
 ]
