@@ -31,6 +31,7 @@ from collections.abc import Sequence
 import numpy as np
 
 from riskvalidation.core.hashing import inputs_hash
+from riskvalidation.core.registry import register
 from riskvalidation.validation.sequential._core import (
     check_alpha_level,
     check_open_unit,
@@ -48,6 +49,14 @@ _HIT_LOW, _HIT_HIGH = (0.25, 0.5), (1.5, 2.0, 3.0, 4.0, 6.0, 10.0)
 _CLUSTER = (3.0, 6.0, 12.0, 25.0, 50.0)
 
 
+@register(
+    "sequential.var_hits",
+    family="sequential",
+    name="VaR hit-rate e-process",
+    h0="the hits are independent Bernoulli(alpha): the VaR exceedance probability equals alpha",
+    reference=REFERENCE,
+    decision="p_value",
+)
 def var_hit_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05, direction: str = "two-sided",
                      multipliers: Sequence[float] | None = None) -> EProcessResult:
     """The e-process of the VaR hit rate against `alpha`, the exceedance probability the VaR claims (a decimal, for
@@ -80,6 +89,14 @@ def var_hit_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05, d
                 "weights": [1.0 / m.size] * int(m.size), "n_events": int(h.sum())})
 
 
+@register(
+    "sequential.var_hit_clustering",
+    family="sequential",
+    name="VaR hit-clustering e-process",
+    h0="the hits are independent Bernoulli(alpha): no hit is more likely the day after a hit",
+    reference=REFERENCE + "; Christoffersen (1998), doi:10.2307/2527341",
+    decision="p_value",
+)
 def var_hit_clustering_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05,
                                 multipliers: Sequence[float] | None = None) -> EProcessResult:
     """The e-process of hit clustering: the null is independent Bernoulli(alpha); the alternatives are first-order

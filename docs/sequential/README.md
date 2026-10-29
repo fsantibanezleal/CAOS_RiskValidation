@@ -180,3 +180,15 @@ clustering the repeated independence test is faster at a size above 5 %.
 - Jeffreys (1946), Proc. R. Soc. A 186:453-461, doi:10.1098/rspa.1946.0056 (the prior of the PD mixture).
 - The application to PD calibration by vintage and to a validator's battery is, to the author's knowledge, not published
   (UNVERIFIED: a literature search was not run in this unit; the research brief records the same status).
+
+## The registered monitors
+
+Each monitor is in the test catalogue (`riskvalidation.core.registry`); its `TestResult` (`EProcessResult.to_test_result`) names the
+id, the null hypothesis and the reference below, and decides on the anytime-valid p-value at the monitor's size.
+
+| Test id | Monitor | Null hypothesis |
+|---|---|---|
+| `sequential.var_hits` | `var_hit_eprocess` | the hits are independent Bernoulli(alpha): the VaR exceedance probability equals alpha |
+| `sequential.var_hit_clustering` | `var_hit_clustering_eprocess` | no hit is more likely the day after a hit |
+| `sequential.pd_grades` | `pd_grade_eprocess` | the defaults of every grade are Binomial(obligors, predicted PD) given the past |
+| `sequential.battery` | `eprocess_battery` | every component null holds (the intersection of the component nulls) |

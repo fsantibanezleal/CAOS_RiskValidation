@@ -93,7 +93,8 @@ class EProcessResult:
         """The engine's result record: red when the monitor rejected, green otherwise, `not_evaluated` when empty.
 
         statistic = `sup E_t` (clipped at `exp(700)`), p_value = the anytime-valid p-value, metric = the final `E_n`.
-        The record is not registered in the test catalogue.
+        The monitor ids are registered in the test catalogue (`sequential.var_hits`, `sequential.var_hit_clustering`,
+        `sequential.pd_grades`, `sequential.battery`).
         """
         kw: dict[str, Any] = {
             "test_id": self.monitor_id, "h0": self.h0, "reference": self.reference, "policy_version": VERSION_LABEL,
