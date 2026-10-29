@@ -55,7 +55,7 @@ _HIGH = tuple(float(v) for v in np.geomspace(1.0, 4.0, 9)[1:])
     name="PD calibration e-process by grade",
     h0="the defaults of every grade are Binomial(obligors, predicted PD) given the past",
     reference=REFERENCE,
-    decision="p_value",
+    decision="metric",
 )
 def pd_grade_eprocess(defaults: object, exposures: object, predicted_pd: object, *, alpha_level: float = 0.05,
                       direction: str = "two-sided", multipliers: Sequence[float] | None = None,
