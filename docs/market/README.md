@@ -24,7 +24,8 @@ numbers; the functions of `riskvalidation.market` take and return the return con
 | [05. Scoring and comparison](05_scoring-and-comparison.md) | the FZ0 loss and its reduction, the tick loss, Diebold-Mariano, the Model Confidence Set |
 | [06. FRTB tests](06_frtb-tests.md) | the binomial table of MAR32.9, the zones and multipliers, the desk limits, the PLA Spearman, KS and zones |
 | [07. The back-tests](07_backtests.md) | each back-test as a `TestResult`: statistic, p-value, light, edge cases, the size of each on correct forecasts |
-| [08. The PLA complement](08_pla-complement.md) | the beyond-tier scale-and-level complement to the PLA test: Mincer-Zarnowitz Wald, absolute and rolling Spearman, a calibrated decision, its measured power and size |
+| [08. Conformal recalibration](08_conformal-recalibration.md) | the beyond-tier adaptive conformal recalibration of a VaR model's level (Gibbs and Candes), its ES at the adapted level, wrapped against unwrapped on the C11 windows, and the verdict |
+| [09. The PLA complement](09_pla-complement.md) | the beyond-tier scale-and-level complement to the PLA test: Mincer-Zarnowitz Wald, absolute and rolling Spearman, a calibrated decision, its measured power and size |
 
 ## Sources read for this unit, and what was not
 

@@ -170,7 +170,7 @@ def test_complement_is_added_to_not_substituted_for_the_pla_zone():
 def test_defining_behaviour_hypothesis_on_known_truth():
     """The plan's hypothesis in a test's time: at a size of 1 percent per statistic the rolling-mean statistic flags a
     20-day-stale volatility in at least 10 percent of replications (the refutation bound; the 30 percent hypothesis is
-    decided in docs/market/08_pla-complement.md at 6,000 replications) while the regulatory zone flags fewer, and the
+    decided in docs/market/09_pla-complement.md at 6,000 replications) while the regulatory zone flags fewer, and the
     null stays at its size."""
     null = [pc.pla_complement_statistics(*p) for p in _null_pairs(10_000, 800)]
     th = pc.pla_complement_calibrate(null, size=0.01, correction="none")

@@ -4,6 +4,30 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [1.01.000] - 2026-10-28
+
+A minor release: names are added, none removed or changed (`docs/api-policy.md`). Each method has a page with its
+evaluation, the hypothesis it was built to test and the measured verdict, negative or partial results included.
+
+- `market.pla_complement` (new): a scale-and-level complement to the FRTB P&L attribution test: a Mincer-Zarnowitz Wald test
+  of intercept 0 and slope 1 with HC3 covariance, the Spearman correlation of absolute P&L and of 20-day rolling means, the
+  thresholds calibrated on a simulated null; the regulatory zone is returned unchanged. On the C13 generator the stale-volatility
+  model the PLA flags in 0 of 1,000 replications is flagged in 999 (held-out size 1.2 %). Page `docs/market/09_pla-complement.md`.
+- `transitions.withdrawals` (new): the PD by grade as a function of the odds k of a rating withdrawal in the year of default,
+  the Manski bounds, the tipping k and a k anchored on a second default count. On grade B the anchored interval covers the true
+  PD in 98.5 to 99.5 % of 200 repetitions; the existing treatments fall under 50 % only at ten times the cohort. Page
+  `docs/transitions/06_withdrawal-bounds.md`.
+- `validation.sequential` (new subpackage): betting e-processes for VaR hits and their clustering, for defaults against
+  predicted PD by grade, and a battery, with anytime-valid size (Ville). The size holds (2.2 % where a daily Kupiec read
+  rejects 65.5 %); the power cost is 12.2 points at a hit-rate factor of 3, over the 10 the hypothesis allowed, and 8.1 at 4.
+  Page `docs/sequential/README.md`.
+- `market.conformal` (new): adaptive conformal inference on a VaR model's level (Gibbs and Candes), with ES from the model's
+  tail at the adapted level and a wrapped-against-unwrapped comparison. Page `docs/market/08_conformal-recalibration.md`.
+- `oprisk.robust` (new): optimally bias-robust and Cramer-von Mises severity fits and the mean-adjusted single-loss
+  approximation. Under 3 % gross losses the robust fits are closer to the true capital than the lognormal MLE; on clean data
+  the MLE stays the tightest. Page `docs/oprisk/06_robust-severity.md` (148 to 170 histories per scenario).
+- `scripts/make_api_policy.py` lists the modules of a nested subpackage.
+
 ## [1.00.001] - 2026-10-22
 
 A patch of 1.00.000: no public name or signature changes.
