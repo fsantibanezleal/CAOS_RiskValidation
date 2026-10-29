@@ -1,0 +1,1026 @@
+{
+  "seed": 20261028,
+  "hits": {
+    "alpha": 0.01,
+    "horizon": 1000,
+    "window": 250,
+    "reps": 2000,
+    "scenarios": {
+      "null": {
+        "e_rate": {
+          "ever": 0.022,
+          "by": 0.0145,
+          "median_day": null,
+          "median_day_among_detected": 137.0
+        },
+        "e_rate_upper": {
+          "ever": 0.026,
+          "by": 0.018,
+          "median_day": null,
+          "median_day_among_detected": 103.0
+        },
+        "e_cluster": {
+          "ever": 0.004,
+          "by": 0.0,
+          "median_day": null,
+          "median_day_among_detected": 675.0
+        },
+        "e_battery": {
+          "ever": 0.009,
+          "by": 0.006,
+          "median_day": null,
+          "median_day_among_detected": 84.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.0955
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.6555,
+          "by": 0.0955,
+          "median_day": 729.0,
+          "median_day_among_detected": 501.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.336,
+          "by": 0.2355,
+          "median_day": null,
+          "median_day_among_detected": 192.0
+        },
+        "basel_traffic_light": {
+          "ever": 0.608,
+          "by": 0.1155,
+          "median_day": 787.5,
+          "median_day_among_detected": 487.5
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.076,
+          "by": 0.0115,
+          "median_day": null,
+          "median_day_among_detected": 555.0
+        },
+        "basel_first_non_green_count": 5
+      },
+      "rate x2": {
+        "e_rate": {
+          "ever": 0.5565,
+          "by": 0.172,
+          "median_day": 867.0,
+          "median_day_among_detected": 430.0
+        },
+        "e_rate_upper": {
+          "ever": 0.593,
+          "by": 0.2155,
+          "median_day": 787.0,
+          "median_day_among_detected": 396.0
+        },
+        "e_cluster": {
+          "ever": 0.03,
+          "by": 0.0085,
+          "median_day": null,
+          "median_day_among_detected": 324.0
+        },
+        "e_battery": {
+          "ever": 0.464,
+          "by": 0.1195,
+          "median_day": null,
+          "median_day_among_detected": 462.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.248
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.8905,
+          "by": 0.248,
+          "median_day": 398.5,
+          "median_day_among_detected": 357.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.8745,
+          "by": 0.4715,
+          "median_day": 280.0,
+          "median_day_among_detected": 227.0
+        },
+        "basel_traffic_light": {
+          "ever": 0.994,
+          "by": 0.5685,
+          "median_day": 250.0,
+          "median_day_among_detected": 250.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.159,
+          "by": 0.018,
+          "median_day": null,
+          "median_day_among_detected": 553.0
+        },
+        "basel_first_non_green_count": 5
+      },
+      "rate x3": {
+        "e_rate": {
+          "ever": 0.9795,
+          "by": 0.504,
+          "median_day": 238.5,
+          "median_day_among_detected": 235.0
+        },
+        "e_rate_upper": {
+          "ever": 0.9845,
+          "by": 0.568,
+          "median_day": 225.0,
+          "median_day_among_detected": 219.0
+        },
+        "e_cluster": {
+          "ever": 0.0925,
+          "by": 0.032,
+          "median_day": null,
+          "median_day_among_detected": 447.0
+        },
+        "e_battery": {
+          "ever": 0.965,
+          "by": 0.4315,
+          "median_day": 298.0,
+          "median_day_among_detected": 290.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.6265
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.9975,
+          "by": 0.6265,
+          "median_day": 250.0,
+          "median_day_among_detected": 250.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.999,
+          "by": 0.7965,
+          "median_day": 111.0,
+          "median_day_among_detected": 111.0
+        },
+        "basel_traffic_light": {
+          "ever": 1.0,
+          "by": 0.884,
+          "median_day": 250.0,
+          "median_day_among_detected": 250.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.1535,
+          "by": 0.0135,
+          "median_day": null,
+          "median_day_among_detected": 577.0
+        },
+        "basel_first_non_green_count": 5
+      },
+      "rate x4": {
+        "e_rate": {
+          "ever": 1.0,
+          "by": 0.785,
+          "median_day": 129.0,
+          "median_day_among_detected": 129.0
+        },
+        "e_rate_upper": {
+          "ever": 1.0,
+          "by": 0.8175,
+          "median_day": 110.0,
+          "median_day_among_detected": 110.0
+        },
+        "e_cluster": {
+          "ever": 0.1925,
+          "by": 0.057,
+          "median_day": null,
+          "median_day_among_detected": 474.0
+        },
+        "e_battery": {
+          "ever": 0.9985,
+          "by": 0.732,
+          "median_day": 154.0,
+          "median_day_among_detected": 154.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.866
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 1.0,
+          "by": 0.866,
+          "median_day": 250.0,
+          "median_day_among_detected": 250.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 1.0,
+          "by": 0.939,
+          "median_day": 66.0,
+          "median_day_among_detected": 66.0
+        },
+        "basel_traffic_light": {
+          "ever": 1.0,
+          "by": 0.974,
+          "median_day": 250.0,
+          "median_day_among_detected": 250.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.167,
+          "by": 0.012,
+          "median_day": null,
+          "median_day_among_detected": 600.5
+        },
+        "basel_first_non_green_count": 5
+      },
+      "cluster 0.1": {
+        "e_rate": {
+          "ever": 0.048,
+          "by": 0.0345,
+          "median_day": null,
+          "median_day_among_detected": 138.0
+        },
+        "e_rate_upper": {
+          "ever": 0.055,
+          "by": 0.046,
+          "median_day": null,
+          "median_day_among_detected": 92.5
+        },
+        "e_cluster": {
+          "ever": 0.249,
+          "by": 0.0345,
+          "median_day": null,
+          "median_day_among_detected": 594.5
+        },
+        "e_battery": {
+          "ever": 0.239,
+          "by": 0.048,
+          "median_day": null,
+          "median_day_among_detected": 533.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.125
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.7325,
+          "by": 0.125,
+          "median_day": 606.5,
+          "median_day_among_detected": 454.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.3905,
+          "by": 0.274,
+          "median_day": null,
+          "median_day_among_detected": 192.0
+        },
+        "basel_traffic_light": {
+          "ever": 0.6075,
+          "by": 0.119,
+          "median_day": 772.0,
+          "median_day_among_detected": 480.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.5715,
+          "by": 0.148,
+          "median_day": 816.5,
+          "median_day_among_detected": 438.0
+        },
+        "basel_first_non_green_count": 5
+      },
+      "cluster 0.2": {
+        "e_rate": {
+          "ever": 0.0865,
+          "by": 0.052,
+          "median_day": null,
+          "median_day_among_detected": 129.0
+        },
+        "e_rate_upper": {
+          "ever": 0.09,
+          "by": 0.068,
+          "median_day": null,
+          "median_day_among_detected": 74.0
+        },
+        "e_cluster": {
+          "ever": 0.531,
+          "by": 0.1105,
+          "median_day": 938.5,
+          "median_day_among_detected": 503.5
+        },
+        "e_battery": {
+          "ever": 0.516,
+          "by": 0.12,
+          "median_day": 958.0,
+          "median_day_among_detected": 473.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.172
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.8325,
+          "by": 0.172,
+          "median_day": 497.5,
+          "median_day_among_detected": 430.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.526,
+          "by": 0.3695,
+          "median_day": 776.0,
+          "median_day_among_detected": 192.0
+        },
+        "basel_traffic_light": {
+          "ever": 0.635,
+          "by": 0.1325,
+          "median_day": 724.5,
+          "median_day_among_detected": 446.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.787,
+          "by": 0.2725,
+          "median_day": 471.0,
+          "median_day_among_detected": 356.5
+        },
+        "basel_first_non_green_count": 5
+      },
+      "cluster 0.4": {
+        "e_rate": {
+          "ever": 0.1835,
+          "by": 0.1005,
+          "median_day": null,
+          "median_day_among_detected": 182.0
+        },
+        "e_rate_upper": {
+          "ever": 0.1675,
+          "by": 0.1185,
+          "median_day": null,
+          "median_day_among_detected": 101.0
+        },
+        "e_cluster": {
+          "ever": 0.78,
+          "by": 0.2515,
+          "median_day": 543.5,
+          "median_day_among_detected": 408.0
+        },
+        "e_battery": {
+          "ever": 0.7935,
+          "by": 0.2545,
+          "median_day": 540.0,
+          "median_day_among_detected": 411.0
+        },
+        "kupiec_one_shot_250": {
+          "power": 0.2845
+        },
+        "kupiec_trailing_250_daily": {
+          "ever": 0.944,
+          "by": 0.2845,
+          "median_day": 372.5,
+          "median_day_among_detected": 354.0
+        },
+        "kupiec_cumulative_daily": {
+          "ever": 0.6985,
+          "by": 0.497,
+          "median_day": 263.5,
+          "median_day_among_detected": 192.0
+        },
+        "basel_traffic_light": {
+          "ever": 0.674,
+          "by": 0.176,
+          "median_day": 670.0,
+          "median_day_among_detected": 435.0
+        },
+        "independence_trailing_250_daily": {
+          "ever": 0.9125,
+          "by": 0.435,
+          "median_day": 299.0,
+          "median_day_among_detected": 266.0
+        },
+        "basel_first_non_green_count": 5
+      }
+    }
+  },
+  "pd_grades": {
+    "pd": [
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1
+    ],
+    "obligors_per_grade_year": 2000,
+    "years": 10,
+    "reps": 2000,
+    "scenarios": {
+      "PD x1": {
+        "e_product": {
+          "ever": 0.0,
+          "by": 0.0,
+          "median_day": null,
+          "median_day_among_detected": null
+        },
+        "e_average": {
+          "ever": 0.0055,
+          "by": 0.0045,
+          "median_day": null,
+          "median_day_among_detected": 2.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 0.051
+        },
+        "chi2_read_every_year": {
+          "ever": 0.201,
+          "by": 0.1045,
+          "median_day": null,
+          "median_day_among_detected": 3.0
+        }
+      },
+      "PD x1.05": {
+        "e_product": {
+          "ever": 0.0,
+          "by": 0.0,
+          "median_day": null,
+          "median_day_among_detected": null
+        },
+        "e_average": {
+          "ever": 0.038,
+          "by": 0.0095,
+          "median_day": null,
+          "median_day_among_detected": 6.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 0.6835
+        },
+        "chi2_read_every_year": {
+          "ever": 0.7915,
+          "by": 0.33,
+          "median_day": 6.0,
+          "median_day_among_detected": 4.0
+        }
+      },
+      "PD x1.1": {
+        "e_product": {
+          "ever": 0.242,
+          "by": 0.029,
+          "median_day": null,
+          "median_day_among_detected": 7.0
+        },
+        "e_average": {
+          "ever": 0.611,
+          "by": 0.1435,
+          "median_day": 8.0,
+          "median_day_among_detected": 6.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 1.0
+        },
+        "chi2_read_every_year": {
+          "ever": 1.0,
+          "by": 0.813,
+          "median_day": 2.0,
+          "median_day_among_detected": 2.0
+        }
+      },
+      "PD x1.25": {
+        "e_product": {
+          "ever": 1.0,
+          "by": 0.997,
+          "median_day": 2.0,
+          "median_day_among_detected": 2.0
+        },
+        "e_average": {
+          "ever": 1.0,
+          "by": 0.9965,
+          "median_day": 2.0,
+          "median_day_among_detected": 2.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 1.0
+        },
+        "chi2_read_every_year": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        }
+      },
+      "PD x1.5": {
+        "e_product": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        },
+        "e_average": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 1.0
+        },
+        "chi2_read_every_year": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        }
+      },
+      "PD x2": {
+        "e_product": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        },
+        "e_average": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        },
+        "chi2_one_shot_year_10": {
+          "power": 1.0
+        },
+        "chi2_read_every_year": {
+          "ever": 1.0,
+          "by": 1.0,
+          "median_day": 1.0,
+          "median_day_among_detected": 1.0
+        }
+      }
+    }
+  },
+  "c11": {
+    "equity-2007-09": {
+      "n_days": 504,
+      "models": [
+        {
+          "model": "hs-250",
+          "n_exceedances": 19,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "hs-500",
+          "n_exceedances": 27,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "awhs",
+          "n_exceedances": 16,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "dn-rolling",
+          "n_exceedances": 57,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "cf-rolling",
+          "n_exceedances": 26,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "ewma",
+          "n_exceedances": 16,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "garch-t",
+          "n_exceedances": 16,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gjr-t",
+          "n_exceedances": 14,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "egarch-t",
+          "n_exceedances": 20,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "fhs",
+          "n_exceedances": 13,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "evt-mf",
+          "n_exceedances": 13,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "caviar-sav",
+          "n_exceedances": 13,
+          "e_process_day": 87,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "caviar-as",
+          "n_exceedances": 15,
+          "e_process_day": 87,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "caviar-es",
+          "n_exceedances": 13,
+          "e_process_day": 87,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gas-fz-1",
+          "n_exceedances": 20,
+          "e_process_day": 19,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gas-fz-2",
+          "n_exceedances": 26,
+          "e_process_day": 24,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gas-hybrid",
+          "n_exceedances": 27,
+          "e_process_day": 19,
+          "kupiec_cumulative_day": 50,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        }
+      ],
+      "n_flagged_by_traffic_light": 17,
+      "n_flagged_by_e_process": 17,
+      "n_flagged_by_traffic_light_missed_by_e_process": 0,
+      "median_e_day_among_traffic_light_flagged": 24.0,
+      "median_traffic_light_day": 250.0,
+      "e_process_earlier": true
+    },
+    "fx-2008": {
+      "n_days": 251,
+      "models": [
+        {
+          "model": "hs-250",
+          "n_exceedances": 10,
+          "e_process_day": 79,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "hs-500",
+          "n_exceedances": 13,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "awhs",
+          "n_exceedances": 6,
+          "e_process_day": 128,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "dn-rolling",
+          "n_exceedances": 23,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "cf-rolling",
+          "n_exceedances": 14,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "ewma",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "garch-t",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "gjr-t",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "egarch-t",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "fhs",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "evt-mf",
+          "n_exceedances": 3,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "caviar-sav",
+          "n_exceedances": 5,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "caviar-as",
+          "n_exceedances": 4,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": null,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "caviar-es",
+          "n_exceedances": 5,
+          "e_process_day": null,
+          "kupiec_cumulative_day": 68,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": null
+        },
+        {
+          "model": "gas-fz-1",
+          "n_exceedances": 11,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gas-fz-2",
+          "n_exceedances": 19,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        },
+        {
+          "model": "gas-hybrid",
+          "n_exceedances": 16,
+          "e_process_day": 68,
+          "kupiec_cumulative_day": 64,
+          "traffic_light_day": 250,
+          "kupiec_trailing_day": 250
+        }
+      ],
+      "n_flagged_by_traffic_light": 10,
+      "n_flagged_by_e_process": 8,
+      "n_flagged_by_traffic_light_missed_by_e_process": 2,
+      "median_e_day_among_traffic_light_flagged": 68.0,
+      "median_traffic_light_day": 250.0,
+      "e_process_earlier": true
+    }
+  },
+  "c03": {
+    "fy2006-07": {
+      "vintages": [
+        2006,
+        2007
+      ],
+      "months": [
+        12,
+        24,
+        36,
+        48,
+        60
+      ],
+      "first_age_step_rejected": 1,
+      "anytime_p_value": 0.0,
+      "grade_first_age_step": {
+        "2006": 1,
+        "2007": 1
+      },
+      "log_e_by_age": [
+        416.716,
+        4553.614,
+        8550.952,
+        14878.405,
+        18054.91
+      ]
+    },
+    "fy2008-10": {
+      "vintages": [
+        2008,
+        2009,
+        2010
+      ],
+      "months": [
+        12,
+        24,
+        36,
+        48,
+        60
+      ],
+      "first_age_step_rejected": 1,
+      "anytime_p_value": 0.0,
+      "grade_first_age_step": {
+        "2008": 1,
+        "2009": 1,
+        "2010": 2
+      },
+      "log_e_by_age": [
+        235.868,
+        2552.951,
+        5908.234,
+        6528.008,
+        5515.258
+      ]
+    },
+    "fy2011-14": {
+      "vintages": [
+        2011,
+        2012,
+        2013,
+        2014
+      ],
+      "months": [
+        12,
+        24,
+        36,
+        48,
+        60
+      ],
+      "first_age_step_rejected": null,
+      "anytime_p_value": 1.0,
+      "grade_first_age_step": {
+        "2011": null,
+        "2012": null,
+        "2013": null,
+        "2014": null
+      },
+      "log_e_by_age": [
+        -13.123,
+        -138.782,
+        -429.606,
+        -757.707,
+        -1094.736
+      ]
+    },
+    "fy2015-17": {
+      "vintages": [
+        2015,
+        2016,
+        2017
+      ],
+      "months": [
+        12,
+        24,
+        36,
+        48,
+        60
+      ],
+      "first_age_step_rejected": null,
+      "anytime_p_value": 1.0,
+      "grade_first_age_step": {
+        "2015": null,
+        "2016": null,
+        "2017": null
+      },
+      "log_e_by_age": [
+        -22.006,
+        -242.553,
+        -662.604,
+        -1178.303,
+        -1550.21
+      ]
+    },
+    "fy2018-20": {
+      "vintages": [
+        2018,
+        2019,
+        2020
+      ],
+      "months": [
+        12,
+        24,
+        36,
+        48,
+        60
+      ],
+      "first_age_step_rejected": null,
+      "anytime_p_value": 1.0,
+      "grade_first_age_step": {
+        "2018": 1,
+        "2019": null,
+        "2020": null
+      },
+      "log_e_by_age": [
+        -5.602,
+        -140.728,
+        -375.396,
+        -563.839,
+        -672.635
+      ]
+    }
+  },
+  "verdict": {
+    "H1_size": {
+      "holds": true,
+      "e_process_size": 0.022,
+      "kupiec_trailing_daily_size": 0.6555,
+      "kupiec_cumulative_daily_size": 0.336,
+      "bound": 0.06462019151721345
+    },
+    "H2_delay": {
+      "holds": true
+    },
+    "H3_power_cost": {
+      "holds": false
+    },
+    "detail": {
+      "rate x3": {
+        "e_median_day": 238.5,
+        "traffic_light_median_day": 250.0,
+        "H2": true,
+        "kupiec_power_250": 0.6265,
+        "e_power_by_250": 0.504,
+        "power_cost": 0.12249999999999994,
+        "H3": false
+      },
+      "rate x4": {
+        "e_median_day": 129.0,
+        "traffic_light_median_day": 250.0,
+        "H2": true,
+        "kupiec_power_250": 0.866,
+        "e_power_by_250": 0.785,
+        "power_cost": 0.08099999999999996,
+        "H3": true
+      }
+    },
+    "H4_real_data": {
+      "holds": true,
+      "equity-2007-09": {
+        "median_e_day": 24.0,
+        "median_traffic_light_day": 250.0
+      },
+      "fx-2008": {
+        "median_e_day": 68.0,
+        "median_traffic_light_day": 250.0
+      }
+    },
+    "hypothesis_holds": false
+  }
+}
