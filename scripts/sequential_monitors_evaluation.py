@@ -3,11 +3,14 @@
 
 Three parts, each deterministic under ``--seed``:
 
-1. VaR hits (generator G17, ``riskvalidation.generators.VarHits``): ``alpha = 0.01``, horizon ``T = 1000`` days, ``--reps``
+1. VaR hits (generator G17, ``riskvalidation.generators.VarHits``): ``alpha = 0.01``, horizon ``T = 1000`` days,
+   ``--reps``
    series per scenario. Scenarios: the null; a hit rate multiplied by 2, 3 and 4 (the severity ladder; the hypothesis is
-   judged at 3 and 4); a first-order clustering with P(hit | hit) = 0.1, 0.2 and 0.4 at the right rate. Monitors: the rate
+   judged at 3 and 4); a first-order clustering with P(hit | hit) = 0.1, 0.2 and 0.4 at the right rate. Monitors:
+   the rate
    e-process, the clustering e-process, their average (the battery). Comparators: the Kupiec test on the first 250 days
-   (one reading), the Kupiec test on the trailing 250 days read every day from day 250, the Kupiec test on all days so far
+   (one reading), the Kupiec test on the trailing 250 days read every day from day 250, the Kupiec test on all
+   days so far
    read every day from day 50, the Basel traffic light (first day with the trailing 250-day count outside the green
    zone) and the Christoffersen independence test on the trailing 250 days read every day from day 250.
 2. Defaults against PD by grade: five grades (PD 0.5, 1, 2, 5, 10 %), 2000 obligors per grade and year, ten yearly
@@ -15,7 +18,8 @@ Three parts, each deterministic under ``--seed``:
    first run in which 1.25 and above were all detected in the first two years, which does not separate the monitors).
    Monitors: the e-process combined by product and by average. Comparators: the chi-square test across grades on the
    cumulative counts, read once at year 10 and read every year.
-3. Real data (only with ``--contraste-data DIR``, the ``data/derived`` folder of Contraste): C11 exceedance days of the 17
+3. Real data (only with ``--contraste-data DIR``, the ``data/derived`` folder of Contraste): C11 exceedance days
+   of the 17
    models, ``equity-2007-09`` and ``fx-2008``, alpha 1 %, against the Basel traffic light and the Kupiec test on the
    trailing 250 days; C03 charge-offs by year of age against the predicted cumulative PD, per vintage.
 
@@ -231,7 +235,8 @@ def run_c03(data: Path) -> dict:
         n_vals = np.array([c["n"] for c in curves], dtype=float)
         pred = np.array([c["predicted_cumulative_pd"] for c in curves], dtype=float)
         obs = np.array([c["observed_cumulative_pd"] for c in curves], dtype=float)
-        # steps are the five years of age; grades are the vintages; the interval PD is the increment of the cumulative PD
+        # steps are the five years of age; grades are the vintages; the interval PD is the increment of the
+        # cumulative PD
         p_int = np.diff(np.concatenate([np.zeros((len(curves), 1)), pred], axis=1), axis=1).T
         o_int = np.diff(np.concatenate([np.zeros((len(curves), 1)), obs], axis=1), axis=1).T
         n_mat = np.tile(n_vals, (p_int.shape[0], 1))
@@ -262,7 +267,8 @@ def verdict(hits: dict, c11: dict | None) -> dict:
         ok3 = cost < 0.10
         h2, h3 = h2 and ok2, h3 and ok3
         detail[name] = {"e_median_day": e_med, "traffic_light_median_day": tl_med, "H2": ok2,
-                        "kupiec_power_250": s[name]["kupiec_one_shot_250"]["power"], "e_power_by_250": r["e_rate"]["by"],
+                        "kupiec_power_250": s[name]["kupiec_one_shot_250"]["power"],
+                        "e_power_by_250": r["e_rate"]["by"],
                         "power_cost": cost, "H3": ok3}
     out = {"H1_size": {"holds": h1, "e_process_size": size_e, "kupiec_trailing_daily_size": size_k,
                        "kupiec_cumulative_daily_size": size_kc, "bound": 0.05 + mc},

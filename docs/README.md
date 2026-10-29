@@ -26,8 +26,9 @@ consumed by the Contraste workbench and runs both in a Python pipeline and in th
 | [tests.md](tests.md) | the validation test catalogue: PD calibration, discrimination, rating-system stability, population stability |
 | [regulatory.md](regulatory.md) | regulatory calculators: the IRB risk-weight functions by regime, expected loss against provisions |
 | [engines.md](engines.md) | reference engines: the one-factor model, most prudent estimation, PD curve calibration |
-| [transitions.md](transitions.md) | rating transitions: estimators of a migration matrix, the embedding problem and the EM generator, the Markov and time-homogeneity tests, intervals for PDs by grade and mobility, the through-the-cycle portfolio |
+| [transitions.md](transitions.md) | rating transitions: estimators of a migration matrix, the embedding problem and the EM generator, the Markov and time-homogeneity tests, intervals for PDs by grade and mobility, the through-the-cycle portfolio; the PD under informative withdrawals ([transitions/06_withdrawal-bounds.md](transitions/06_withdrawal-bounds.md)) |
 | [generators.md](generators.md) | known-truth generators and the size and power harness: rejection rates with their Monte Carlo error, exact rejection probabilities, published simulations reproduced |
+| [sequential/README.md](sequential/README.md) | sequential monitors: betting e-processes for VaR hits, defaults against PD by grade and a battery, with anytime-valid size, their evaluation and the verdict |
 | [governance/README.md](governance/README.md) | model governance: the scope test, the inventory and its dependency graph, the tiering rubric and its four readings, the lifecycle, the findings workflow, the review schedule, the opinion, the appetite metrics, the policy identity, the validation report and the five `gov.` tests; every number a stated convention |
 
 Each later unit adds its own section (further test families, regulatory calculators, engines, governance) in the
