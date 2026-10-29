@@ -38,7 +38,7 @@ REFERENCE = (
     name="Battery of e-processes",
     h0="every component null holds (the intersection of the component nulls)",
     reference=REFERENCE,
-    decision="p_value",
+    decision="metric",
 )
 def eprocess_battery(components: Mapping[str, EProcessResult], *, combine: str = "average",
                      alpha_level: float | None = None) -> EProcessResult:

@@ -55,7 +55,7 @@ _CLUSTER = (3.0, 6.0, 12.0, 25.0, 50.0)
     name="VaR hit-rate e-process",
     h0="the hits are independent Bernoulli(alpha): the VaR exceedance probability equals alpha",
     reference=REFERENCE,
-    decision="p_value",
+    decision="metric",
 )
 def var_hit_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05, direction: str = "two-sided",
                      multipliers: Sequence[float] | None = None) -> EProcessResult:
@@ -95,7 +95,7 @@ def var_hit_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05, d
     name="VaR hit-clustering e-process",
     h0="the hits are independent Bernoulli(alpha): no hit is more likely the day after a hit",
     reference=REFERENCE + "; Christoffersen (1998), doi:10.2307/2527341",
-    decision="p_value",
+    decision="metric",
 )
 def var_hit_clustering_eprocess(hits: object, alpha: float, *, alpha_level: float = 0.05,
                                 multipliers: Sequence[float] | None = None) -> EProcessResult:
