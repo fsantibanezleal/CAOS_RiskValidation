@@ -9,6 +9,7 @@ optional extra `market`) is imported inside the functions that need it. The back
 
 __all__ = [
     "caviar",
+    "conformal",
     "conventions",
     "evt",
     "frtb",
