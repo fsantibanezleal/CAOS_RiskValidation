@@ -446,11 +446,15 @@ Names: `FAMILIES`, `FAST_RUN_CLASS`, `FAST_RUN_RULES`, `FastRun`, `ListScenario`
 
 Market risk: VaR and ES estimators, the scoring and comparison of forecasts and the FRTB statistics.
 
-Modules, imported by path (`from riskvalidation.market import <module>`): `caviar`, `conventions`, `evt`, `frtb`, `garch`, `gas_fz`, `historical`, `parametric`, `scoring`.
+Modules, imported by path (`from riskvalidation.market import <module>`): `caviar`, `conformal`, `conventions`, `evt`, `frtb`, `garch`, `gas_fz`, `historical`, `parametric`, `pla_complement`, `scoring`.
 
 ### `riskvalidation.market.caviar`
 
 Names: `CaviarEsFit`, `CaviarFit`, `caviar_es_fit`, `caviar_es_forecast`, `caviar_var_forecast`, `dq_statistic_unchecked`, `dynamic_quantile_statistic`, `fit_caviar`.
+
+### `riskvalidation.market.conformal`
+
+Names: `AciComparison`, `AciResult`, `ConformalScores`, `aci_compare`, `aci_update`, `aci_var_es`, `forecast_scores`, `historical_forecaster`.
 
 ### `riskvalidation.market.conventions`
 
@@ -479,6 +483,10 @@ Names: `age_weighted_var_es`, `age_weights`, `filtered_hs_var_es`, `historical_v
 ### `riskvalidation.market.parametric`
 
 Names: `CornishFisher`, `cornish_fisher_var`, `delta_normal_var_es`, `ewma_effective_days`, `ewma_var_es`, `ewma_variance`.
+
+### `riskvalidation.market.pla_complement`
+
+Names: `DEFAULT_WINDOW`, `MZResult`, `PLAComplement`, `PLAComplementDecision`, `PLAComplementStatistics`, `PLAComplementThresholds`, `pla_abs_spearman`, `pla_complement`, `pla_complement_calibrate`, `pla_complement_decide`, `pla_complement_statistics`, `pla_mz_wald`, `pla_rolling_abs_spearman`.
 
 ### `riskvalidation.market.scoring`
 
@@ -542,7 +550,7 @@ Names: `RankStability`, `SeedDispersion`, `attribution_rank_stability`, `grade_a
 
 Operational risk: the loss distribution approach (distributions, aggregation, the single loss approximation, scenarios) and the standardised approach (SMA).
 
-Modules, imported by path (`from riskvalidation.oprisk import <module>`): `aggregate`, `distributions`, `scenarios`, `sla`, `sma`.
+Modules, imported by path (`from riskvalidation.oprisk import <module>`): `aggregate`, `distributions`, `robust`, `scenarios`, `sla`, `sma`.
 
 ### `riskvalidation.oprisk.aggregate`
 
@@ -551,6 +559,10 @@ Names: `AnnualLossSample`, `CompoundMoments`, `compound_poisson_moments`, `discr
 ### `riskvalidation.oprisk.distributions`
 
 Names: `FrequencyFit`, `SeverityFit`, `SpliceFit`, `TailProfile`, `fit_frequency`, `fit_severity`, `fit_splice`, `frequency_pmf`, `rescale_frequency`, `severity_cdf`, `severity_isf`, `severity_moment`, `severity_ppf`, `tail_index_profile`, `truncated_severity_cdf`.
+
+### `riskvalidation.oprisk.robust`
+
+Names: `MeanAdjustedSla`, `RobustSeverityFit`, `cramer_von_mises_distance`, `fit_severity_cvm`, `fit_severity_obre`, `sla_var_mean_adjusted`.
 
 ### `riskvalidation.oprisk.scenarios`
 
@@ -710,7 +722,7 @@ Names: `SkewedTFit`, `VarFit`, `fit_skewed_t_to_quantiles`, `fit_var`, `gar_quan
 
 Rating transitions: estimators, the embedding problem and the EM generator, intervals, mobility and the through-the-cycle portfolio.
 
-Modules, imported by path (`from riskvalidation.transitions import <module>`): `em`, `embedding`, `estimators`, `intervals`, `mobility`, `ttc`.
+Modules, imported by path (`from riskvalidation.transitions import <module>`): `em`, `embedding`, `estimators`, `intervals`, `mobility`, `ttc`, `withdrawals`.
 
 ### `riskvalidation.transitions.em`
 
@@ -735,6 +747,10 @@ Names: `svd_mobility`, `trace_mobility`.
 ### `riskvalidation.transitions.ttc`
 
 Names: `is_primitive`, `project`, `propagation_matrix`, `ttc_portfolio`.
+
+### `riskvalidation.transitions.withdrawals`
+
+Names: `ASSUMPTIONS`, `CRO_2020`, `MANSKI_1989`, `odds_multiplier`, `tipping_k`, `withdrawal_bounds`, `withdrawal_pd`, `withdrawn_defaulters`.
 
 ## `riskvalidation.validation`
 
@@ -815,6 +831,26 @@ Names: `bottom_up_vs_top_down`, `reverse_solution_check`, `satellite_backcast`, 
 ### `riskvalidation.validation.transitions`
 
 Names: `rating_markov_order`, `rating_matrix_reference`, `rating_momentum`, `rating_time_homogeneity`.
+
+### `riskvalidation.validation.sequential`
+
+Names, imported from the subpackage: `EProcessResult`, `GradeEProcessResult`, `anytime_p_value`, `battery`, `detection_time`, `eprocess_battery`, `monitor`, `pd_grade_eprocess`, `pd_grades`, `var_hit_clustering_eprocess`, `var_hit_eprocess`, `var_hits`.
+
+### `riskvalidation.validation.sequential.battery`
+
+Names: `eprocess_battery`.
+
+### `riskvalidation.validation.sequential.monitor`
+
+Names: `EProcessResult`, `GradeEProcessResult`, `anytime_p_value`, `detection_time`.
+
+### `riskvalidation.validation.sequential.pd_grades`
+
+Names: `pd_grade_eprocess`.
+
+### `riskvalidation.validation.sequential.var_hits`
+
+Names: `var_hit_clustering_eprocess`, `var_hit_eprocess`.
 
 <!-- generated:end -->
 

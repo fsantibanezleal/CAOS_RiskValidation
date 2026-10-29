@@ -7,6 +7,7 @@ Modules are imported by path (for example ``from riskvalidation.oprisk import ag
   maximum likelihood fits.
 - ``aggregate``: the compound annual loss by Monte Carlo, Panjer recursion and FFT, and what is read from it.
 - ``sla``: the single loss approximation, and its mean-corrected form, which is UNVERIFIED.
+- ``robust``: the optimally bias-robust and Cramer-von Mises severity fits and the mean-adjusted SLA (tier sota).
 - ``scenarios``: scenario analysis and its combination with loss data.
 - ``sma``: the OPE25 standardised approach (business indicator, BIC, loss component, ILM).
 
@@ -14,12 +15,14 @@ The engine computes and states no compliance claim: the LDA is the economic-capi
 dossier 05 F.1, never a Pillar 1 model, and collection thresholds, quantile levels and light parameters are policy
 parameters the caller supplies. Money is a float in one currency (the caller's); the engine never converts. A tail
 index of 1 or more has no mean: no function returns a finite mean-based number for it. The validation tests are in
-``riskvalidation.validation.oprisk``. Contract: ``engine-oprisk-api`` 1.0.0.
+``riskvalidation.validation.oprisk``.
+Contract: ``engine-oprisk-api`` 1.0.0; the module ``robust`` is added in 1.1.0 (a minor: no existing name changes).
 """
 
 __all__ = [
     "aggregate",
     "distributions",
+    "robust",
     "scenarios",
     "sla",
     "sma",

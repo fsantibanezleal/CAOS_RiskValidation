@@ -17,6 +17,7 @@ expected shortfall refuse), and a value that cannot be computed is an error or a
 | [03. SLA and scenarios](03_sla-and-scenarios.md) | the single loss approximation, its UNVERIFIED mean-corrected form, the scenario combination and the Bayesian credibility of Shevchenko and Wuthrich |
 | [04. The standardised approach](04_sma-ope25.md) | OPE25: the business indicator, the BIC, the loss component, the ILM, the discretions and the five-year rule |
 | [05. The validation tests](05_validation-tests.md) | the five tests with their light rules, and what must not be claimed |
+| [06. Robust severity](06_robust-severity.md) | optimally bias-robust and Cramer-von Mises severity fits, the mean-adjusted single-loss approximation, and their capital against the truth on contaminated and clean data |
 
 Modules are imported by path, for example `from riskvalidation.oprisk import aggregate` and
 `from riskvalidation.validation import oprisk`; nothing is re-exported from the package root. Requirements `RV-1201` to
