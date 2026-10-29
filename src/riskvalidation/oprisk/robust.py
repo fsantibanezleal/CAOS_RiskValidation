@@ -293,9 +293,20 @@ def _solve_aA(s: np.ndarray, c: float, start: np.ndarray | None = None
     if start is None:
         ainv = np.linalg.inv(s.T @ s / g)
         start = np.array([0.0, 0.0, ainv[0, 0], ainv[0, 1], ainv[1, 1]])
+    def solved(r) -> bool:
+        return bool(np.all(np.isfinite(r.x)) and float(np.max(np.abs(r.fun))) < 1e-9)
+
     sol = optimize.least_squares(resid, start, method="lm", xtol=1e-14, ftol=1e-14, gtol=1e-14, max_nfev=2000)
+    if not solved(sol):
+        # MINPACK's step tests can stop short of the root on some SciPy releases (1.15 stalls at a residual near 0.16
+        # where 1.18 reaches 1e-16): the trust-region solver on the Jacobian's scale, then Levenberg-Marquardt from it
+        alt = optimize.least_squares(resid, sol.x if np.all(np.isfinite(sol.x)) else start, method="trf", x_scale="jac",
+                                     xtol=1e-15, ftol=1e-15, gtol=1e-15, max_nfev=4000)
+        alt = optimize.least_squares(resid, alt.x, method="lm", xtol=1e-14, ftol=1e-14, gtol=1e-14, max_nfev=2000)
+        if solved(alt) or float(np.max(np.abs(alt.fun))) < float(np.max(np.abs(sol.fun))):
+            sol = alt
     d, w, _ = weights(sol.x)
-    ok = bool(np.all(np.isfinite(sol.x)) and float(np.max(np.abs(sol.fun))) < 1e-9)
+    ok = solved(sol)
     a, amat = unpack(sol.x)
     return a, amat, w, sol.x, ok
 
