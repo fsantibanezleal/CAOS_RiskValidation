@@ -86,6 +86,26 @@ def _names(mod) -> list[str]:
     return list(getattr(mod, "__all__", []))
 
 
+def _nested_packages(package: str) -> list[str]:
+    """The public subpackages one level below ``package`` (``riskvalidation.validation.sequential``, 1.1.0)."""
+    pkg = importlib.import_module(package)
+    return sorted(f"{package}.{m.name}" for m in pkgutil.iter_modules(pkg.__path__) if m.ispkg and not m.name.startswith("_"))
+
+
+def _module_sections(package: str, out: list[str]) -> None:
+    """A ``###`` section for each public module of ``package``, then for each nested subpackage (its ``__all__``) and,
+    recursively, its own modules."""
+    for sub in _public_modules(package):
+        names = _names(importlib.import_module(sub))
+        out.append(f"### `{sub}`\n")
+        out.append("Names: " + ", ".join(f"`{n}`" for n in names) + ".\n" if names else "The list is empty.\n")
+    for nested in _nested_packages(package):
+        names = _names(importlib.import_module(nested))
+        out.append(f"### `{nested}`\n")
+        out.append("Names, imported from the subpackage: " + ", ".join(f"`{n}`" for n in names) + ".\n" if names else "The list is empty.\n")
+        _module_sections(nested, out)
+
+
 def build() -> str:
     out: list[str] = []
     subs = sorted(m.name for m in pkgutil.iter_modules(riskvalidation.__path__) if m.ispkg)
@@ -106,11 +126,7 @@ def build() -> str:
         if not (mods or other):
             out.append("The list is empty.\n")
         if s:
-            for sub in _public_modules(name):
-                sm = importlib.import_module(sub)
-                names = _names(sm)
-                out.append(f"### `{sub}`\n")
-                out.append("Names: " + ", ".join(f"`{n}`" for n in names) + ".\n" if names else "The list is empty.\n")
+            _module_sections(name, out)
     return "\n".join(out)
 
 
