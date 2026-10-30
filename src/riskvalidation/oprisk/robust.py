@@ -373,9 +373,23 @@ def fit_severity_obre(law: str, losses: np.ndarray, collection_threshold: float 
         except (ValueError, np.linalg.LinAlgError, FloatingPointError):
             return np.full(2, 1e6)
 
+    def reached(x: np.ndarray) -> bool:
+        return bool(np.all(np.isfinite(x)) and float(np.max(np.abs(equation(x)))) < 1e-6)
+
     sol = optimize.root(equation, eta0, method="hybr", tol=1e-11)
-    ok = bool(sol.success and np.all(np.isfinite(sol.x)) and float(np.max(np.abs(equation(sol.x)))) < 1e-6)
-    eta = sol.x if ok else eta0
+    eta_hat = sol.x
+    if not (sol.success and reached(eta_hat)):
+        # Powell's hybrid method can stop short on some LAPACK builds (the Linux runner of the Python 3.10 job): the
+        # Levenberg-Marquardt root, then a trust-region least-squares solve of the same conditions, each from the start
+        for retry in (lambda: optimize.root(equation, eta0, method="lm", tol=1e-12).x,
+                      lambda: optimize.least_squares(equation, eta0, method="trf", x_scale="jac", xtol=1e-15,
+                                                     ftol=1e-15, gtol=1e-15, max_nfev=4000).x):
+            cand = retry()
+            if reached(cand):
+                eta_hat = cand
+                break
+    ok = reached(eta_hat)
+    eta = eta_hat if ok else eta0
     _, _, w, _ = weights_and_psi(eta)
     p = _full(law, eta, h)
     sn = model.nodes(eta)
