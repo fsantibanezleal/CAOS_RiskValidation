@@ -382,8 +382,8 @@ def fit_severity_obre(law: str, losses: np.ndarray, collection_threshold: float 
         # Powell's hybrid method can stop short on some LAPACK builds (the Linux runner of the Python 3.10 job): the
         # Levenberg-Marquardt root, then a trust-region least-squares solve of the same conditions, each from the start
         for retry in (lambda: optimize.root(equation, eta0, method="lm", tol=1e-12).x,
-                      lambda: optimize.least_squares(equation, eta0, method="trf", x_scale="jac", xtol=1e-15, ftol=1e-15,
-                                                     gtol=1e-15, max_nfev=4000).x):
+                      lambda: optimize.least_squares(equation, eta0, method="trf", x_scale="jac", xtol=1e-15,
+                                                     ftol=1e-15, gtol=1e-15, max_nfev=4000).x):
             cand = retry()
             if reached(cand):
                 eta_hat = cand
