@@ -1,4 +1,4 @@
-# 08. Adaptive conformal recalibration of VaR and ES (BS-16)
+# 08. Adaptive conformal recalibration of VaR and ES
 
 Module `riskvalidation.market.conformal`. Sources: Gibbs and Candes, "Adaptive Conformal Inference Under Distribution Shift",
 NeurIPS 34, 2021, arXiv 2106.00170; Christoffersen, International Economic Review 39(4):841-862, 1998,
@@ -31,7 +31,7 @@ empty or the whole line); the guarantee then holds only while the level stays in
 not. D-2, no conformal guarantee is claimed for the ES. D-3, a rounding excess `es > var` of one unit in the last place (when
 $\alpha N<1$ in HS the two coincide) is set to `es = var`; a larger excess or a non-finite forecast raises `ValueError`.
 
-## Evaluation (hypothesis of the plan, BS-16)
+## Evaluation (the hypothesis fixed before the run)
 
 Hypothesis: HS-250, GARCH-t and FHS wrapped pass (Kupiec and conditional coverage, p at least 0.05) in at least one more of the
 three stress windows than unwrapped, without mean FZ0 worsening by more than 5 percent. Refuted if the wrapper fails the
