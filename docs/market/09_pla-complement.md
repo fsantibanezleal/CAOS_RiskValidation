@@ -1,6 +1,6 @@
 # 08. The scale-and-level complement to the PLA test
 
-Module `riskvalidation.market.pla_complement` (tier: beyond; plan BS-13 of the Contraste method tiers). It adds three statistics
+Module `riskvalidation.market.pla_complement` (added in 1.1.0). It adds three statistics
 and a calibrated decision to the regulatory P&L attribution test of [page 06](06_frtb-tests.md). The complement is added to the
 regulatory zone, never substituted for it, and has no regulatory standing: `pla_complement` returns the zone of
 `frtb.pla_zone_exact` unchanged beside its own decision.
