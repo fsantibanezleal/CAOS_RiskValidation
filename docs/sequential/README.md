@@ -1,4 +1,4 @@
-# Sequential monitors: e-processes for back-tests and calibration (BS-15)
+# Sequential monitors: e-processes for back-tests and calibration
 
 `riskvalidation.validation.sequential` reads a back-test or a calibration every day, or every vintage, without losing its
 size. A fixed-window test (Kupiec, Hosmer-Lemeshow, the Basel traffic light) is valid when it is read once on a window
@@ -153,7 +153,7 @@ The sign of the evidence is the point: the monitor rejects when the observed def
 stays below 1 when they do not. Two or three vintages per cohort are few; the C03 run is an illustration on the committed
 curves, not a validation of power.
 
-### Verdict on the hypothesis of the plan (BS-15)
+### Verdict on the hypothesis fixed before the run
 
 | Rule (written before the run) | Measured | Holds |
 |---|---|---|
