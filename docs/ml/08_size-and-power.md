@@ -37,7 +37,7 @@ slices with one slice that predicts $1-p$, a NaN rate, two forecasts with extra 
 the first run, were a size of at most 0.05 and a power of at least 0.90, with two exceptions: the conformal coverage test (size at
 most 0.10) and the worst-subsample test (size at most 0.15). **History, stated plainly.** The 0.10 and 0.15 bounds were not stated
 before the run: the first design measured a size of 0.0620 for the conformal test and 0.1055 for the worst-subsample test (finding
-F4), and the bounds were set after those runs. The review of the unit (majors M-2 and M-3) refused them, and the designs were
+F4), and the bounds were set after those runs. The review of the unit refused them in two major findings, and the designs were
 replaced, not the bounds: the Beta-Binomial null (page 05) and the development-only reference (page 01). Every test now answers to
 the default bound, a size of at most 0.05 plus two Monte Carlo standard errors (0.0569 at 4,000 repetitions), and a power of at least
 0.90, with no exception. A first pooled-permutation reference for the shift test had a power of 0.28 and a power floor of 0.15 was set after that
