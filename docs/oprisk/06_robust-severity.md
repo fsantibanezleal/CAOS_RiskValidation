@@ -1,6 +1,6 @@
 # 06. Robust severity estimators and the mean-adjusted SLA
 
-Module `riskvalidation.oprisk.robust` (added in 1.1.0, tier: state of the art). Source: Opdyke and Cavallo (2012, *Estimating
+Module `riskvalidation.oprisk.robust` (added in 1.1.0). Source: Opdyke and Cavallo (2012, *Estimating
 operational risk capital: the challenges of truncation, the hazards of maximum likelihood estimation, and the promise of robust
 statistics*, Journal of Operational Risk 7(3)), who recommend the two estimators below with the mean-adjusted single loss
 approximation for the truncated severity of an operational risk loss distribution. Their primary text was not read (it is behind a
@@ -86,7 +86,7 @@ Median absolute log ratio, the typical multiplicative error (0 is exact; 0.69 is
 
 ## Verdict on the hypotheses
 
-The plan (section 3, S-3) asks for the capital's bias and spread of the robust estimators reported beside the MLE splice, on
+The study asks for the capital's bias and spread of the robust estimators reported beside the MLE splice, on
 generators of known truth; it states no numeric threshold. The three statements below were written into the study before the
 final run and are operationalised here; each is reported whether or not it holds.
 
