@@ -273,3 +273,21 @@ def test_gar_quantile_regressions_refusals(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", no_statsmodels)
     with pytest.raises(ImportError, match="stress"):
         sm.gar_quantile_regressions(y, x)
+
+
+def test_fit_skewed_t_to_quantiles_on_near_normal_quantiles_stays_in_bounds():
+    # BL-106: on quantiles close to a normal's the distance is flat in nu above its bound of 1000, Nelder-Mead walks log nu
+    # far up, and exponentiating it raised OverflowError ("math range error"; Contraste C18, Banco Andino window 0, recorded
+    # not-fitted in 1.00.000). The search now clips log nu to its bounds before exponentiating.
+    taus = (0.05, 0.25, 0.75, 0.95)
+    q = stats.norm.ppf(taus)
+    fit = sm.fit_skewed_t_to_quantiles(q, taus)
+    assert 0.5 <= fit.nu <= 1000.0 and math.isfinite(fit.mu) and math.isfinite(fit.sigma) and math.isfinite(fit.alpha)
+    assert fit.distance <= 1e-6 and abs(fit.alpha) <= 0.05
+    c18 = np.array([-0.822108481, 0.704160696, 1.98124719, 3.90178668, 4.8121704])
+    fit = sm.fit_skewed_t_to_quantiles(c18, (0.05, 0.25, 0.5, 0.75, 0.95))
+    assert 0.5 <= fit.nu <= 1000.0 and math.isfinite(fit.distance) and fit.distance >= 0.0
+    # the location and scale are the least-squares ones for the fitted shape: no other (mu, sigma) is closer
+    z = np.array([sm._std_quantile(t, fit.alpha, fit.nu) for t in (0.05, 0.25, 0.5, 0.75, 0.95)])
+    resid = c18 - (fit.mu + fit.sigma * z)
+    assert float(resid @ resid) == pytest.approx(fit.distance, rel=1e-9, abs=1e-12)

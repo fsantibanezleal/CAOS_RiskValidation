@@ -4,6 +4,12 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
+## [Unreleased]
+
+### Fixed
+
+- `stress.scenario_models.fit_skewed_t_to_quantiles` no longer raises OverflowError on quantiles close to a normal's (BL-106). The distance is flat in the degrees of freedom above their bound of 1000, Nelder-Mead walked the logarithm of nu far up, and exponentiating it overflowed ("math range error"; Contraste C18 recorded its first Banco Andino window as not fitted in 1.00.000). The search variable is now clipped to the bounds of nu before it is exponentiated; a fit whose search stayed inside the bounds is unchanged. Test: `tests/stress/test_stress_scenario_models.py::test_fit_skewed_t_to_quantiles_on_near_normal_quantiles_stays_in_bounds`.
+
 ## [1.01.000] - 2026-10-28
 
 A minor release: names are added, none removed or changed (`docs/api-policy.md`). Each method has a page with its
