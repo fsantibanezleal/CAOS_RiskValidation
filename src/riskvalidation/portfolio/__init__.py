@@ -5,7 +5,8 @@ Rungs: C1 the large homogeneous portfolio (`portfolio.lhp_measures`, from `riskv
 the Gaussian and Student-t copula Monte Carlo (`copula`), C4 CreditRisk+ with the stable recursion
 (`creditrisk_plus`), C5 the granularity adjustment of Gordy and Lutkebohmert (`granularity`), C6 importance sampling
 (`importance`); the Euler contributions and the concentration measures (`euler`); the fit of the Vasicek distribution
-to a series of yearly loss rates (`asrf_fit`). The validation tests of an economic capital model are in
+to a series of yearly loss rates (`asrf_fit`) and the default correlation from a panel of yearly default counts by
+rating grade (`panel_fit`). The validation tests of an economic capital model are in
 ``riskvalidation.validation.portfolio``.
 
 Modules are imported by path (for example ``from riskvalidation.portfolio import copula``); nothing is re-exported
@@ -22,5 +23,6 @@ __all__ = [
     "euler",
     "granularity",
     "importance",
+    "panel_fit",
     "portfolio",
 ]

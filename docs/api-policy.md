@@ -592,7 +592,7 @@ Names: `abs_upper_le`, `aggregation_corr_stress`, `aggregation_diversification`,
 
 Portfolio credit capital: the loss distribution of a credit portfolio by the rungs of dossier 04 and its Euler contributions.
 
-Modules, imported by path (`from riskvalidation.portfolio import <module>`): `asrf_fit`, `copula`, `creditrisk_plus`, `euler`, `granularity`, `importance`, `portfolio`.
+Modules, imported by path (`from riskvalidation.portfolio import <module>`): `asrf_fit`, `copula`, `creditrisk_plus`, `euler`, `granularity`, `importance`, `panel_fit`, `portfolio`.
 
 ### `riskvalidation.portfolio.asrf_fit`
 
@@ -617,6 +617,10 @@ Names: `GranularityResult`, `delta`, `gamma_quantile`, `granularity_adjustment`,
 ### `riskvalidation.portfolio.importance`
 
 Names: `ImportanceResult`, `importance_sample_gaussian`, `solve_theta`, `twisted_pd`, `variance_ratio`, `weighted_var_es`.
+
+### `riskvalidation.portfolio.panel_fit`
+
+Names: `N_NODES`, `QUADRATURES`, `PanelFit`, `PanelFitError`, `PanelMoments`, `default_correlation`, `fit_panel_asrf`, `fit_panel_moments`, `panel_log_likelihood`.
 
 ### `riskvalidation.portfolio.portfolio`
 

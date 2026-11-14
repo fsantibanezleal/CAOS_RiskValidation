@@ -15,9 +15,9 @@ from _portfolio_helpers import identical
 ROOT = Path(__file__).resolve().parents[2]
 PAGES = ROOT / "docs" / "portfolio"
 NAMES = ("01_portfolio-and-measures.md", "02_copulas.md", "03_creditrisk-plus.md", "04_granularity-and-importance.md",
-         "05_euler-and-concentration.md", "06_vasicek-fit.md", "07_validation-tests.md")
+         "05_euler-and-concentration.md", "06_vasicek-fit.md", "07_validation-tests.md", "08_panel-fit.md")
 HEAVY = ("pandas", "sklearn", "statsmodels", "torch", "lightgbm", "xgboost", "matplotlib")
-MODULES = ("portfolio", "copula", "creditrisk_plus", "granularity", "importance", "euler", "asrf_fit")
+MODULES = ("portfolio", "copula", "creditrisk_plus", "granularity", "importance", "euler", "asrf_fit", "panel_fit")
 
 
 def test_modules_import_no_dataframe_library():
@@ -32,7 +32,16 @@ def test_modules_import_no_dataframe_library():
 
 
 def _calls():
-    from riskvalidation.portfolio import asrf_fit, copula, creditrisk_plus, euler, granularity, importance, portfolio
+    from riskvalidation.portfolio import (
+        asrf_fit,
+        copula,
+        creditrisk_plus,
+        euler,
+        granularity,
+        importance,
+        panel_fit,
+        portfolio,
+    )
     from riskvalidation.validation import portfolio as val
 
     p = identical(20, pd=0.03, rho=0.2, lgd=0.5, ead=2.0, n_groups=2)
@@ -42,6 +51,8 @@ def _calls():
     total = parts.sum(axis=1)
     rates = np.array([0.011, 0.02, 0.035, 0.008, 0.05, 0.015, 0.027, 0.012])
     nu = np.array([1, 2, 3])
+    panel_d = np.array([[1, 4, 9], [0, 2, 6], [2, 5, 13], [0, 1, 4], [1, 3, 8], [0, 2, 7]])
+    panel_n = np.tile(np.array([300, 200, 100]), (6, 1))
     crp = creditrisk_plus.CreditRiskPlusInput(nu=nu, pd=np.array([0.1, 0.2, 0.3]), w0=np.array([0.2, 0.5, 1.0]),
                                               weights=np.array([[0.8], [0.5], [0.0]]), sigma2=np.array([0.5]),
                                               loss_unit=1.0, currency="USD")
@@ -72,6 +83,9 @@ def _calls():
         (asrf_fit.fit_moments, (rates,)),
         (asrf_fit.profile_likelihood, (rates, np.array([0.05, 0.1, 0.2]))),
         (asrf_fit.implied_factors, (rates, 0.02, 0.15)),
+        (panel_fit.fit_panel_asrf, (panel_d, panel_n)),
+        (panel_fit.fit_panel_moments, (panel_d, panel_n)),
+        (panel_fit.default_correlation, (np.array([0.01, 0.05]), 0.2)),
         (val.tail_backtest, (rates, 0.02, 0.15)),
         (val.mc_convergence, (0.101, 0.001, 0.1)),
         (val.euler_additivity, (np.array([0.5, 0.5]), 1.0)),
