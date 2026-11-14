@@ -402,7 +402,7 @@ Names: `DownturnResult`, `coverage_shortfall`, `downturn_add_on`, `identify_down
 
 ### `riskvalidation.lgd_ead.floors`
 
-Names: `FloorBite`, `apply_ead_floor`, `apply_lgd_floor`, `ead_floor`, `lgd_floor`, `supervisory_ccf`.
+Names: `LGD_FLOOR_CELLS_CRR3`, `LGD_FLOOR_SOURCES`, `FloorBite`, `LGDFloorApplied`, `LGDFloorInput`, `apply_ead_floor`, `apply_lgd_floor`, `ead_floor`, `lgd_floor`, `partly_secured_lgd_floor`, `resolve_lgd_floor`, `supervisory_ccf`.
 
 ### `riskvalidation.lgd_ead.lgd_models`
 
