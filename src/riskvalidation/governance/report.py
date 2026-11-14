@@ -8,7 +8,9 @@ accents and the eñe); every number in them is computed here.
 Inputs, all mappings read and never mutated:
 
 - ``entry``: the inventory entry in its document form (``key``, ``case_id``, ``fit_id``, ``title``,
-  ``attributes``, ``components``, ``tier_block``);
+  ``attributes``, ``components``, ``tier_block``) and, optionally, ``names``: ``{"fit": {"en", "es"}, "sources":
+  {<source id>: {"en", "es"}}}``, the display names the report prints for the fit and the sources it cites (the id
+  where a name or a language is missing);
 - ``inventory``: the inventory document (its ``provenance.documents_read``, ``as_of_basis``);
 - ``register``: the findings register rows of the entry;
 - ``variants``: the variant documents of the entry, the first being the default one; each holds ``variant_id``,
@@ -161,6 +163,24 @@ def _table(caption: tuple[str, str], columns: Sequence[tuple[str, str]], rows: l
     return {"kind": "table", "caption": _t(*caption), "columns": [_t(*c) for c in columns], "rows": rows}
 
 
+def _display(names: Any, fallback: str) -> dict[str, str]:
+    """The display name of one cited thing in both languages from a ``{"en", "es"}`` mapping; a language the mapping
+    lacks (or holds empty or not as text) falls back to ``fallback``, the id the report printed before names existed.
+    """
+    got = names if isinstance(names, Mapping) else {}
+    return {lang: v if isinstance(v := got.get(lang), str) and v else fallback for lang in ("en", "es")}
+
+
+def _names_of(entry: Mapping[str, Any]) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """The ``fit`` and ``sources`` parts of the optional ``names`` block of the entry, an empty mapping for a part the
+    block lacks (or for a block that is not a mapping): the report then prints the ids.
+    """
+    block = entry.get("names")
+    block = block if isinstance(block, Mapping) else {}
+    fit, sources = block.get("fit"), block.get("sources")
+    return (fit if isinstance(fit, Mapping) else {}), (sources if isinstance(sources, Mapping) else {})
+
+
 def _first_path(attribute: Mapping[str, Any] | None) -> str | None:
     m = _PATH.search(str((attribute or {}).get("basis", "")))
     return m.group(1) if m else None
@@ -252,6 +272,8 @@ def build_report(
         raise ValueError("the entry has no variant document: the report needs the default variant's test rows")
     _check_as_of(entry, register, as_of)
     key, fit = entry["key"], entry["fit_id"]
+    fit_names, source_names = _names_of(entry)
+    fit_name = _display(fit_names, fit)
     attrs = entry["attributes"]
     tb = entry["tier_block"]
     default = variants[0]
@@ -292,11 +314,12 @@ def build_report(
             [
                 {"kind": "text", "text": question},
                 _text(
-                    f"Scope: the fit {fit} of case {entry['case_id']}; the full battery of the default variant "
+                    f"Scope: the fit {fit_name['en']} of case {entry['case_id']}; the full battery of the default "
+                    f"variant "
                     f"({rows_en}) and the "
                     f"findings of its {var_en}.",
-                    f"Alcance: el ajuste {fit} del caso {entry['case_id']}; la batería completa de la variante por "
-                    f"defecto ({rows_es}) y los hallazgos de {_pick(n_var, 'su', 'sus')} {var_es}.",
+                    f"Alcance: el ajuste {fit_name['es']} del caso {entry['case_id']}; la batería completa de la "
+                    f"variante por defecto ({rows_es}) y los hallazgos de {_pick(n_var, 'su', 'sus')} {var_es}.",
                 ),
                 _table(
                     ("Test lights of the default variant", "Luces de las pruebas de la variante por defecto"),
@@ -333,8 +356,8 @@ def build_report(
             ],
             [
                 _text(
-                    f"{title['en']}: {rec_n_en} in the fit {fit}; tier {tb['tier']} ({mc}).",
-                    f"{title['es']}: {rec_n_es} en el ajuste {fit}; nivel {tb['tier']} "
+                    f"{title['en']}: {rec_n_en} in the fit {fit_name['en']}; tier {tb['tier']} ({mc}).",
+                    f"{title['es']}: {rec_n_es} en el ajuste {fit_name['es']}; nivel {tb['tier']} "
                     f"({mc_es}).",
                 ),
                 _table(
@@ -388,6 +411,8 @@ def build_report(
     # 4 data
     a14 = (attrs.get("A14") or {}).get("value")
     sources = list(a14.get("sources", [])) if isinstance(a14, Mapping) else []
+    named = [_display(source_names.get(src), src) for src in sources]
+    shown = {lang: [n[lang] for n in named] for lang in ("en", "es")}
     secs.append(
         _section(
             4,
@@ -397,8 +422,8 @@ def build_report(
             ],
             [
                 _text(
-                    "Sources: " + (", ".join(sources) if sources else "none (a generated book)") + ".",
-                    "Fuentes: " + (", ".join(sources) if sources else "ninguna (un libro generado)") + ".",
+                    "Sources: " + (", ".join(shown["en"]) if sources else "none (a generated book)") + ".",
+                    "Fuentes: " + (", ".join(shown["es"]) if sources else "ninguna (un libro generado)") + ".",
                 )
             ],
             [

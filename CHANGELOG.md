@@ -13,6 +13,7 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 ### Changed
 
 - `governance.report.build_report` agrees every count with its noun in English and Spanish (BL-097): "its 1 variant" and "su 1 variante", "1 register row is a stated limit" and "1 fila del registro es un límite declarado", "1 test row", "1 model record", "1 of 3 rows is of a test that is not", "null for 1 row", and the two input references of sections 7 and 12. Zero and two or more stay plural; a report whose counts are all two or more is byte-identical to 1.1.0. Test: `tests/governance/test_governance_report_agreement.py`.
+- `governance.report.build_report` names what it cites (BL-098): the inventory entry may carry an optional `names` block, `{"fit": {"en", "es"}, "sources": {<source id>: {"en", "es"}}}`, and the scope, model-description and sources sentences print the display names of the fit and of the sources where it has them. A name, a language or a source id the block lacks falls back to the id, never fails; an entry without the block gives the 1.1.0 report byte for byte. Test: `tests/governance/test_governance_report_names.py`.
 
 ## [1.01.000] - 2026-10-28
 
