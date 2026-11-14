@@ -4,7 +4,9 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
-## [Unreleased]
+## [1.02.000] - 2026-11-14
+
+A minor release: names and optional arguments are added, none removed or changed (`docs/api-policy.md`); a call without the new options returns what 1.1.0 returned.
 
 ### Added
 
