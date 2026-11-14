@@ -19,6 +19,10 @@ names, so a scenario is never rebuilt. The registry holds 21 tests (the nine tha
 - `N_REP`: the default repetitions of a study, 4,000; a study of a costly test names fewer in its own `n_rep` and `power_n_rep`.
 - `simulate_study(study, which="null", *, n_rep=None, seed=None)`: runs the null or the alternative with `harness.simulate`, using the
   study's generator, seed, feed, arguments and rule. It is the one entry point of the suites and of C22.
+- `scripts/size_study_sharded.py`: runs the repetitions of a registered study in slices on a process pool and sums the counts
+  (`python scripts/size_study_sharded.py --study <test id> --reps <n> --workers <k> --out <file>`). Each repetition keeps its own
+  spawned seed, so the counts, the p-values and the rates equal `simulate_study`'s exactly for any number of workers; a local
+  tool for the `sizepower` hours, outside CI. Test: `tests/test_size_study_sharded.py`.
 - `STAGE_MATRIX`, `STAGE_SHIFT`, `STAGE_ROWS`: the predicted three-stage migration matrix of `ifrs9.stage_migration_backtest`, the
   departure of the alternative (1.5 points of the stage 1 accounts move to stage 2) and the accounts per starting stage (4,000, 1,500, 500:
   the smallest expected count is 10, the chi-square assumption).
