@@ -6,6 +6,10 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
 ## [Unreleased]
 
+### Tests
+
+- `tests/test_packaged_policies.py` reads the Contraste corpus from before the 1.0 re-bake, through `CONTRASTE_PRE_1_0_ROOT` (an export of Contraste tag v0.15.000's `data/derived`): its four corpus tests resolve the inline battery strings of that corpus (3,123 rows), which the 1.0 re-bake replaced with the packaged labels themselves, so on the 1.0 corpus they failed for want of rows. The 1.0 corpus is checked by `tests/test_contraste_corpus_labels.py` on `CONTRASTE_ROOT`. A release run sets both.
+
 ### Fixed
 
 - `stress.scenario_models.fit_skewed_t_to_quantiles` no longer raises OverflowError on quantiles close to a normal's (BL-106). The distance is flat in the degrees of freedom above their bound of 1000, Nelder-Mead walked the logarithm of nu far up, and exponentiating it overflowed ("math range error"; Contraste C18 recorded its first Banco Andino window as not fitted in 1.00.000). The search variable is now clipped to the bounds of nu before it is exponentiated; a fit whose search stayed inside the bounds is unchanged. Test: `tests/stress/test_stress_scenario_models.py::test_fit_skewed_t_to_quantiles_on_near_normal_quantiles_stays_in_bounds`.

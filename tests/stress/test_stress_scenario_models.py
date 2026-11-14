@@ -276,9 +276,9 @@ def test_gar_quantile_regressions_refusals(monkeypatch):
 
 
 def test_fit_skewed_t_to_quantiles_on_near_normal_quantiles_stays_in_bounds():
-    # BL-106: on quantiles close to a normal's the distance is flat in nu above its bound of 1000, Nelder-Mead walks log nu
-    # far up, and exponentiating it raised OverflowError ("math range error"; Contraste C18, Banco Andino window 0, recorded
-    # not-fitted in 1.00.000). The search now clips log nu to its bounds before exponentiating.
+    # BL-106: on quantiles close to a normal's the distance is flat in nu above its bound of 1000, Nelder-Mead walks
+    # log nu far up, and exponentiating it raised OverflowError ("math range error"; Contraste C18, Banco Andino
+    # window 0, recorded not-fitted in 1.00.000). The search now clips log nu to its bounds before exponentiating.
     taus = (0.05, 0.25, 0.75, 0.95)
     q = stats.norm.ppf(taus)
     fit = sm.fit_skewed_t_to_quantiles(q, taus)
