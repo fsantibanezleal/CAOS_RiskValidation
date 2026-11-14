@@ -10,6 +10,10 @@ metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
 - `stress.scenario_models.fit_skewed_t_to_quantiles` no longer raises OverflowError on quantiles close to a normal's (BL-106). The distance is flat in the degrees of freedom above their bound of 1000, Nelder-Mead walked the logarithm of nu far up, and exponentiating it overflowed ("math range error"; Contraste C18 recorded its first Banco Andino window as not fitted in 1.00.000). The search variable is now clipped to the bounds of nu before it is exponentiated; a fit whose search stayed inside the bounds is unchanged. Test: `tests/stress/test_stress_scenario_models.py::test_fit_skewed_t_to_quantiles_on_near_normal_quantiles_stays_in_bounds`.
 
+### Changed
+
+- `governance.report.build_report` agrees every count with its noun in English and Spanish (BL-097): "its 1 variant" and "su 1 variante", "1 register row is a stated limit" and "1 fila del registro es un límite declarado", "1 test row", "1 model record", "1 of 3 rows is of a test that is not", "null for 1 row", and the two input references of sections 7 and 12. Zero and two or more stay plural; a report whose counts are all two or more is byte-identical to 1.1.0. Test: `tests/governance/test_governance_report_agreement.py`.
+
 ## [1.01.000] - 2026-10-28
 
 A minor release: names are added, none removed or changed (`docs/api-policy.md`). Each method has a page with its
