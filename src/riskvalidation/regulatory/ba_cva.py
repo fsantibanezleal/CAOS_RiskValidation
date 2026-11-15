@@ -14,8 +14,8 @@ Full version (MAR50.20 to MAR50.25): K_full = beta K_reduced + (1 - beta) K_hedg
 The counterparty risk weights are MAR50.16 Table 1. There is no verified official numeric example (research addendum
 R8): the tests rest on the invariants of dossier 01 M.1 (rho = 1 gives the sum of the SCVA, hedges never take K_full
 below beta K_reduced). Not implemented: the computation of SNH_c, IH and HMA_c from the hedge instruments (the caller
-passes the terms), the MAR50.18 eligible-hedge rule, and SA-CVA (MAR50.27 onward). The engine computes and states no
-compliance claim.
+passes the terms) and the MAR50.18 eligible-hedge rule. The SA-CVA (MAR50.27 onward) is in
+`riskvalidation.regulatory.sa_cva`. The engine computes and states no compliance claim.
 """
 
 from __future__ import annotations
