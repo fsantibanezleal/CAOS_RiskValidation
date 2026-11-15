@@ -16,6 +16,7 @@ A minor release: names and an optional extra are added, none removed or changed 
 - `regulatory.drc`: the default risk charge for non-securitisations (BL-076, RV-2006 to RV-2009, MAR22.1 to MAR22.26): the LGDs, the maturity weight with its three-month floor, the Table 2 risk weights, `gross_jtd`, `net_jtd` (a short offsets a long only at the same or lower seniority, the total offset checked against a linear program), `hedge_benefit_ratio` (0 when both sums are 0, a stated reading), `bucket_drc`, `drc_non_securitisation` (the plain sum of the buckets) and `drc_from_exposures`. Securitisations and the correlation trading portfolio are outside. Tests: `tests/regulatory/test_drc.py` (including the Basel FAQ under MAR22.15 and MAR22.16). Page: `docs/regulatory/u9/07_drc.md`.
 - `regulatory.rrao`: the residual risk add-on (BL-076, RV-2010, MAR23.1 to MAR23.8): `rrao` (1.0% of the simple sum of the gross notionals with an exotic underlying plus 0.1% of those with other residual risks, no offsetting) and `classify_instrument` (the exclusions of MAR23.7 only). Tests: `tests/regulatory/test_rrao.py`. Page: `docs/regulatory/u9/08_rrao.md`.
 - `pyproject.toml`: the extra `vine`. `docs/api-policy.md` lists the new names (added only).
+- Docs: the gate cell of the u14-ml requirement RV-1432 no longer carries a stray token without a test name (a release verdict read it as an absent test; since 1.1.0); the older aggregation and stress pages and the U13 aggregation requirements point at the new rungs instead of calling them deferred.
 
 ## [1.02.000] - 2026-11-14
 
