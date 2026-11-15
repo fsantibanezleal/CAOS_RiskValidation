@@ -14,7 +14,7 @@ by default, `convention.name = "eu-undrawn"`; the LEQ in US terms): every page t
 | [02. LGD models](02_lgd-models.md) | the rungs: OLS, fractional logit, beta regression, hurdle, Tobit, the cure decomposition; the endpoint transform and its sensitivity |
 | [03. Downturn LGD](03_downturn.md) | the downturn period from a macro path, the cohort add-on, the coverage shortfall |
 | [04. CCF and EAD](04_ccf-and-ead.md) | the EU convention and the US terms, the reference-date designs, the treatments of a CCF outside [0, 1], the direct EAD and utilisation change models |
-| [05. Floors](05_floors.md) | the IRB LGD floor cells, the partly secured floor formula, the EAD floor, the supervisory CCFs |
+| [05. Floors](05_floors.md) | the IRB LGD floor cells of Basel III and CRR3, the partly secured floor (CRE32.17), the floor of one exposure, the EAD floor, the supervisory CCFs |
 | [06. The validation tests](06_validation-tests.md) | the six tests with their light rules, and what must not be claimed |
 
 Modules are imported by path, for example `from riskvalidation.lgd_ead import workout` and

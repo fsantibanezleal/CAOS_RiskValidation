@@ -1,44 +1,85 @@
 # 05. Floors and supervisory CCFs
 
-Module `riskvalidation.lgd_ead.floors`. Source: dossier 01 section A.5 (CRE32, Basel III final, in force 2023-01-01; the Basel
-II floors are not implemented). Every cell is transcribed from the dossier table; the paragraph text of the consolidated
-framework (https://www.bis.org/basel_framework/chapter/CRE/32.htm) was not re-read.
+Module `riskvalidation.lgd_ead.floors`. Sources: the Basel III final chapter CRE32 (in force 2023-01-01; the Basel II floors are
+not implemented), read on the paragraph text on 2026-11-11 from the BIS chapter PDFs
+(https://www.bis.org/committees/bcbs/basel-framework/81366/chapter.pdf, version effective 1 January 2022, and
+https://www.bis.org/committees/bcbs/basel-framework/81431/chapter.pdf, version effective 1 November 2028: the floor paragraphs are
+identical), and Regulation (EU) 2024/1623 (CRR3, http://data.europa.eu/eli/reg/2024/1623/oj, applying from 2025-01-01), Articles
+161(4) to (7) and 164(4) to (6), read in the Official Journal text.
 
 ## LGD floors (A-IRB)
 
-`lgd_floor(portfolio, collateral)`; sovereign exposures are exempt (CRE32.16) and are not passed to it. A combination without a
-cell (a corporate `qrre`, a corporate `mortgage`) raises.
+`lgd_floor(portfolio, collateral, regime="basel3")`; sovereign exposures are exempt (CRE32.16) and are not passed to it. A combination
+without a cell (a corporate `qrre`, a corporate `mortgage`, a Basel `public-sector`) raises. CRE32.16: "The LGD for each corporate
+exposure that is used as input into the risk weight formula and the calculation of expected loss must not be less than the parameter
+floors indicated in the table below (the floors do not apply to the LGD for exposures in the sovereign asset class)". CRE32.58 gives the
+retail table and CRE32.59 fixes the residential mortgage floor.
 
-| portfolio | collateral | floor | reference |
-|---|---|---|---|
-| corporate | unsecured | 0.25 | CRE32.16 |
-| corporate | financial | 0.00 | CRE32.16 |
-| corporate | receivables | 0.10 | CRE32.16 |
-| corporate | real-estate | 0.10 | CRE32.16 |
-| corporate | other-physical | 0.15 | CRE32.16 |
-| retail | mortgage | 0.05 | CRE32.58 to CRE32.59 |
-| retail | qrre | 0.50 | CRE32.58 to CRE32.59 |
-| retail | unsecured | 0.30 | CRE32.58 to CRE32.59 |
-| retail | financial | 0.00 | CRE32.58 to CRE32.59 |
-| retail | receivables | 0.10 | CRE32.58 to CRE32.59 |
-| retail | real-estate | 0.10 | CRE32.58 to CRE32.59 |
-| retail | other-physical | 0.15 | CRE32.58 to CRE32.59 |
+| portfolio | collateral | Basel III (`basel3`) | reference | CRR3 (`crr3`) | reference |
+|---|---|---|---|---|---|
+| corporate | unsecured | 0.25 | CRE32.16 | 0.25 | Article 161(4) |
+| corporate | financial | 0.00 | CRE32.16 | 0.00 | Article 161(4) |
+| corporate | receivables | 0.10 | CRE32.16 | 0.10 | Article 161(4) |
+| corporate | real-estate | 0.10 | CRE32.16 | 0.10 | Article 161(4) |
+| corporate | other-physical | 0.15 | CRE32.16 | 0.15 | Article 161(4) |
+| public-sector | unsecured | none | | 0.05 | Article 161(5) |
+| retail | mortgage | 0.05 | CRE32.58, fixed by CRE32.59 | 0.05 | Article 164(4), fixed by Article 164(4a)(d) |
+| retail | qrre | 0.50 | CRE32.58 | 0.50 | Article 164(4) |
+| retail | unsecured | 0.30 | CRE32.58 | 0.30 | Article 164(4) |
+| retail | financial | 0.00 | CRE32.58 | 0.00 | Article 164(4) |
+| retail | receivables | 0.10 | CRE32.58 | 0.10 | Article 164(4) |
+| retail | real-estate | 0.10 | CRE32.58 | 0.10 | Article 164(4) |
+| retail | other-physical | 0.15 | CRE32.58 | 0.15 | Article 164(4) |
 
-The dossier lists the retail secured floors as "0% / 10% / 10% / 15% by collateral" without naming the order; the order
-financial, receivables, real estate, other physical is read from the corporate row and is **UNVERIFIED**; the dossier cites
-CRE32.58 to CRE32.59 jointly, so the split of the seven retail cells between the two paragraphs is not asserted.
+`LGD_FLOOR_CELLS` and `LGD_FLOOR_CELLS_CRR3` hold the values and `LGD_FLOOR_SOURCES[regime][(portfolio, collateral)]` the paragraph of each. The
+order of the retail secured cells (financial 0%, receivables 10%, real estate 10%, other physical 15%) is **confirmed** against the CRE32.58 table
+(the 2026-11-11 reading settled the question the earlier version of this page left UNVERIFIED). The corporate floors of CRR3 are in Article 161(4)
+(not 164(4)); the 5% cell of Article 161(5) is for exposures to regional governments, local authorities and public sector entities
+(Article 147(2)(aa)(i) and (ii)) and has no Basel counterpart. The shared cells carry the same numbers in both texts. QRRE has no secured cell and
+a mortgage no unsecured cell ("Not applicable" in both tables).
 
 ## The partly secured floor
 
-CRE32.17 (dossier 01 A.5): the floor of a partly secured exposure is not a cell. The caller applies `lgd_floor` to each part
-and combines them with the formula,
+CRE32.17 (and CRR3 Article 161(6), the same form): "The LGD floor for a partially secured exposure is calculated as a weighted average of the
+unsecured LGD floor for the unsecured portion and the secured LGD floor for the secured portion",
 
 $$\mathrm{Floor}=\mathrm{LGD}_{U,\text{floor}}\,\frac{E_U}{E(1+H_E)}+\mathrm{LGD}_{S,\text{floor}}\,\frac{E_S}{E(1+H_E)},$$
 
-Symbols: $E_U$ the unsecured part and $E_S$ the secured part of the exposure, with $E_S$ capped at $E(1+H_E)$ and
-$E_U=E(1+H_E)-E_S$, $H_E$ the exposure haircut. Example: corporate unsecured 0.25 on 40% of the exposure and receivables 0.10
-on 60% gives $0.25\cdot0.4+0.10\cdot0.6=0.16$. The engine has no function for the blend (the contract leaves it to the
-caller); the formula is the one printed in dossier 01.
+with, from CRE32.10, $E$ the current value of the exposure, $H_E$ the haircut on it where securities are lent or posted, $E_S$ the value of the
+collateral received after its haircuts (CRE32.11), capped at $E(1+H_E)$, and $E_U=E(1+H_E)-E_S$. `partly_secured_lgd_floor(unsecured_floor,
+secured_floor, e, e_s, h_e=0.0)` computes it. Hand cases: $0.30\cdot0.4+0.10\cdot0.6=0.18$ for $E=100$, $E_S=60$ with a 30% unsecured and a 10%
+secured floor; $E=100$, $H_E=0.10$, $E_S=44$ gives $E_U=66$ and $0.30\cdot66/110+0.10\cdot44/110=0.22$. $E_S=0$ gives the unsecured floor and
+$E_S\ge E(1+H_E)$ (fully secured, CRE32.17 first sentence; the cap) the secured floor. The retail rule is CRE32.59: partially secured "other retail"
+exposures take the same formula; the residential mortgage floor "is fixed at 5%, irrespective of the level of collateral provided by the property"
+(Article 164(4a)(d) says the same).
+
+## The floor of one exposure
+
+`resolve_lgd_floor(asset_class, lgd, regime, spec, defaulted=False)` returns an `LGDFloorApplied` (`applied`, `portfolio`, `collateral`, `lgd_input`,
+`floor`, `lgd_used`, `binding`, `secured_share`, `source`, `reason`); `spec` is an `LGDFloorInput(collateral="unsecured", e=1.0, e_s=0.0,
+h_e=0.0, portfolio=None)`. It is what `regulatory.irb.capital_requirement(..., lgd_floor=spec)` calls.
+
+- Where the floors apply: the LGD input of the risk-weight and expected-loss formulas, for own-estimate LGD (CRE32.15; CRR3 Articles 161(4) and
+  164(4) "where own estimates of LGD are used"), of a non-defaulted exposure, not sovereign. A caller using the supervisory LGD of the foundation
+  approach does not pass the option.
+- `corporate`, `sme` and `hvcre` take the corporate row; `residential_mortgage`, `qrre` and `other_retail` the retail rows;
+  `LGDFloorInput(portfolio="public-sector")` (CRR3 only, asset class `corporate`) the Article 161(5) cell.
+- A sovereign exposure is returned unfloored with the source (CRE32.16; under CRR3 the Articles name only corporate and retail classes). A defaulted
+  exposure is returned unfloored with the source (CRE31.7 and CRE31.20; CRR3 Article 158(5)): the floor paragraphs name the non-defaulted formulas
+  (Articles 153(1)(iii), 154(1)(ii)) and do not mention defaulted exposures, and whether the floor binds the default-time LGD (CRE36.85) was not read:
+  **UNVERIFIED**, so none is applied and the page says so.
+- `bank` and `financial_institution` raise: CRE32.16 and Article 161(4) say "corporate" and how banks and financial institutions are classed in them was
+  not read (**UNVERIFIED**). Any regime but `basel3` and `crr3` raises.
+- Exactly at a floor the LGD is kept (`binding` False); above every floor nothing changes; a floor of 0 (financial collateral) binds nowhere.
+
+Differences between CRR3 and Basel that are **not** implemented (UNVERIFIED or out of scope): the haircuts $H_c$ and $H_{fx}$ of Article 230 against
+CRE32.10 to CRE32.12 (the Article 230 values were not read: the caller supplies $E_S$ after its haircuts); the national higher floors of Article 164(6)
+and (7) with their six-month transition; the mapping of retail purchased receivables (no row in Table 1); a transitional phase-in of the floors (not
+searched); Article 161(7) (the own unsecured LGD as $\mathrm{LGD}_U$ when recoveries on the collateral cannot be modelled).
+
+Goldens (`tests/regulatory/test_irb_lgd_floors.py`, `tests/lgd_ead/test_lgd_floors_partly_secured_crr3.py`): a corporate LGD of 10% takes 25% and its risk
+weight is the printed CRE99 column of LGD 40% times 25/40 (K is linear in the LGD); a QRRE LGD of 30% takes 50% and reproduces the printed QRRE 50% column;
+a mortgage LGD of 2% takes 5%; the partly secured other-retail blend above gives 0.18; the CRR3 public sector cell gives 0.05.
 
 ## Applying a floor
 
@@ -73,5 +114,6 @@ has no off-balance amount and its floor is the drawn amount.
 
 ## Limits
 
-The engine reproduces the dossier cells and states no compliance claim: a floor applies to a regulatory capital calculation
-under the framework the institution is subject to, and the CRR3 text for the EU was not compared cell by cell here.
+The engine reproduces the published cells and states no compliance claim: a floor applies to a regulatory capital calculation under the
+framework the institution is subject to. The consolidated CRR was not read (the amending Regulation (EU) 2024/1623 was); the CCFs and the EAD
+floor below were transcribed from dossier 01 and not re-read on the paragraph text.

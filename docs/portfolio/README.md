@@ -16,6 +16,7 @@ homogeneous portfolio) and `regulatory.irb` (the IRB capital) are the analytic a
 | [05. Euler contributions and concentration](05_euler-and-concentration.md) | ES and VaR contributions, the asymptotic anchor, HHI and the effective number of names |
 | [06. The Vasicek fit](06_vasicek-fit.md) | maximum likelihood, moments, the profile interval, the parametric bootstrap, the implied factors |
 | [07. The validation tests](07_validation-tests.md) | the five tests with their light rules, and what must not be claimed |
+| [08. The default correlation from a panel by rating grade](08_panel-fit.md) | the one-factor common-loading likelihood, the per-grade moment estimator, the default correlation, the quadrature, every failure case |
 
 Modules are imported by path, for example `from riskvalidation.portfolio import copula` and
 `from riskvalidation.validation import portfolio`; nothing is re-exported from the package root. Requirements `RV-701` to `RV-729`
