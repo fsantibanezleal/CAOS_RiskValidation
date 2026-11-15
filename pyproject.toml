@@ -43,6 +43,10 @@ stress = ["statsmodels>=0.15,<0.16"]
 # BL-083 transitions: Open Risk's transitionMatrix (Apache-2.0) is the independent reference of the cohort estimator, in the tests only;
 # the engine core never imports it. Pinned to the version the reconciliation was measured against.
 transitions = ["transitionMatrix==0.5.1"]
+# U19 vine (BL-078): pyvinecopulib (MIT, C++ wheels, Python 3.11 or later; it pulls numpy>=2, matplotlib and networkx) selects, fits and
+# simulates the regular vines of `aggregation.vines`; the module imports it inside its functions, so the core stays NumPy and SciPy only.
+# Pinned to the major version the reconciliation was measured on (1.0.1, PyPI 2026-10-06).
+vine = ["pyvinecopulib>=1.0.1,<2; python_version >= '3.11'"]
 
 [project.urls]
 Homepage = "https://github.com/fsantibanezleal/CAOS_RiskValidation"
