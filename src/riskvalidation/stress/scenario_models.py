@@ -205,6 +205,16 @@ def _project(alpha: float, nu: float, taus: np.ndarray, q: np.ndarray) -> tuple[
     return float(mu), float(sigma), float(resid @ resid)
 
 
+# the degrees of freedom the fit searches, as their logarithm (the search variable)
+_LOG_NU_BOUNDS = (math.log(0.5), math.log(1000.0))
+
+
+def _nu_of(log_nu: float) -> float:
+    """nu from the search variable, clipped to [0.5, 1000] before exponentiating: on quantiles close to a normal's the
+    distance is flat above the upper bound and Nelder-Mead walks log nu far up, where `exp` overflowed (BL-106)."""
+    return math.exp(min(max(log_nu, _LOG_NU_BOUNDS[0]), _LOG_NU_BOUNDS[1]))
+
+
 def fit_skewed_t_to_quantiles(quantiles: np.ndarray, taus: Sequence[float] = DEFAULT_TAUS) -> SkewedTFit:
     """Step 2 of growth-at-risk: fit the skewed t by minimising the squared distance to the estimated 5, 25, 75 and 95
     percent quantiles (05 l.390). The location and scale are the exact least-squares solution for each shape, so only
@@ -225,7 +235,7 @@ def fit_skewed_t_to_quantiles(quantiles: np.ndarray, taus: Sequence[float] = DEF
     for alpha0, nu0 in ((0.0, 5.0), (2.0, 5.0), (-2.0, 5.0), (0.0, 20.0)):
 
         def objective(v: np.ndarray) -> float:
-            return _project(float(v[0]), float(np.clip(math.exp(v[1]), 0.5, 1000.0)), tau, q)[2]
+            return _project(float(v[0]), _nu_of(float(v[1])), tau, q)[2]
 
         res = optimize.minimize(
             objective,
@@ -233,7 +243,7 @@ def fit_skewed_t_to_quantiles(quantiles: np.ndarray, taus: Sequence[float] = DEF
             method="Nelder-Mead",
             options={"xatol": 1e-10, "fatol": 1e-20, "maxiter": 800, "maxfev": 1600},
         )
-        alpha, nu = float(res.x[0]), float(np.clip(math.exp(res.x[1]), 0.5, 1000.0))
+        alpha, nu = float(res.x[0]), _nu_of(float(res.x[1]))
         mu, sigma, dist = _project(alpha, nu, tau, q)
         if best is None or dist < best.distance:
             best = SkewedTFit(mu=mu, sigma=sigma, alpha=alpha, nu=nu, distance=dist)

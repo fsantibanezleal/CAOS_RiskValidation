@@ -3,7 +3,11 @@
 One versioned policy file per Contraste battery, `policies/contraste-<name>-<version>.json`, label `contraste-<name>
 <version>`. Every cut point of every committed inline battery string resolves to an entry, and the entry (through its
 `rule` and its keyed case) reproduces the light of every committed row. The committed-document tests read the
-Contraste case documents read-only and are skipped when `CONTRASTE_ROOT` is unset.
+Contraste case documents read-only: the corpus BEFORE the 1.0 re-bake (Contraste tag v0.15.000, its
+`data/derived`), whose rows carry the inline battery strings these tests resolve. The 1.0 re-bake writes the packaged
+labels themselves (all but 35 of its 6,330 rows), which `tests/test_contraste_corpus_labels.py` checks on
+`CONTRASTE_ROOT`; this file reads `CONTRASTE_PRE_1_0_ROOT` (an export of that tag) and its corpus tests skip when it
+is unset.
 """
 
 from __future__ import annotations
@@ -217,8 +221,8 @@ def test_an_unknown_rule_is_a_keyerror_naming_the_rules():
 # ---------------------------------------------------------------------------------------------------------------
 # the committed documents (read-only)
 
-ROOT = os.environ.get("CONTRASTE_ROOT")
-needs_root = pytest.mark.skipif(not ROOT, reason="CONTRASTE_ROOT is unset")
+ROOT = os.environ.get("CONTRASTE_PRE_1_0_ROOT")  # the pre-1.0 corpus (module docstring)
+needs_root = pytest.mark.skipif(not ROOT, reason="CONTRASTE_PRE_1_0_ROOT is unset")
 
 
 def _documents():

@@ -24,6 +24,8 @@ from types import MappingProxyType
 
 from scipy.special import ndtr, ndtri
 
+from riskvalidation.lgd_ead.floors import LGDFloorApplied, LGDFloorInput, resolve_lgd_floor
+
 Q_999 = 0.999
 
 #: the asset classes, and which of them carry the maturity adjustment
@@ -212,9 +214,15 @@ class IRBResult:
     defaulted: bool
     references: dict[str, str]
     notes: tuple[str, ...] = ()
+    #: what the LGD input floor did (``capital_requirement(..., lgd_floor=...)``); None, and absent from ``to_dict`` and
+    #: from the repr, when the option was not given, so that a call without it is the 1.1.0 result byte for byte
+    lgd_floor_applied: LGDFloorApplied | None = field(default=None, repr=False)
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        out = asdict(self)
+        if self.lgd_floor_applied is None:
+            del out["lgd_floor_applied"]
+        return out
 
 
 def capital_requirement(
@@ -230,6 +238,7 @@ def capital_requirement(
     defaulted: bool = False,
     el_best_estimate: float | None = None,
     regime: str = "basel3",
+    lgd_floor: LGDFloorInput | None = None,
 ) -> IRBResult:
     """K, the risk weight 12.5 K (times the regime's scaling factor) and, given an EAD, the RWA of one exposure.
 
@@ -241,6 +250,12 @@ def capital_requirement(
     5 years for non-retail classes, and retail classes have no maturity adjustment. A defaulted exposure gets
     K = max(0, LGD - EL best estimate) (CRE31.3). Where a regime fixes the LGD of a class (RAN 21-6 consumer, 61.3%) a
     different ``lgd`` is refused rather than silently replaced.
+
+    ``lgd_floor`` (an :class:`~riskvalidation.lgd_ead.floors.LGDFloorInput`; default None, which changes nothing)
+    applies the IRB LGD input floor of the ``regime`` (``basel3``: CRE32.16, CRE32.17, CRE32.58, CRE32.59; ``crr3``:
+    Articles 161(4) to (6) and 164(4) to (4a); any other regime refuses it) to the own-estimate ``lgd`` that feeds the
+    risk weight and the expected loss. A sovereign and a defaulted exposure get no floor; the result reports the input
+    LGD, the floor and the LGD used in ``lgd_floor_applied``, and ``lgd`` is the LGD used.
     """
     reg = _regime(regime, asset_class)
     notes: list[str] = []
@@ -254,14 +269,24 @@ def capital_requirement(
         raise ValueError("lgd is required for this asset class")
     if not 0.0 <= lgd <= 1.0:
         raise ValueError("lgd must lie in [0, 1]")
+    floor_info: LGDFloorApplied | None = None
+    if lgd_floor is not None:
+        if not isinstance(lgd_floor, LGDFloorInput):
+            raise TypeError(f"lgd_floor must be an LGDFloorInput or None, got {type(lgd_floor).__name__}")
+        floor_info = resolve_lgd_floor(asset_class, lgd, regime, lgd_floor, defaulted)
+        lgd = floor_info.lgd_used
+        if floor_info.binding:
+            notes.append(f"LGD floored at {floor_info.floor:.2%} ({floor_info.source})")
     if defaulted:
         if el_best_estimate is None:
             raise ValueError("a defaulted exposure needs its best estimate of expected loss")
         k = max(0.0, lgd - el_best_estimate)
         rw = 12.5 * k * reg.scaling
+        drefs = {"defaulted": reg.references.get("defaulted", ""), "scaling": reg.references["scaling"]}
+        if floor_info is not None:
+            drefs["lgd_floor"] = floor_info.source
         return IRBResult(asset_class, reg.id, pd, 1.0, lgd, None, None, None, k, rw, None if ead is None else rw * ead,
-                         True, {"defaulted": reg.references.get("defaulted", ""), "scaling": reg.references["scaling"]},
-                         tuple(notes))
+                         True, drefs, tuple(notes), floor_info)
     floor = reg.pd_floor_qrre if asset_class == "qrre" and revolver else reg.pd_floor
     exempt = asset_class in reg.floor_exempt
     if not 0.0 <= pd < 1.0 or (pd == 0.0 and (exempt or floor <= 0.0)):
@@ -291,8 +316,10 @@ def capital_requirement(
         refs["large_financial_institution"] = reg.references["large_financial_institution"]
     if m_used is not None:
         refs["maturity"] = reg.references.get("maturity", "")
+    if floor_info is not None:
+        refs["lgd_floor"] = floor_info.source
     return IRBResult(asset_class, reg.id, pd, pd_applied, lgd, m_used, r, ma, k, rw, None if ead is None else rw * ead,
-                     False, refs, tuple(notes))
+                     False, refs, tuple(notes), floor_info)
 
 
 def el_versus_provisions(

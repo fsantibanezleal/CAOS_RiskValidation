@@ -80,7 +80,7 @@ normativo of August 2026,
 ## 3. The adjustments the function applies
 
 `capital_requirement(asset_class, pd, lgd, *, maturity=2.5, sales_eur_m=None, large_fi=False, ead=None,
-revolver=False, defaulted=False, el_best_estimate=None, regime="basel3")` returns an `IRBResult` with $K$, the risk
+revolver=False, defaulted=False, el_best_estimate=None, regime="basel3", lgd_floor=None)` returns an `IRBResult` with $K$, the risk
 weight $12.5\,K$ times the regime's scaling, the RWA when an EAD is given, and every parameter it used:
 
 - the PD floored at the regime's floor (sovereigns exempt under `basel3` and `crr3`), with the QRRE revolver floor for
@@ -90,7 +90,29 @@ weight $12.5\,K$ times the regime's scaling, the RWA when an EAD is given, and e
 - the correlation of the asset class, with the firm-size adjustment and the 1.25 multiplier where they apply;
 - the maturity clamped to 1 to 5 years for non-retail classes (CRE32.46 to CRE32.47), and none for retail;
 - for a defaulted exposure, $K = \max(0, \mathrm{LGD} - \mathrm{EL}_{BE})$;
+- the LGD input floor, only when asked (`lgd_floor=`, section 3a);
 - the paragraph reference of each parameter, and a note for each floor or clamp applied.
+
+## 3a. The LGD input floors (the option `lgd_floor`)
+
+Basel III final and CRR3 floor the LGD that feeds the risk-weight formula and the expected loss, for own-estimate LGD of a
+non-defaulted, non-sovereign exposure: CRE32.16 and CRE32.58 to CRE32.59, and CRR3 Articles 161(4) to (6) and 164(4) to (4a)
+(applying from 2025-01-01). `capital_requirement(..., lgd_floor=LGDFloorInput(...))` applies the floor of the call's `regime`
+(`basel3` or `crr3`; any other regime refuses the option). Without the keyword nothing changes: the result, its `to_dict()` and its
+repr are those of 1.1.0 byte for byte (`test_without_the_option_the_result_is_the_1_1_0_one_byte_for_byte`, 1,891 calls).
+
+`LGDFloorInput(collateral="unsecured", e=1.0, e_s=0.0, h_e=0.0, portfolio=None)` names the collateral type (`unsecured`, `financial`,
+`receivables`, `real-estate`, `other-physical`; `mortgage` for a residential mortgage) and the CRE32.10 terms of a partly secured
+exposure; `portfolio="public-sector"` selects the CRR3 Article 161(5) 5% cell (asset class `corporate`). The result keeps the LGD
+used in `lgd` and adds `lgd_floor_applied`, an `LGDFloorApplied` with the input LGD, the floor, the LGD used, whether the floor
+bound, the secured share and the paragraph; a binding floor adds a note and a `lgd_floor` reference. A sovereign and a defaulted
+exposure get no floor and the record says why (CRE32.16; CRE31.7 and CRE31.20, CRR3 Article 158(5)); `bank` and
+`financial_institution` raise because the floor paragraphs say "corporate" and their classification there was not read
+(UNVERIFIED). The cells, the partly secured blend and the open points are on [the floors page](../lgd_ead/05_floors.md).
+
+Goldens: QRRE at LGD 30% takes 50% and its risk weight equals the printed CRE99 column of LGD 50% at every tested PD; a mortgage at LGD 2%
+takes 5% (risk weight = printed LGD 45% column times 5/45, K being linear in the LGD); a corporate at LGD 10% takes 25%; other retail
+partly secured by real estate ($E=100$, $E_S=60$) takes $0.30\cdot0.4+0.10\cdot0.6=0.18$.
 
 ## 4. Expected loss against provisions
 

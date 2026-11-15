@@ -8,7 +8,9 @@ accents and the eñe); every number in them is computed here.
 Inputs, all mappings read and never mutated:
 
 - ``entry``: the inventory entry in its document form (``key``, ``case_id``, ``fit_id``, ``title``,
-  ``attributes``, ``components``, ``tier_block``);
+  ``attributes``, ``components``, ``tier_block``) and, optionally, ``names``: ``{"fit": {"en", "es"}, "sources":
+  {<source id>: {"en", "es"}}}``, the display names the report prints for the fit and the sources it cites (the id
+  where a name or a language is missing);
 - ``inventory``: the inventory document (its ``provenance.documents_read``, ``as_of_basis``);
 - ``register``: the findings register rows of the entry;
 - ``variants``: the variant documents of the entry, the first being the default one; each holds ``variant_id``,
@@ -102,6 +104,19 @@ def _t(en: str, es: str) -> dict[str, str]:
     return {"en": en, "es": es}
 
 
+def _pick(n: int, one: str, many: str) -> str:
+    """``one`` for a count of one, ``many`` for zero and for two or more (zero is plural in English and Spanish)."""
+    return one if n == 1 else many
+
+
+def _agree(n: int, en: tuple[str, str], es: tuple[str, str]) -> tuple[str, str]:
+    """The count beside its noun in both languages, each agreeing in number: ``en`` and ``es`` are the singular and
+    plural forms of the noun, so ``_agree(1, ("variant", "variants"), ("variante", "variantes"))`` is
+    ``("1 variant", "1 variante")``.
+    """
+    return f"{n} {_pick(n, *en)}", f"{n} {_pick(n, *es)}"
+
+
 def executive_counts(rows: Sequence[Mapping[str, object]]) -> dict[str, int]:
     """The counts of the lights ``green``, ``amber``, ``red``, ``not_evaluated`` and ``error`` (the counting of
     ``SuiteRun.counts``).
@@ -146,6 +161,24 @@ def _text(en: str, es: str) -> dict:
 
 def _table(caption: tuple[str, str], columns: Sequence[tuple[str, str]], rows: list[list]) -> dict:
     return {"kind": "table", "caption": _t(*caption), "columns": [_t(*c) for c in columns], "rows": rows}
+
+
+def _display(names: Any, fallback: str) -> dict[str, str]:
+    """The display name of one cited thing in both languages from a ``{"en", "es"}`` mapping; a language the mapping
+    lacks (or holds empty or not as text) falls back to ``fallback``, the id the report printed before names existed.
+    """
+    got = names if isinstance(names, Mapping) else {}
+    return {lang: v if isinstance(v := got.get(lang), str) and v else fallback for lang in ("en", "es")}
+
+
+def _names_of(entry: Mapping[str, Any]) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """The ``fit`` and ``sources`` parts of the optional ``names`` block of the entry, an empty mapping for a part the
+    block lacks (or for a block that is not a mapping): the report then prints the ids.
+    """
+    block = entry.get("names")
+    block = block if isinstance(block, Mapping) else {}
+    fit, sources = block.get("fit"), block.get("sources")
+    return (fit if isinstance(fit, Mapping) else {}), (sources if isinstance(sources, Mapping) else {})
 
 
 def _first_path(attribute: Mapping[str, Any] | None) -> str | None:
@@ -239,6 +272,8 @@ def build_report(
         raise ValueError("the entry has no variant document: the report needs the default variant's test rows")
     _check_as_of(entry, register, as_of)
     key, fit = entry["key"], entry["fit_id"]
+    fit_names, source_names = _names_of(entry)
+    fit_name = _display(fit_names, fit)
     attrs = entry["attributes"]
     tb = entry["tier_block"]
     default = variants[0]
@@ -249,6 +284,11 @@ def build_report(
     manifest_path = _first_path(attrs.get("A02"))
     models_path = _first_path(attrs.get("A01")) or default["path"]
     n_var = len(variants)
+    var_en, var_es = _agree(n_var, ("variant", "variants"), ("variante", "variantes"))
+    rows_en, rows_es = _agree(len(tests), ("test row", "test rows"), ("fila de prueba", "filas de prueba"))
+    rec_n_en, rec_n_es = _agree(
+        len(components), ("model record", "model records"), ("registro de modelo", "registros de modelo")
+    )
 
     counts = executive_counts(tests)
     open_rows = [r for r in register if r["status"] in OPEN_STATES]
@@ -274,12 +314,12 @@ def build_report(
             [
                 {"kind": "text", "text": question},
                 _text(
-                    f"Scope: the fit {fit} of case {entry['case_id']}; the full battery of the default variant "
-                    f"({len(tests)} test rows) and the "
-                    f"findings of its {n_var} variants.",
-                    f"Alcance: el ajuste {fit} del caso {entry['case_id']}; la batería completa de la variante por "
-                    f"defecto ({len(tests)} filas de "
-                    f"prueba) y los hallazgos de sus {n_var} variantes.",
+                    f"Scope: the fit {fit_name['en']} of case {entry['case_id']}; the full battery of the default "
+                    f"variant "
+                    f"({rows_en}) and the "
+                    f"findings of its {var_en}.",
+                    f"Alcance: el ajuste {fit_name['es']} del caso {entry['case_id']}; la batería completa de la "
+                    f"variante por defecto ({rows_es}) y los hallazgos de {_pick(n_var, 'su', 'sus')} {var_es}.",
                 ),
                 _table(
                     ("Test lights of the default variant", "Luces de las pruebas de la variante por defecto"),
@@ -316,8 +356,8 @@ def build_report(
             ],
             [
                 _text(
-                    f"{title['en']}: {len(components)} model records in the fit {fit}; tier {tb['tier']} ({mc}).",
-                    f"{title['es']}: {len(components)} registros de modelo en el ajuste {fit}; nivel {tb['tier']} "
+                    f"{title['en']}: {rec_n_en} in the fit {fit_name['en']}; tier {tb['tier']} ({mc}).",
+                    f"{title['es']}: {rec_n_es} en el ajuste {fit_name['es']}; nivel {tb['tier']} "
                     f"({mc_es}).",
                 ),
                 _table(
@@ -371,6 +411,8 @@ def build_report(
     # 4 data
     a14 = (attrs.get("A14") or {}).get("value")
     sources = list(a14.get("sources", [])) if isinstance(a14, Mapping) else []
+    named = [_display(source_names.get(src), src) for src in sources]
+    shown = {lang: [n[lang] for n in named] for lang in ("en", "es")}
     secs.append(
         _section(
             4,
@@ -380,8 +422,8 @@ def build_report(
             ],
             [
                 _text(
-                    "Sources: " + (", ".join(sources) if sources else "none (a generated book)") + ".",
-                    "Fuentes: " + (", ".join(sources) if sources else "ninguna (un libro generado)") + ".",
+                    "Sources: " + (", ".join(shown["en"]) if sources else "none (a generated book)") + ".",
+                    "Fuentes: " + (", ".join(shown["es"]) if sources else "ninguna (un libro generado)") + ".",
                 )
             ],
             [
@@ -440,18 +482,22 @@ def build_report(
     no_direction = sum(1 for r in outcomes if r["policy"]["direction"] is None)
     missing6 = []
     if unresolved or no_direction:
+        of_en, of_es = _agree(len(outcomes), ("row", "rows"), ("fila", "filas"))
+        nodir_en, nodir_es = _agree(no_direction, ("row", "rows"), ("fila", "filas"))
         missing6.append(
             (
                 ("Threshold kind for rows without a policy file", "Tipo de umbral para filas sin archivo de política"),
                 (
                     f"the kind is spec(test_id).decision where the test is registered ({unresolved} of "
-                    f"{len(outcomes)} rows are of tests "
-                    f"that are not: spec() raises KeyError), and the direction is null for {no_direction} rows "
+                    f"{of_en} "
+                    f"{_pick(unresolved, 'is of a test that is', 'are of tests that are')} not: spec() raises "
+                    f"KeyError), and the direction is null for {nodir_en} "
                     f"for an inline battery string, which has no policy file",
                     f"el tipo es spec(test_id).decision donde la prueba está registrada ({unresolved} de "
-                    f"{len(outcomes)} filas son de "
-                    f"pruebas que no lo están: spec() lanza KeyError), y la dirección es nula en {no_direction} "
-                    f"filas de una cadena de batería en línea, que no tiene archivo de política",
+                    f"{of_es} "
+                    f"{_pick(unresolved, 'es de una prueba que no lo está', 'son de pruebas que no lo están')}: "
+                    f"spec() lanza KeyError), y la dirección es nula en {nodir_es} "
+                    f"de una cadena de batería en línea, que no tiene archivo de política",
                 ),
             )
         )
@@ -473,7 +519,7 @@ def build_report(
     secs.append(
         _section(
             7,
-            [(f"the {n_var} variants of the entry", "document")],
+            [(f"the {var_en} of the entry", "document")],
             [
                 _table(
                     ("Variants as perturbations", "Variantes como perturbaciones"),
@@ -531,15 +577,19 @@ def build_report(
         )
     # 9 limitations and controls
     accepted = [r for r in register if r["status"] == "risk_accepted"]
+    acc_en, acc_es = _agree(
+        len(accepted), ("register row", "register rows"), ("fila del registro", "filas del registro")
+    )
     secs.append(
         _section(
             9,
             [(f"findings register rows of {key} with status risk_accepted", "document")],
             [
                 _text(
-                    f"{len(accepted)} register rows are stated limits of the synthetic case (risk_accepted); use "
-                    f"restrictions are the SDD non-goals.",
-                    f"{len(accepted)} filas del registro son límites declarados del caso sintético (risk_accepted); "
+                    f"{acc_en} {_pick(len(accepted), 'is a stated limit', 'are stated limits')} of the synthetic "
+                    f"case (risk_accepted); use restrictions are the SDD non-goals.",
+                    f"{acc_es} {_pick(len(accepted), 'es un límite declarado', 'son límites declarados')} del caso "
+                    f"sintético (risk_accepted); "
                     f"las restricciones de uso son los "
                     f"no-objetivos del SDD.",
                 )
@@ -625,10 +675,11 @@ def build_report(
     # 12 appendices: the sha256 of every document read for the entry
     wanted = _all_paths(attrs) | {v["path"] for v in variants}
     docs = [d for d in inventory.get("provenance", {}).get("documents_read", []) if d["path"] in wanted]
+    docs_en, _ = _agree(len(docs), ("document", "documents"), ("documento", "documentos"))
     secs.append(
         _section(
             12,
-            [(f"provenance of the {len(docs)} documents read for the entry", "document")],
+            [(f"provenance of the {docs_en} read for the entry", "document")],
             [
                 _table(
                     ("Documents read", "Documentos leídos"),
