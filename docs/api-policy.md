@@ -90,7 +90,7 @@ Names, imported from the package (`from riskvalidation import <name>`): `Light`,
 
 Risk aggregation: the ladder from the simple sum to the worst-case bounds, the dependence band and model risk.
 
-Modules, imported by path (`from riskvalidation.aggregation import <module>`): `band`, `bounds`, `copulas`, `model_risk`, `simple`.
+Modules, imported by path (`from riskvalidation.aggregation import <module>`): `band`, `bounds`, `copulas`, `model_risk`, `simple`, `vines`.
 
 ### `riskvalidation.aggregation.band`
 
@@ -102,7 +102,7 @@ Names: `VarBounds`, `comonotonic_var`, `rearrangement_algorithm`, `worst_var_bou
 
 ### `riskvalidation.aggregation.copulas`
 
-Names: `CopulaAggregate`, `clayton_copula`, `clayton_lower_tail_dependence`, `copula_aggregate`, `marginal_ppf_pmf`, `marginal_ppf_sample`, `simulate_component_losses`, `simulate_copula_uniforms`, `t_tail_dependence`.
+Names: `ClaytonAggregate`, `CopulaAggregate`, `clayton_aggregate`, `clayton_copula`, `clayton_h_function`, `clayton_h_inverse`, `clayton_kendall_tau`, `clayton_lower_tail_dependence`, `clayton_theta_from_tau`, `copula_aggregate`, `marginal_ppf_pmf`, `marginal_ppf_sample`, `simulate_clayton_losses`, `simulate_clayton_uniforms`, `simulate_component_losses`, `simulate_copula_uniforms`, `t_tail_dependence`.
 
 ### `riskvalidation.aggregation.model_risk`
 
@@ -111,6 +111,10 @@ Names: `GlassermanXu`, `ModelRisk`, `barrieu_scandolo`, `glasserman_xu_worst_cas
 ### `riskvalidation.aggregation.simple`
 
 Names: `check_correlation`, `diversification_factor`, `euler_diversification_benefit`, `hybrid_quantile`, `simple_sum`, `std_contributions`, `variance_covariance`.
+
+### `riskvalidation.aggregation.vines`
+
+Names: `DEFAULT_FAMILIES`, `VineAggregate`, `VineFit`, `clayton_log_density`, `fit_vine`, `gaussian_h_function`, `gaussian_log_density`, `simulate_vine`, `vine_aggregate`, `vine_fit_from_model`.
 
 ## `riskvalidation.ccr`
 
@@ -700,11 +704,15 @@ Names: `RegulatoryParameter`, `apply_currency_mismatch`, `bank_risk_weight_ecra`
 
 Macro stress testing: satellites, scenario paths, the capital engine, reverse stress and the scenario models.
 
-Modules, imported by path (`from riskvalidation.stress import <module>`): `capital`, `paths`, `reverse`, `satellites`, `scenario_models`.
+Modules, imported by path (`from riskvalidation.stress import <module>`): `capital`, `panel_quantile`, `paths`, `reverse`, `satellites`, `scenario_models`.
 
 ### `riskvalidation.stress.capital`
 
 Names: `InternalTarget`, `PlanYear`, `PpnrRow`, `annex3_summary`, `capital_plan`, `cet1_path_loss_only`, `chilean_cet1_stack`, `eba_static_balance_sheet`, `internal_capital_target`, `p2g_proxy`, `ppnr_row`.
+
+### `riskvalidation.stress.panel_quantile`
+
+Names: `PanelQuantileBootstrap`, `PanelQuantileFit`, `PanelQuantileProjection`, `fit_panel_quantile`, `panel_quantile_bootstrap`, `project_panel_quantiles`.
 
 ### `riskvalidation.stress.paths`
 
@@ -720,7 +728,7 @@ Names: `SatelliteFit`, `SatelliteProjection`, `fit_satellite`, `inverse_link`, `
 
 ### `riskvalidation.stress.scenario_models`
 
-Names: `SkewedTFit`, `VarFit`, `fit_skewed_t_to_quantiles`, `fit_var`, `gar_quantile_regressions`, `skewed_t_pdf`, `var_conditional_forecast`.
+Names: `BvarDraws`, `BvarPosterior`, `SkewedTFit`, `VarFit`, `bvar_dummies`, `bvar_posterior`, `bvar_posterior_draws`, `fit_bvar_minnesota`, `fit_skewed_t_to_quantiles`, `fit_var`, `gar_quantile_regressions`, `skewed_t_pdf`, `var_conditional_forecast`.
 
 ## `riskvalidation.transitions`
 
