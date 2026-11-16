@@ -4,9 +4,9 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
-## [Unreleased]
+## [1.05.000] - 2026-11-16
 
-A minor release in preparation (1.05.000): names are added, none removed or changed (`docs/api-policy.md`); a call that uses no new name returns what 1.4.0 returned.
+A minor release: names are added, none removed or changed (`docs/api-policy.md`); a call that uses no new name returns what 1.4.0 returned.
 
 - `validation.sequential.e_backtest`: the e-backtests of VaR and of expected shortfall of Wang, Wang and Ziegel (2022), E-backtesting, arXiv 2209.00991 (BL-121, RV-2101 to RV-2115). `var_backtest_e_statistic` (their equation (1), `1{loss > var} / alpha`) and `es_backtest_e_statistic` (equation (3) and Theorem 1, `(loss - var)+ / (alpha (es - var))`, with 0/0 = 1 and 1/0 = infinity); `betting_process` and the e-process of equation (7) in `e_backtest_var` and `e_backtest_es`, returning a frozen `EBacktestResult` (an `EProcessResult` with the e-statistic and the bet of each day and, under GREM, the wealth of GREE and GREL) and registered as `sequential.e_backtest_var` and `sequential.e_backtest_es`. The betting processes are the paper's GREE (13), GREL (14) and GREM (the equal mixture of their wealth, the default the paper recommends), by the closed form (15) the paper uses in its simulations or by the growth-rate maximisation (`solver="exact"`), on all past days or a rolling `window`, capped at `gamma` (default 1/2, Remark 7). The choices the paper leaves open are fixed and stated (no bet on the first day or on a sample whose mean e-statistic is at most 1; the cap after an infinite e-statistic; an ES forecast below the VaR forecast is refused). Tests: `tests/test_sequential_e_backtest.py` (the e-statistics against the paper's definitions on hand-computed values and by quadrature; the VaR e-process equal to the Contraste manuscript's `wwz_log_e` to 1e-12; the betting processes against loops written from the equations; the mean of the e-process exactly 1 by full enumeration; the size at any stopping time and the detection of a planted under-forecast, with the large runs under `sizepower`). Page: `docs/sequential/02_e-backtest.md`.
 
