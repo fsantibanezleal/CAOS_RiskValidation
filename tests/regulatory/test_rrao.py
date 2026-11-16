@@ -97,5 +97,5 @@ def test_rrao_formula_and_exclusions():
         "the caller's",
     ):
         assert phrase in page, phrase
-    assert "—" not in page and "—" not in rr.__doc__
+    assert "\u2014" not in page and "\u2014" not in rr.__doc__
     assert (ROOT / "docs" / "regulatory" / "u9" / "README.md").read_text(encoding="utf-8").count("08_rrao.md") == 1

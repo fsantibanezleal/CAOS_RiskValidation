@@ -819,7 +819,7 @@ def test_stated_limits():
         "securitisation",
     ):
         assert phrase in page, phrase
-    assert "—" not in page and "—" not in sa.__doc__
+    assert "\u2014" not in page and "\u2014" not in sa.__doc__
     assert (
         "cva risk" in page
         and (ROOT / "docs" / "regulatory" / "u9" / "README.md").read_text(encoding="utf-8").count("06_sa-cva.md") == 1
