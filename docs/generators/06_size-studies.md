@@ -19,10 +19,23 @@ names, so a scenario is never rebuilt. The registry holds 21 tests (the nine tha
 - `N_REP`: the default repetitions of a study, 4,000; a study of a costly test names fewer in its own `n_rep` and `power_n_rep`.
 - `simulate_study(study, which="null", *, n_rep=None, seed=None)`: runs the null or the alternative with `harness.simulate`, using the
   study's generator, seed, feed, arguments and rule. It is the one entry point of the suites and of C22.
-- `scripts/size_study_sharded.py`: runs the repetitions of a registered study in slices on a process pool and sums the counts
-  (`python scripts/size_study_sharded.py --study <test id> --reps <n> --workers <k> --out <file>`). Each repetition keeps its own
-  spawned seed, so the counts, the p-values and the rates equal `simulate_study`'s exactly for any number of workers; a local
-  tool for the `sizepower` hours, outside CI. Test: `tests/test_size_study_sharded.py`.
+- `riskvalidation.generators.size_sharded` (engine 1.4.0; the runner lived in `scripts/size_study_sharded.py` from 1.2.0):
+  `run_sharded(test_id, n_rep, workers, *, which, index, seed)` runs the repetitions of a registered study in slices on a process
+  pool and sums the counts; `slices` and `merge` are its two steps; `simulate_registered(study, which, *, n_rep, seed, workers)`
+  is `simulate_study` on one worker and `run_sharded` above one; `size_workers()` reads the environment variable
+  `RISKVALIDATION_SIZE_WORKERS` (unset or 1: one worker; 0, a negative number, a fraction or text: a `ValueError` naming it).
+  Each repetition keeps its own spawned seed, so the counts, the undefined counts and the p-values, metrics and statistics equal
+  `simulate_study`'s exactly for any number of workers. The module is public by path, as `size_studies` is, and
+  `riskvalidation.generators` does not import it. Test: `tests/test_size_study_sharded.py` (including the short equality run of
+  `ml.shift_resilience`, null and alternative).
+- `scripts/size_study_sharded.py`: the command line over `run_sharded`
+  (`python scripts/size_study_sharded.py --study <test id> --reps <n> --workers <k> --out <file>`).
+- The release gate runs the registered studies sharded: set `RISKVALIDATION_SIZE_WORKERS=<k>` and run the `sizepower` suites
+  (`RISKVALIDATION_SIZE_WORKERS=12 python -m pytest tests -m sizepower -p no:cacheprovider -s`; the `ml.` suites of
+  `tests/ml/`, the market power suite, the fairness suite and `size_kit.measure` shard their registered studies, the
+  conditions that are closures stay on one worker). Without the variable the gate runs as before. A sharded gate holds the
+  same size and power as the one-worker gate, to the last repetition; it is outside CI (ADR-0074). With `pytest -n <j>` the
+  processes are `j` times the variable: set the variable to the cores divided by `j`.
 - `STAGE_MATRIX`, `STAGE_SHIFT`, `STAGE_ROWS`: the predicted three-stage migration matrix of `ifrs9.stage_migration_backtest`, the
   departure of the alternative (1.5 points of the stage 1 accounts move to stage 2) and the accounts per starting stage (4,000, 1,500, 500:
   the smallest expected count is 10, the chi-square assumption).
