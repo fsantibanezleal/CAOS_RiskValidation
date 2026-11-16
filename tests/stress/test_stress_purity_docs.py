@@ -21,6 +21,7 @@ NAMES = (
     "04_reverse-stress.md",
     "05_scenario-models.md",
     "06_validation-tests.md",
+    "07_bvar-and-panel-quantile.md",
 )
 HEAVY = ("pandas", "sklearn", "statsmodels", "torch", "lightgbm", "xgboost", "matplotlib", "QuantLib")
 

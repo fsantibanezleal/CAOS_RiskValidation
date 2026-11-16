@@ -36,6 +36,7 @@ Conventions of every page:
 | [04. Reverse stress](04_reverse-stress.md) | the minimum Mahalanobis distance scenario, the closed form for a linear loss, SLSQP otherwise, the plausibility |
 | [05. Scenario models](05_scenario-models.md) | the VAR and its conditional forecast, the Azzalini-Capitanio skewed t, growth-at-risk |
 | [06. The validation tests](06_validation-tests.md) | the six tests with their light rules, and what must not be claimed |
+| [07. The Minnesota BVAR and the panel quantile satellite](07_bvar-and-panel-quantile.md) | the dummy-observation Minnesota prior and its posterior, the inverse-Wishart convention, the posterior draws; Canay's two-step and Koenker's penalized panel quantile estimators, the bootstrap intervals and the projection of a quantile grid |
 
 Modules are imported by path, for example `from riskvalidation.stress import capital` and
 `from riskvalidation.validation import stress`; nothing is re-exported from the package root. Requirements `RV-1301` to `RV-1324` are

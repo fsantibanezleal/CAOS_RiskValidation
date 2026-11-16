@@ -45,8 +45,8 @@ size is a different, equally valid sample.
 $$\lambda_t=2\,t_{\nu+1}\!\left(-\sqrt{\frac{(\nu+1)(1-\rho)}{1+\rho}}\right),\qquad C_\theta(u,v)=\left(u^{-\theta}+v^{-\theta}-1\right)^{-1/\theta},\qquad \lambda_L=2^{-1/\theta}$$
 
 The Gaussian copula has no tail dependence for $|\rho|<1$ (dossier 05 G.1). Clayton is bivariate, with $\theta>0$; apply it to survival
-or to losses as needed so that the dependence sits in the loss tail (dossier 05 G.1). Clayton sampling and vine copulas are deferred
-(BL-078, decision Q13): only the closed forms are here.
+or to losses as needed so that the dependence sits in the loss tail (dossier 05 G.1). Clayton sampling, `clayton_aggregate` and the vine
+copulas (BL-078) are on their own page, [07_clayton-and-vines.md](07_clayton-and-vines.md) (engine 1.3.0, unit U19).
 
 ## Golden values
 

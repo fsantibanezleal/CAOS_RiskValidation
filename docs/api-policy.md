@@ -90,7 +90,7 @@ Names, imported from the package (`from riskvalidation import <name>`): `Light`,
 
 Risk aggregation: the ladder from the simple sum to the worst-case bounds, the dependence band and model risk.
 
-Modules, imported by path (`from riskvalidation.aggregation import <module>`): `band`, `bounds`, `copulas`, `model_risk`, `simple`.
+Modules, imported by path (`from riskvalidation.aggregation import <module>`): `band`, `bounds`, `copulas`, `model_risk`, `simple`, `vines`.
 
 ### `riskvalidation.aggregation.band`
 
@@ -102,7 +102,7 @@ Names: `VarBounds`, `comonotonic_var`, `rearrangement_algorithm`, `worst_var_bou
 
 ### `riskvalidation.aggregation.copulas`
 
-Names: `CopulaAggregate`, `clayton_copula`, `clayton_lower_tail_dependence`, `copula_aggregate`, `marginal_ppf_pmf`, `marginal_ppf_sample`, `simulate_component_losses`, `simulate_copula_uniforms`, `t_tail_dependence`.
+Names: `ClaytonAggregate`, `CopulaAggregate`, `clayton_aggregate`, `clayton_copula`, `clayton_h_function`, `clayton_h_inverse`, `clayton_kendall_tau`, `clayton_lower_tail_dependence`, `clayton_theta_from_tau`, `copula_aggregate`, `marginal_ppf_pmf`, `marginal_ppf_sample`, `simulate_clayton_losses`, `simulate_clayton_uniforms`, `simulate_component_losses`, `simulate_copula_uniforms`, `t_tail_dependence`.
 
 ### `riskvalidation.aggregation.model_risk`
 
@@ -111,6 +111,10 @@ Names: `GlassermanXu`, `ModelRisk`, `barrieu_scandolo`, `glasserman_xu_worst_cas
 ### `riskvalidation.aggregation.simple`
 
 Names: `check_correlation`, `diversification_factor`, `euler_diversification_benefit`, `hybrid_quantile`, `simple_sum`, `std_contributions`, `variance_covariance`.
+
+### `riskvalidation.aggregation.vines`
+
+Names: `DEFAULT_FAMILIES`, `VineAggregate`, `VineFit`, `clayton_log_density`, `fit_vine`, `gaussian_h_function`, `gaussian_log_density`, `simulate_vine`, `vine_aggregate`, `vine_fit_from_model`.
 
 ## `riskvalidation.ccr`
 
@@ -664,13 +668,17 @@ Names: `CompetingRisks`, `TermStructure`, `annualise_pd`, `competing_risks`, `fo
 
 The regulatory calculators: published formulas that turn parameters into capital, provisions or liquidity metrics. The IRB names are exported by name; the other calculators are modules.
 
-Modules, imported by path (`from riskvalidation.regulatory import <module>`): `ba_cva`, `frtb`, `irb`, `lcr_nsfr`, `output_floor`, `sa_ccr`, `standardised`.
+Modules, imported by path (`from riskvalidation.regulatory import <module>`): `ba_cva`, `drc`, `frtb`, `irb`, `lcr_nsfr`, `output_floor`, `rrao`, `sa_ccr`, `sa_cva`, `standardised`.
 
 Names, imported from the package (`from riskvalidation.regulatory import <name>`): `REGIMES`, `IRBResult`, `Regime`, `capital_requirement`, `correlation`, `el_versus_provisions`.
 
 ### `riskvalidation.regulatory.ba_cva`
 
 Names: `capital`, `discount_factor`, `k_full`, `k_hedged`, `k_reduced`, `materiality_threshold_applies`, `scva`, `sector_risk_weight`.
+
+### `riskvalidation.regulatory.drc`
+
+Names: `BUCKETS`, `DEFAULT_RISK_WEIGHTS`, `HORIZON_YEARS`, `LGD`, `MATURITY_FLOOR_YEARS`, `RATINGS`, `SENIORITY`, `DrcExposure`, `DrcResult`, `NetJtd`, `bucket_drc`, `drc_from_exposures`, `drc_non_securitisation`, `gross_jtd`, `hedge_benefit_ratio`, `maturity_weight`, `net_jtd`.
 
 ### `riskvalidation.regulatory.frtb`
 
@@ -688,9 +696,17 @@ Names: `HQLA_HAIRCUTS`, `HQLA_REFERENCES`, `HqlaResult`, `IN_FORCE`, `LCR_INFLOW
 
 Names: `floored_rwa`, `phase_in_factor`.
 
+### `riskvalidation.regulatory.rrao`
+
+Names: `RW_EXOTIC`, `RW_OTHER`, `RraoResult`, `classify_instrument`, `rrao`.
+
 ### `riskvalidation.regulatory.sa_ccr`
 
 Names: `AddOnByClass`, `AddonTerms`, `CommodityEntity`, `CreditEntity`, `EquityEntity`, `IrAddOn`, `IrHedgingSet`, `IrTrade`, `IrTradeResult`, `SaCcrResult`, `commodity_addon`, `commodity_trade_effective_notional`, `credit_addon`, `credit_addon_terms`, `credit_trade_effective_notional`, `entity_aggregate`, `entity_aggregate_terms`, `equity_addon`, `equity_addon_terms`, `fx_addon`, `ir_addon`, `ir_effective_notional`, `maturity_bucket`, `maturity_factor`, `multiplier`, `netting_set_ead`, `replacement_cost`, `supervisory_delta_option`, `supervisory_delta_tranche`, `supervisory_duration`, `supervisory_parameter`.
+
+### `riskvalidation.regulatory.sa_cva`
+
+Names: `COM_BUCKETS`, `COM_DELTA_RISK_WEIGHTS`, `COM_GAMMA`, `COM_GAMMA_WITHIN`, `COM_VEGA_RISK_WEIGHT`, `CCS_BUCKET_SECTORS`, `CCS_GAMMA`, `CCS_RISK_WEIGHTS`, `CCS_TENORS`, `EQ_BUCKETS`, `EQ_DELTA_RISK_WEIGHTS`, `EQ_GAMMA`, `EQ_LARGE_CAP_BUCKETS`, `EQ_VEGA_RISK_WEIGHTS`, `FX_DELTA_RISK_WEIGHT`, `FX_GAMMA`, `FX_VEGA_RISK_WEIGHT`, `IR_DELTA_CORRELATION_SPECIFIED`, `IR_DELTA_RHO_OTHER`, `IR_DELTA_RISK_WEIGHTS_SPECIFIED`, `IR_DELTA_RISK_WEIGHT_OTHER`, `IR_FACTORS_SPECIFIED`, `IR_GAMMA`, `IR_VEGA_RHO`, `IR_VEGA_RISK_WEIGHT`, `M_CVA`, `R`, `RCS_BUCKETS`, `RCS_DELTA_RISK_WEIGHTS`, `RCS_GAMMA`, `RCS_GAMMA_TABLE_9`, `RCS_VEGA_RISK_WEIGHT`, `RWA_FACTOR`, `SPECIFIED_CURRENCIES`, `RiskClassResult`, `SaCvaCapital`, `SaCvaParameters`, `Sensitivity`, `bucket_k`, `bucket_s`, `ccs_rho`, `risk_class_k`, `sa_cva_capital`, `sa_cva_parameters`, `weighted_sensitivity`.
 
 ### `riskvalidation.regulatory.standardised`
 
@@ -700,11 +716,15 @@ Names: `RegulatoryParameter`, `apply_currency_mismatch`, `bank_risk_weight_ecra`
 
 Macro stress testing: satellites, scenario paths, the capital engine, reverse stress and the scenario models.
 
-Modules, imported by path (`from riskvalidation.stress import <module>`): `capital`, `paths`, `reverse`, `satellites`, `scenario_models`.
+Modules, imported by path (`from riskvalidation.stress import <module>`): `capital`, `panel_quantile`, `paths`, `reverse`, `satellites`, `scenario_models`.
 
 ### `riskvalidation.stress.capital`
 
 Names: `InternalTarget`, `PlanYear`, `PpnrRow`, `annex3_summary`, `capital_plan`, `cet1_path_loss_only`, `chilean_cet1_stack`, `eba_static_balance_sheet`, `internal_capital_target`, `p2g_proxy`, `ppnr_row`.
+
+### `riskvalidation.stress.panel_quantile`
+
+Names: `PanelQuantileBootstrap`, `PanelQuantileFit`, `PanelQuantileProjection`, `fit_panel_quantile`, `panel_quantile_bootstrap`, `project_panel_quantiles`.
 
 ### `riskvalidation.stress.paths`
 
@@ -720,7 +740,7 @@ Names: `SatelliteFit`, `SatelliteProjection`, `fit_satellite`, `inverse_link`, `
 
 ### `riskvalidation.stress.scenario_models`
 
-Names: `SkewedTFit`, `VarFit`, `fit_skewed_t_to_quantiles`, `fit_var`, `gar_quantile_regressions`, `skewed_t_pdf`, `var_conditional_forecast`.
+Names: `BvarDraws`, `BvarPosterior`, `SkewedTFit`, `VarFit`, `bvar_dummies`, `bvar_posterior`, `bvar_posterior_draws`, `fit_bvar_minnesota`, `fit_skewed_t_to_quantiles`, `fit_var`, `gar_quantile_regressions`, `skewed_t_pdf`, `var_conditional_forecast`.
 
 ## `riskvalidation.transitions`
 

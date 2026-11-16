@@ -10,7 +10,7 @@ values this unit implements one by one. Transcribed into `docs/aggregation/`.
 EARS (Mavin et al., RE'09, doi:10.1109/RE.2009.9). Every requirement names the gate that fails when it is violated. The engine computes
 and states no compliance claim: the simple sum is the headline capital of the case and every other figure of the band is information, not
 capital. Capital is economic capital on the unexpected-loss basis, `EC = VaR - EL` (dossier 04 l.652-653). The vine copula, Clayton
-sampling and the BVAR are deferred (BL-078) and not written here. The golden values are reproduced by tests that recompute them through
+sampling and the BVAR were deferred here (BL-078) and are specified in `u19-ladder-rungs` (engine 1.3.0). The golden values are reproduced by tests that recompute them through
 a second, independent route, never by a test that only types the answer.
 
 | ID | Requirement | Gate |

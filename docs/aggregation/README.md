@@ -35,10 +35,11 @@ Conventions of every page:
 | [04. Band](04_band.md) | the dependence-uncertainty band and its rows |
 | [05. Model risk](05_model-risk.md) | the Barrieu and Scandolo add-on and relative measures and the Glasserman and Xu worst case |
 | [06. The validation tests](06_validation-tests.md) | the eight tests with their light rules, and what must not be claimed |
+| [07. Clayton sampling and vine copulas](07_clayton-and-vines.md) | the Clayton Kendall tau, the Marshall-Olkin and conditional samplers, the h-function and its inverse, the Clayton aggregate; the vine selection, simulation and aggregate behind the optional extra `vine` |
 
 Modules are imported by path, for example `from riskvalidation.aggregation import simple` and
 `from riskvalidation.validation import aggregation`; nothing is re-exported from the package root. Requirements `RV-1301` to
 `RV-1326` are in `docs/design/features/u13-aggregation/requirements.md`, each naming its test. Sources: dossier 05 of the Contraste
 initiative (section G), dossier 06 (B.12), the U13 research addendum (F5) and dossier 04 (l.652-653); each page cites the primary
-sources with their DOIs or URLs. Not implemented, by decision: the vine copula, Clayton sampling and the Bayesian VAR (BL-078).
+sources with their DOIs or URLs. Clayton sampling and the vine copulas (BL-078) are on page 07; the vine functions need the optional extra `vine` (Python 3.11 or later).
 Contract: `engine-aggregation-api` 1.0.0.
