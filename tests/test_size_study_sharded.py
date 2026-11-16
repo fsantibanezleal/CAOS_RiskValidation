@@ -1,5 +1,6 @@
-"""The sharded size-study runner (``riskvalidation.generators.size_sharded``; the CLI is ``scripts/size_study_sharded.py``;
-Contraste backlog BL-093, engine 1.2.0, moved into the package by BL-112, engine 1.4.0).
+"""The sharded size-study runner (``riskvalidation.generators.size_sharded``; the CLI is
+``scripts/size_study_sharded.py``; Contraste backlog BL-093, engine 1.2.0, moved into the package by BL-112,
+engine 1.4.0).
 
 Each repetition of ``harness.simulate`` runs from its own spawned seed, so a study cut into slices on a process pool
 gives the counts of the unsharded run exactly, whatever the number of workers. The studies used here are small (10 to 30
@@ -15,9 +16,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from riskvalidation.generators.size_studies import STUDIES, simulate_study
-
 from riskvalidation.generators import size_sharded as sharded
+from riskvalidation.generators.size_studies import STUDIES, simulate_study
 
 SCRIPTS = str(Path(__file__).resolve().parents[1] / "scripts")
 if SCRIPTS not in sys.path:
