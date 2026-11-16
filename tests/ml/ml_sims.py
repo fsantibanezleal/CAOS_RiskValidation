@@ -19,6 +19,7 @@ from scipy import special
 
 from riskvalidation.generators import GeneratorBase
 from riskvalidation.generators.pipelines import SHIFT_N, SHIFT_PERMUTATIONS, run_conformal, run_shift  # noqa: F401
+from riskvalidation.generators.size_sharded import run_sharded, size_workers
 from riskvalidation.generators.size_studies import study as size_study
 from riskvalidation.harness.run import Simulation, light_not_green, simulate
 from riskvalidation.ml import (  # noqa: F401  (the sub-modules the pipelines use)
@@ -51,6 +52,22 @@ def study(test, generator, *, seed: int = SEED, n_rep: int = N_REP, test_kwargs=
     return simulate(
         test, generator, n_rep=n_rep, seed=seed, alphas=(), rules=[light_not_green("alarm")], test_kwargs=test_kwargs
     )
+
+
+#: the conditions that are a registered study of `generators.size_studies` (built by `_from_study`): with
+#: `RISKVALIDATION_SIZE_WORKERS` above 1 they run through `run_sharded` (a worker rebuilds the study by its id); the
+#: other conditions are closures and stay on one worker
+REGISTERED = frozenset({"ml.shift_resilience", "ml.conformal_coverage"})
+
+
+def study_for(test_id, test, generator, *, which: str = "null", seed: int = SEED, n_rep: int = N_REP, workers=None):
+    """`study(test, generator, seed=seed, n_rep=n_rep)`, sharded over `workers` processes (default: the environment
+    variable `RISKVALIDATION_SIZE_WORKERS`) when the condition is a registered study; the counts, p-values, metrics and
+    statistics are equal either way (`tests/test_size_study_sharded.py`). `which` is "null" or "alternative"."""
+    workers = size_workers() if workers is None else workers
+    if workers > 1 and test_id in REGISTERED:
+        return run_sharded(test_id, n_rep, workers, which=which, seed=seed)
+    return study(test, generator, seed=seed, n_rep=n_rep)
 
 
 # -------------------------------------------------------------------------------------------- the pipelines

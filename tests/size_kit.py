@@ -13,7 +13,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from riskvalidation.generators.size_studies import Study, simulate_study
+from riskvalidation.generators.size_sharded import simulate_registered
+from riskvalidation.generators.size_studies import Study
 from riskvalidation.harness import Rate, size_bound, within_size
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,8 +55,8 @@ class Measured:
 def measure(study: Study) -> Measured:
     """Run the null and the alternative of a study (each its own seeded 4,000-repetition simulation)."""
     t0 = time.perf_counter()
-    null = simulate_study(study, "null")
-    alt = simulate_study(study, "alternative")
+    null = simulate_registered(study, "null")  # sharded when RISKVALIDATION_SIZE_WORKERS > 1 (BL-112)
+    alt = simulate_registered(study, "alternative")
     r5, r1 = null.rate(0.05), null.rate(0.01)
     out = Measured(
         study=study, size5=r5.rate, size1=r1.rate, bound5=size_bound(0.05, r5.n), bound1=size_bound(0.01, r1.n),

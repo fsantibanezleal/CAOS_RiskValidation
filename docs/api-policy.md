@@ -278,6 +278,10 @@ Names: `ECB_2019`, `GradeFrequencies`, `Migrations`, `break_monotonicity`, `conc
 
 Names: `BinormalScores`, `HANLEY_MCNEIL`, `LogisticPortfolio`, `binormal_auc`, `binormal_auc_variance`.
 
+### `riskvalidation.generators.size_sharded`
+
+Names: `SIZE_WORKERS_ENV`, `merge`, `run_sharded`, `simulate_registered`, `size_workers`, `slices`.
+
 ### `riskvalidation.generators.size_studies`
 
 Names: `N_REP`, `RULES`, `STAGE_MATRIX`, `STAGE_SHIFT`, `STAGE_ROWS`, `STUDIES`, `Study`, `rejection_label`, `simulate_study`, `study`.
