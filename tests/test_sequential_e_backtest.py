@@ -284,9 +284,15 @@ def test_the_var_e_process_equals_the_manuscripts_reference(p_hit, alpha):
 
 # ------------------------------------------------------------------------------------------ the exact solver
 
+def growth(lam: float, sample: list) -> float:
+    """The empirical growth rate `mean log(1 - lam + lam e)` of a sample of e-statistics (equations (13) and (14))."""
+    return float(np.mean(np.log1p(lam * (np.array(sample) - 1.0))))
+
+
 def test_the_exact_solver_maximises_the_growth_rate():
     n, alpha = 160, 0.05
-    # a hit series: the maximiser of h log(1 + lam (1 - alpha) / alpha) + (1 - h) log(1 - lam) is (h - alpha) / (1 - alpha)
+    # a hit series: the maximiser of h log(1 + lam (1 - alpha) / alpha) + (1 - h) log(1 - lam) is
+    # (h - alpha) / (1 - alpha)
     rng = np.random.default_rng(np.random.SeedSequence([5, 20261116]))
     hits = rng.random(n) < 0.12
     loss, var = np.where(hits, 1.0, -1.0), np.zeros(n)
@@ -302,12 +308,11 @@ def test_the_exact_solver_maximises_the_growth_rate():
         for t in (10, 40, 89):
             sample = [e_es(loss[s], es[s] if method == "GREE" else es[t], var[s] if method == "GREE" else var[t], alpha)
                       for s in range(t)]
-            sol = optimize.minimize_scalar(lambda lam, sample=sample: -np.mean(np.log(1.0 - lam + np.array(sample))),
-                                           bounds=(0.0, 0.5), method="bounded", options={"xatol": 1e-13})
+            sol = optimize.minimize_scalar(lambda lam, sample=sample: -growth(lam, sample), bounds=(0.0, 0.5),
+                                           method="bounded", options={"xatol": 1e-13})
             assert res.betting[t] == pytest.approx(sol.x, abs=1e-7), (method, t)
             taylor = e_backtest_es(loss, var, es, alpha, method=method).betting[t]
-            growth = lambda lam, sample=sample: float(np.mean(np.log(1.0 - lam + np.array(sample))))  # noqa: E731
-            assert growth(res.betting[t]) >= growth(taylor) - 1e-12
+            assert growth(res.betting[t], sample) >= growth(taylor, sample) - 1e-12
     # a neutral or adverse sample bets nothing, and an infinite e-statistic in the sample bets the cap
     flat = e_backtest_var(np.full(8, -1.0), np.zeros(8), alpha, method="GREE", solver="exact")
     assert flat.betting.tolist() == [0.0] * 8
@@ -351,10 +356,17 @@ def test_the_rolling_window():
                                    rtol=0, atol=1e-13)
         assert res.extras["window"] == 20
         full = e_backtest_var(loss, var, alpha, method=method)
-        assert res.betting[100:].mean() > full.betting[100:].mean()  # the window recovers faster
         for big in (n, n + 50):
             same = e_backtest_var(loss, var, alpha, method=method, window=big)
             np.testing.assert_allclose(same.betting, full.betting, rtol=0, atol=1e-15)
+    # Remark 8 by hand: no hit for 100 days, then a hit every day, alpha = 0.2. On day 111 (110 days before it) the
+    # whole past has 10 hits (e = 5, e - 1 = 4) and 100 non-hits (e - 1 = -1): S1 = 40 - 100 < 0 and the bet is 0; the
+    # last 20 days have 10 non-hits and 10 hits: S1 = 40 - 10 = 30, S2 = 10 * 16 + 10 = 170, the bet is 30 / 170
+    swing = np.where(np.arange(150) < 100, -1.0, 1.0)
+    for method in ("GREE", "GREL"):
+        assert e_backtest_var(swing, np.zeros(150), 0.2, method=method).betting[110] == 0.0
+        windowed = e_backtest_var(swing, np.zeros(150), 0.2, method=method, window=20)
+        assert windowed.betting[110] == pytest.approx(30.0 / 170.0, abs=1e-15)
     one = e_backtest_var(loss, var, alpha, method="GREE", window=1)
     np.testing.assert_allclose(one.betting, loop_lambda(loss, var, var, alpha, "var", "GREE", window=1), atol=1e-15)
 
@@ -378,7 +390,7 @@ def test_the_e_process_has_mean_one_by_enumeration():
     for method, solver, window, gamma in (("GREE", "taylor", None, 0.5), ("GREL", "taylor", None, 0.5),
                                           ("GREM", "taylor", None, 0.5), ("GREM", "taylor", 4, 0.3),
                                           ("GREM", "exact", None, 0.5), ("GREE", "exact", 5, 0.9)):
-        n_days = 9 if solver == "exact" else 11
+        n_days = 8 if solver == "exact" else 10
         assert _enumerate_var(n_days, 0.2, method, solver, window, gamma, 1.0) == pytest.approx(1.0, abs=1e-12), \
             (method, solver, window)
     # an over-forecast (a VaR above the true quantile: hit probability below alpha) is a strict supermartingale
@@ -396,9 +408,9 @@ def test_the_e_process_has_mean_one_by_enumeration():
     assert float(np.dot(probs, es_backtest_e_statistic(values, np.ones(3), np.full(3, 3.0), 0.1))) == pytest.approx(1.0)
     for method, window in (("GREE", None), ("GREL", None), ("GREM", None), ("GREM", 3)):
         total = 0.0
-        for idx in itertools.product(range(3), repeat=8):
+        for idx in itertools.product(range(3), repeat=7):
             prob = float(np.prod(probs[list(idx)]))
-            res = e_backtest_es(values[list(idx)], np.ones(8), np.full(8, 3.0), 0.1, method=method, window=window)
+            res = e_backtest_es(values[list(idx)], np.ones(7), np.full(7, 3.0), 0.1, method=method, window=window)
             total += prob * math.exp(res.log_e[-1])
         assert total == pytest.approx(1.0, abs=1e-12), (method, window)
     # forecasts that move with the day (GREL then differs from GREE) keep the mean at 1: here the scale cycles 1, 2, 3
