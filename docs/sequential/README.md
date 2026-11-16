@@ -5,6 +5,9 @@ size. A fixed-window test (Kupiec, Hosmer-Lemeshow, the Basel traffic light) is 
 fixed in advance. Read every day on a growing or a sliding window it rejects a correct model far more often than its
 nominal level, which is what a monitoring desk does. The monitors here keep the size.
 
+The e-backtests of VaR and of expected shortfall of Wang, Wang and Ziegel (2022), the published comparator of these
+monitors, are on [page 02](02_e-backtest.md).
+
 ## The idea
 
 An *e-process* `E_t` is a non-negative process that starts at 1 and whose expected value under the null is at most 1 at
@@ -26,6 +29,7 @@ ratio test that knows the alternative.
 | `var_hit_eprocess(hits, alpha)` | `var_hits` | VaR exceedance rate against `alpha`; alternatives `m alpha`, default `m` = 0.25, 0.5, 1.5, 2, 3, 4, 6, 10, equal weights; `direction` keeps one side |
 | `var_hit_clustering_eprocess(hits, alpha)` | `var_hits` | a hit after a hit: first-order Markov alternatives `P(hit given hit) = m alpha`, default `m` = 3, 6, 12, 25, 50 |
 | `pd_grade_eprocess(defaults, exposures, predicted_pd)` | `pd_grades` | observed defaults against the predicted PD of each grade by step; multiplicative miscalibration `m p`, 16-point log grid in [1/4, 4], Jeffreys-type weights; grades combined by `"product"` or `"average"` |
+| `e_backtest_var(loss, var, alpha)`, `e_backtest_es(loss, var, es, alpha)` | `e_backtest` | the e-backtests of VaR and expected shortfall of Wang, Wang and Ziegel (2022): the backtest e-statistics `var_backtest_e_statistic` and `es_backtest_e_statistic`, the betting processes GREE, GREL and GREM (`betting_process`), one-sided; page [02_e-backtest.md](02_e-backtest.md) |
 | `eprocess_battery(components)` | `battery` | several monitors of the same steps as one verdict: `"average"` (always valid) or `"product"` (independent components) |
 | `EProcessResult`, `GradeEProcessResult` | `monitor` | the record: `log_e`, `rejection_time`, `rejected`, `anytime_p_value`, `threshold`, `to_test_result()` |
 | `detection_time(log_e, alpha_level)`, `anytime_p_value(log_e)` | `monitor` | the first crossing (1-based) and the anytime-valid p-value of any path |
@@ -192,3 +196,5 @@ id, the null hypothesis and the reference below, and decides on the anytime-vali
 | `sequential.var_hit_clustering` | `var_hit_clustering_eprocess` | no hit is more likely the day after a hit |
 | `sequential.pd_grades` | `pd_grade_eprocess` | the defaults of every grade are Binomial(obligors, predicted PD) given the past |
 | `sequential.battery` | `eprocess_battery` | every component null holds (the intersection of the component nulls) |
+| `sequential.e_backtest_var` | `e_backtest_var` | the VaR forecast is not below the true conditional VaR on any day |
+| `sequential.e_backtest_es` | `e_backtest_es` | the ES forecast is not below the true conditional ES and the VaR forecast is the true conditional VaR, on every day |

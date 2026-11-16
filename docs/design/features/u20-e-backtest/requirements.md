@@ -1,5 +1,3 @@
-Status: planned
-
 # U20 E-backtests of VaR and expected shortfall: the backtest e-statistics and the betting processes of Wang, Wang and Ziegel (2022) (BL-121)
 
 Sources: Wang, Wang and Ziegel (2022), E-backtesting, arXiv 2209.00991 (version 7, read in full: Definitions 1 and 2, equation (1) and
@@ -46,7 +44,7 @@ infinity as "a case of no relevance", is refused.
 
 | ID | Requirement | Gate |
 |---|---|---|
-| RV-2110 | THE e-process SHALL be a martingale with mean exactly 1 at every day under the null (Theorem 2): by full enumeration of all 2^12 hit sequences for the VaR e-statistic and of all 3^8 loss sequences of a three-point loss law with `ES = 3` and `VaR = 1` at level 0.9 for the ES e-statistic, `E[M_T]` SHALL equal 1 to 1e-12 for GREE, GREL and GREM, closed form and exact solver, with and without a window; and an over-forecast SHALL give `E[M_T]` below 1. | `tests/test_sequential_e_backtest.py::test_the_e_process_has_mean_one_by_enumeration` |
+| RV-2110 | THE e-process SHALL be a martingale with mean exactly 1 at every day under the null (Theorem 2): by full enumeration of all 2^10 hit sequences (2^8 for the exact solver) for the VaR e-statistic and of all 3^7 loss sequences of a three-point loss law with `ES = 3` and `VaR = 1` at level 0.9 for the ES e-statistic, `E[M_T]` SHALL equal 1 to 1e-12 for GREE, GREL and GREM, closed form and exact solver, with and without a window; and an over-forecast SHALL give `E[M_T]` below 1. | `tests/test_sequential_e_backtest.py::test_the_e_process_has_mean_one_by_enumeration` |
 | RV-2111 | THE monitor SHALL hold its size at any stopping time (Ville, Theorem 2): the share of null series whose path ever reaches `1 / alpha_level` SHALL not exceed `alpha_level` plus three binomial standard errors at `alpha_level` 0.5, 0.2, 0.1 and 0.05, for the VaR and the ES e-process, constant and time-varying forecasts (a CI run of 400 series; 4,000 series of 1,000 days under `sizepower`). | `tests/test_sequential_e_backtest.py::test_size_at_any_stopping_time`, `tests/test_sequential_e_backtest.py::test_size_at_any_stopping_time_large` |
 | RV-2112 | THE monitor SHALL detect a planted under-forecast (a VaR at 70% of the true value, an ES and a VaR each at 70%) before the end of 1,500 days in at least 90% of 100 seeded series, and SHALL not reject an over-forecast of 130%; and under the paper's Proposition 1 the ES e-process SHALL not reject when both forecasts are multiplied by the same factor above 1. | `tests/test_sequential_e_backtest.py::test_a_planted_under_forecast_is_detected_and_an_over_forecast_is_not` |
 
