@@ -16,4 +16,5 @@ __all__ = [
     "copulas",
     "model_risk",
     "simple",
+    "vines",
 ]

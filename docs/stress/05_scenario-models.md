@@ -2,7 +2,7 @@
 
 Rungs 2 and 3 of the macro stress ladder (dossier 05 H.2, l.388 and l.390): the VAR with a conditional forecast, and growth-at-risk.
 They are engine functions with their own acceptance tests that no C18 variant bakes (decision Q13). The Minnesota BVAR and the panel
-quantile satellite are backlog item BL-078. The module is pure NumPy and SciPy except `gar_quantile_regressions`, which reads
+quantile satellite (BL-078) are on their own page, [07_bvar-and-panel-quantile.md](07_bvar-and-panel-quantile.md) (engine 1.3.0, unit U19). The module is pure NumPy and SciPy except `gar_quantile_regressions`, which reads
 `statsmodels` (the optional extra `stress`, imported inside the function; without it the function raises `ImportError` naming the extra).
 
 ## The VAR
@@ -71,8 +71,8 @@ dossier 08 row, so a bake that needs it must register it first.
   forecast density. A VAR is a reduced-form association over a stated window, not a structural model.
 - The skewed t fit has four free parameters for four quantiles: the fit is exact when the target is a skewed t and a compact summary
   otherwise. `nu` is searched on $[0.5, 1000]$; a normal target leaves the likelihood-free objective flat in $\nu$.
-- The Minnesota BVAR (Litterman 1986; Banbura, Giannone and Reichlin 2010) and the panel quantile satellite (Covas, Rump and Zakrajsek 2014)
-  are not implemented (BL-078). The full text of the quantile-regression sources was not read beyond the dossier's summary (UNVERIFIED detail).
+- The Minnesota BVAR (Banbura, Giannone and Reichlin) and the panel quantile satellite (Koenker 2004; Canay 2011; the panel use of Covas,
+  Rump and Zakrajsek 2014) are implemented from engine 1.3.0 (BL-078, unit U19): [07_bvar-and-panel-quantile.md](07_bvar-and-panel-quantile.md). The full text of the quantile-regression sources was not read beyond the dossier's summary (UNVERIFIED detail).
 - These functions are engine functions with acceptance tests; no C18 variant bakes them.
 
 ## Sources

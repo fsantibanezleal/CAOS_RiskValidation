@@ -10,6 +10,7 @@ tests are in ``riskvalidation.validation.stress``. Contract: ``engine-stress-api
 
 __all__ = [
     "capital",
+    "panel_quantile",
     "paths",
     "reverse",
     "satellites",

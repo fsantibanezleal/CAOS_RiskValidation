@@ -13,6 +13,9 @@ compliance claim: it reproduces published formulas and tables.
 | [03 SA-CCR](03_sa-ccr.md) | `sa_ccr` | CRE52, the five CRE99 netting sets from their trades |
 | [04 BA-CVA](04_ba-cva.md) | `ba_cva` | MAR50.14 to MAR50.25 |
 | [05 FRTB SBM and the liquidity-horizon cascade](05_frtb-sbm-and-cascade.md) | `frtb` | MAR21 with GIRR, MAR33.4 |
+| [06 SA-CVA](06_sa-cva.md) | `sa_cva` | MAR50.27 to MAR50.77, every table of MAR50.54 to MAR50.77 (unit U19) |
+| [07 Default risk charge, non-securitisations](07_drc.md) | `drc` | MAR22.1 to MAR22.26 (unit U19) |
+| [08 Residual risk add-on](08_rrao.md) | `rrao` | MAR23.1 to MAR23.8 (unit U19) |
 
-The requirements, each naming its test, are in `docs/design/features/u9-regulatory/requirements.md`. LCR and NSFR are not here (U11), the internal
+The requirements, each naming its test, are in `docs/design/features/u9-regulatory/requirements.md` (pages 06 to 08: `docs/design/features/u19-frtb-cva/requirements.md`). LCR and NSFR are not here (U11), the internal
 ratings-based formulas are in [the IRB page](../01_irb.md), and the standardised measurement approach to operational risk is `riskvalidation.oprisk.sma`.
