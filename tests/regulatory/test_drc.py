@@ -387,6 +387,6 @@ def test_stated_limits_and_page():
         "same or lower seniority",
     ):
         assert phrase in page, phrase
-    assert "—" not in page and "—" not in drc.__doc__
+    assert "\u2014" not in page and "\u2014" not in drc.__doc__
     readme = (ROOT / "docs" / "regulatory" / "u9" / "README.md").read_text(encoding="utf-8")
     assert readme.count("07_drc.md") == 1
