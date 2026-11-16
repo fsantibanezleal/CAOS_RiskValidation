@@ -8,7 +8,8 @@ was set AFTER the run that measured a size of 0.1055 (finding F4), so it was not
 permutation reference replaced that design (Beta-Binomial null for the conformal test, exact permutation reference for
 the shift test) and both sizes now answer to the default bound: at most 0.05 plus two Monte Carlo standard errors
 (`harness.rates.size_bound`). These runs take minutes to hours: the module carries the `sizepower` marker (the engine CI
-deselects it with `-m "not sizepower"`; the local release gate runs it, sharded over RISKVALIDATION_SIZE_WORKERS processes for the registered studies)."""
+deselects it with `-m "not sizepower"`; the local release gate runs it, sharded over
+RISKVALIDATION_SIZE_WORKERS processes for the registered studies)."""
 
 from __future__ import annotations
 
@@ -16,7 +17,7 @@ import math
 
 import numpy as np
 import pytest
-from ml_sims import N_REP, SEED, conditions, study, study_for
+from ml_sims import N_REP, SEED, conditions, study_for
 
 from riskvalidation.harness.rates import size_bound
 from riskvalidation.ml.cbpe import cbpe_auc
