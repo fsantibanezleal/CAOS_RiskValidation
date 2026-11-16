@@ -4,9 +4,9 @@ All notable changes are recorded here, newest first, following
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use the display form `X.XX.XXX`; the package
 metadata carries the PEP 440 form (`0.01.000` is `0.1.0`).
 
-## [Unreleased]
+## [1.04.000] - 2026-11-16
 
-A minor release in preparation: names are added, none removed or changed (`docs/api-policy.md`); with `RISKVALIDATION_SIZE_WORKERS` unset the gate runs as 1.3.0 did.
+A minor release: names are added, none removed or changed (`docs/api-policy.md`); with `RISKVALIDATION_SIZE_WORKERS` unset the gate runs as 1.3.0 did.
 
 - `generators.size_sharded` (BL-112, RV-318): the sharded size-study runner moves from `scripts/size_study_sharded.py` into the package: `run_sharded`, `slices`, `merge` (signatures unchanged), `size_workers` and `SIZE_WORKERS_ENV` (the environment variable `RISKVALIDATION_SIZE_WORKERS`: unset or 1 is one worker; zero, a negative number, a fraction or text raise a `ValueError` naming it) and `simulate_registered` (`simulate_study` on one worker, `run_sharded` above one). The module is public by path, like `size_studies`. The script is a thin command line over it.
 - The `sizepower` suites that run a registered study (`tests/ml/`, `tests/validation_market/test_market_power.py`, `tests/fairness/test_fairness_size_power.py`, `tests/size_kit.py`) shard it when the variable is above 1, so `ml.shift_resilience` stops taking hours on one worker; the rejection counts, undefined counts and p-values, metrics and statistics equal the unsharded run element by element (`tests/test_size_study_sharded.py`, null and alternative of `ml.shift_resilience`). The release-gate command in `docs/generators/06_size-studies.md` sets the variable.
