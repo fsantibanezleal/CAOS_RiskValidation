@@ -23,7 +23,8 @@ from riskvalidation.fairness.plants import LabelNoiseBiasPlant, ProxyFeaturePlan
 from riskvalidation.fairness.replication import replicate_effect
 from riskvalidation.fairness.situation import situation_test
 from riskvalidation.generators import GeneratorBase
-from riskvalidation.generators.size_studies import simulate_study, study
+from riskvalidation.generators.size_sharded import simulate_registered
+from riskvalidation.generators.size_studies import study
 from riskvalidation.harness.run import light_not_green, simulate
 from riskvalidation.validation import fairness as fv
 
@@ -88,13 +89,13 @@ def test_size_and_power_two_proportion_z_and_fisher():
     `riskvalidation.generators.size_studies` (the null and the planted threshold gap, the seeds, the table feed)."""
     zs, fs = study("fair.two_proportion_z"), study("fair.fisher_exact")
     null, alt = zs.null, zs.alternative
-    z_size = record("two_proportion_z size [p]", simulate_study(zs, "null"))
-    z_power = record("two_proportion_z power [p]", simulate_study(zs, "alternative"))
+    z_size = record("two_proportion_z size [p]", simulate_registered(zs, "null"))
+    z_power = record("two_proportion_z power [p]", simulate_registered(zs, "alternative"))
     se = se_of(0.05)
     assert abs(z_size - 0.05) <= 3.3 * se, (z_size, se)  # the pooled z-test holds its 5 percent level
     assert z_power >= 0.85
-    f_size = record("fisher_exact size [p]", simulate_study(fs, "null"))
-    f_power = record("fisher_exact power [p]", simulate_study(fs, "alternative"))
+    f_size = record("fisher_exact size [p]", simulate_registered(fs, "null"))
+    f_power = record("fisher_exact power [p]", simulate_registered(fs, "alternative"))
     assert f_size <= 0.05 + 3.1 * se  # exact: conservative, never above the level beyond Monte Carlo error
     assert f_size < z_size + 3 * se and f_power >= 0.80
     # the planted gap is a real selection-rate gap of the stated size

@@ -8,7 +8,7 @@ was set AFTER the run that measured a size of 0.1055 (finding F4), so it was not
 permutation reference replaced that design (Beta-Binomial null for the conformal test, exact permutation reference for
 the shift test) and both sizes now answer to the default bound: at most 0.05 plus two Monte Carlo standard errors
 (`harness.rates.size_bound`). These runs take minutes to hours: the module carries the `sizepower` marker (the engine CI
-deselects it with `-m "not sizepower"`; the local release gate runs it)."""
+deselects it with `-m "not sizepower"`; the local release gate runs it, sharded over RISKVALIDATION_SIZE_WORKERS processes for the registered studies)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import math
 
 import numpy as np
 import pytest
-from ml_sims import N_REP, SEED, conditions, study
+from ml_sims import N_REP, SEED, conditions, study, study_for
 
 from riskvalidation.harness.rates import size_bound
 from riskvalidation.ml.cbpe import cbpe_auc
@@ -37,8 +37,8 @@ def test_size_under_the_null_and_power_against_the_planted_defect(test_id):
     """The size under the null of every `ml.` light, among them the two p-value tests the catalogue's size rule names
     here: `ml.shift_resilience` (`shift_resilience`) and `ml.conformal_coverage` (`conformal_coverage`)."""
     run_null, gen_null, gen_def, run_def, _ = COND[test_id]
-    null = study(run_null, gen_null)
-    defect = study(run_def or run_null, gen_def, seed=SEED + 1)
+    null = study_for(test_id, run_null, gen_null, which="null")  # RISKVALIDATION_SIZE_WORKERS > 1: sharded (BL-112)
+    defect = study_for(test_id, run_def or run_null, gen_def, which="alternative", seed=SEED + 1)
     size, power = null.rate("alarm"), defect.rate("alarm")
     assert null.n_rep >= 4000 and defect.n_rep >= 4000
     print(  # the measured rates, copied into docs/ml/08 (run with -s)

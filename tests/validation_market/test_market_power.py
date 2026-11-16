@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from riskvalidation.generators.size_studies import STUDIES, rejection_label, simulate_study
+from riskvalidation.generators.size_sharded import simulate_registered
+from riskvalidation.generators.size_studies import STUDIES, rejection_label
 from size_kit import ROOT, page_paragraph
 
 # a local release gate; the engine CI deselects it with -m "not sizepower"
@@ -21,7 +22,7 @@ CASES = [(tid, i) for tid in MARKET_IDS for i in range(len(STUDIES[tid]))]
 def test_power_of_the_market_backtests_against_their_stated_alternative(test_id, index):
     """market back-tests: power at 5% on the alternative of the named study, in [0, 1], stated by the page."""
     st = STUDIES[test_id][index]
-    sim = simulate_study(st, "alternative")
+    sim = simulate_registered(st, "alternative")  # sharded when RISKVALIDATION_SIZE_WORKERS > 1
     rate = sim.rate(rejection_label(st))
     assert rate.undefined == 0 and sim.n_rep == (st.power_n_rep or st.n_rep)
     assert 0.0 <= rate.rate <= 1.0
