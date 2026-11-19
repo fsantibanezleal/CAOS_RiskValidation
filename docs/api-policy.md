@@ -862,11 +862,15 @@ Names: `rating_markov_order`, `rating_matrix_reference`, `rating_momentum`, `rat
 
 ### `riskvalidation.validation.sequential`
 
-Names, imported from the subpackage: `EProcessResult`, `GradeEProcessResult`, `anytime_p_value`, `battery`, `detection_time`, `eprocess_battery`, `monitor`, `pd_grade_eprocess`, `pd_grades`, `var_hit_clustering_eprocess`, `var_hit_eprocess`, `var_hits`.
+Names, imported from the subpackage: `EBacktestResult`, `EProcessResult`, `GradeEProcessResult`, `anytime_p_value`, `battery`, `betting_process`, `detection_time`, `e_backtest`, `e_backtest_es`, `e_backtest_var`, `eprocess_battery`, `es_backtest_e_statistic`, `monitor`, `pd_grade_eprocess`, `pd_grades`, `var_backtest_e_statistic`, `var_hit_clustering_eprocess`, `var_hit_eprocess`, `var_hits`.
 
 ### `riskvalidation.validation.sequential.battery`
 
 Names: `eprocess_battery`.
+
+### `riskvalidation.validation.sequential.e_backtest`
+
+Names: `EBacktestResult`, `betting_process`, `e_backtest_es`, `e_backtest_var`, `es_backtest_e_statistic`, `var_backtest_e_statistic`.
 
 ### `riskvalidation.validation.sequential.monitor`
 
